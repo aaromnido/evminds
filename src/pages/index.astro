@@ -33,10 +33,6 @@ const articles = Array(9).fill({
 
     <!-- Subheader -->
     <section class="subheader">
-      <Badge
-        label="Agregador Noticias Mobilidad Eléctrica"
-        variant="outlined"
-      />
       <h1 class="subheader__title">
         Un punto de encuentro para <strong>mentes inquietas</strong> y <strong
           >eléctricas</strong
@@ -103,7 +99,7 @@ El sedán eléctrico más eficiente"
     padding: 0 48px 48px;
     display: flex;
     flex-direction: column;
-    gap: 48px;
+    gap: 24px;
     background-color: var(--sepia-light);
     min-height: 100vh;
   }
@@ -142,16 +138,15 @@ El sedán eléctrico más eficiente"
 
   /* Featured section */
   .featured {
-    display: flex;
+    display: grid;
+    grid-template-columns: calc(66.667% - 8px) calc(33.333%);
     gap: 24px;
-    align-items: flex-start;
   }
 
   .featured__right {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    flex: 0 0 446px;
   }
 
   /* News grid */
@@ -162,8 +157,50 @@ El sedán eléctrico más eficiente"
   }
 
   .news__row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
     align-items: flex-start;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .featured {
+      grid-template-columns: 1fr;
+    }
+
+    .featured__right {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .news__row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .featured {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+
+    .featured__right {
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    .news {
+      gap: 72px;
+      margin-top: 24px;
+    }
+
+    .news__row {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
   }
 </style>
