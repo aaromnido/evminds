@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -72,6 +73,17 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* evminds design tokens */
+:root {
+    --navy-1: #1f1633;
+    --navy-2: #191b41;
+    --navy-light: #23254a;
+    --sepia-light: #faf7f0;
+    --ev-primary-blue: #0076f4;
+    --ev-primary-green: #01c98a;
+    --ev-teal: #00bcbc;
 }
 
 @theme inline {

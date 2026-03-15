@@ -1,0 +1,63 @@
+---
+import Logo from './Logo.astro';
+
+const navItems = [
+  { label: 'Home', href: '/', active: true },
+  { label: 'Acerca de', href: '/about' },
+  { label: 'Recursos', href: '/recursos' },
+  { label: 'Colaboraciones', href: '/colaboraciones' },
+  { label: 'Contacto', href: '/contacto' },
+];
+---
+
+<header class="site-header">
+  <Logo />
+  <nav class="nav" aria-label="Navegación principal">
+    {navItems.map((item) => (
+      <a
+        href={item.href}
+        class:list={['nav__item', { 'nav__item--active': item.active }]}
+      >
+        {item.label}
+      </a>
+    ))}
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 0;
+    border-bottom: 2px solid var(--navy-2);
+    width: 100%;
+  }
+
+  .nav {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .nav__item {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--navy-2);
+    text-decoration: none;
+    padding: 12px 0;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    border-top: 2px solid transparent;
+    transition: border-color 0.15s;
+  }
+
+  .nav__item--active {
+    border-top-color: var(--navy-2);
+  }
+
+  .nav__item:hover:not(.nav__item--active) {
+    border-top-color: color-mix(in srgb, var(--navy-2) 30%, transparent);
+  }
+</style>

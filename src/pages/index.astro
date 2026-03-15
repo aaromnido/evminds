@@ -1,17 +1,152 @@
 ---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Badge from '@/components/Badge.astro';
+import ArticleCard from '@/components/ArticleCard.astro';
+import FeaturedPrimary from '@/components/FeaturedPrimary.astro';
+import FeaturedSecondary from '@/components/FeaturedSecondary.astro';
 
+// Image assets from Figma (valid 7 days from 2026-03-15)
+const IMG_PORSCHE  = 'https://www.figma.com/api/mcp/asset/c7595055-47a1-4321-b28d-d5cf982a34ad';
+const IMG_MINI     = 'https://www.figma.com/api/mcp/asset/b065001a-81d2-4c8e-a517-6e9ac69e288c';
+const IMG_HYUNDAI  = 'https://www.figma.com/api/mcp/asset/69cd14be-e595-4064-8164-4bf3fa70c1e5';
+const IMG_NIO      = 'https://www.figma.com/api/mcp/asset/4b52a9a1-75d9-41eb-9468-39ec8d1e6083';
+
+const articles = Array(9).fill({
+  image: IMG_NIO,
+  title: 'NIO presenta Firefly, su marca de eléctricos baratos para Europa',
+  excerpt: 'La nueva marca Firefly ya es oficial, y su primer coche eléctrico se empezará a entregar durante la primera mitad del año 2025. Se presentará de forma oficial...',
+  source: 'forococheselectricos.com',
+  category: 'Coches Eléctricos',
+});
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout>
+  <main class="page">
+    <Header />
+
+    <!-- Subheader -->
+    <section class="subheader">
+      <Badge label="Agregador Noticias Mobilidad Eléctrica" variant="outlined" />
+      <h1 class="subheader__title">
+        Un punto de encuentro para <em>mentes inquietas</em> y <em>eléctricas</em>
+      </h1>
+      <p class="subheader__subtitle">
+        Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a la movilidad eléctrica y las energías renovables
+      </p>
+    </section>
+
+    <!-- Featured news -->
+    <section class="featured" aria-label="Noticias destacadas">
+      <FeaturedPrimary
+        image={IMG_PORSCHE}
+        title="Nuevo Porsche Macan Eléctrico&#10;La revolución SUV"
+        date="20 de enero de 2024"
+        source="forococheselectricos.com"
+        category="Coches eléctricos"
+      />
+
+      <div class="featured__right">
+        <FeaturedSecondary
+          image={IMG_MINI}
+          title="Nuevo MINI Cooper SE 2024&#10;El urbano eléctrico se reinventa"
+          date="20 de enero de 2024"
+          source="motor.es"
+          category="Coches eléctricos"
+          categoryVariant="filled"
+        />
+        <FeaturedSecondary
+          image={IMG_HYUNDAI}
+          title="Prueba Hyundai IONIQ 6&#10;El sedán eléctrico más eficiente"
+          date="20 de enero de 2024"
+          source="hibridosyelectricos.com"
+          category="Industria"
+          categoryVariant="green"
+        />
+      </div>
+    </section>
+
+    <!-- News grid -->
+    <section class="news" aria-label="Últimas noticias">
+      {[0, 1, 2].map((row) => (
+        <div class="news__row">
+          {articles.slice(row * 3, row * 3 + 3).map((article) => (
+            <ArticleCard {...article} />
+          ))}
+        </div>
+      ))}
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    background-color: var(--sepia-light);
+    min-height: 100vh;
+  }
+
+  /* Subheader */
+  .subheader {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1105px;
+  }
+
+  .subheader__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1;
+    color: var(--navy-2);
+    letter-spacing: -0.01em;
+  }
+
+  .subheader__title em {
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  .subheader__subtitle {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy-2);
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  /* Featured section */
+  .featured {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .featured__right {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex: 0 0 446px;
+  }
+
+  /* News grid */
+  .news {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .news__row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+</style>

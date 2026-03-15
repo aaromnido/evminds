@@ -1,0 +1,107 @@
+---
+import Badge from './Badge.astro';
+
+interface Props {
+  image: string;
+  title: string;
+  date: string;
+  source: string;
+  category: string;
+  href?: string;
+}
+
+const { image, title, date, source, category, href = '#' } = Astro.props;
+---
+
+<a href={href} class="featured-primary">
+  <!-- Background image -->
+  <img src={image} alt={title} class="featured-primary__image" loading="eager" />
+
+  <!-- Logo mark (white dots) top-left -->
+  <div class="featured-primary__logomark" aria-hidden="true">
+    <svg width="100" height="125" viewBox="0 0 18.865 23.575" fill="none">
+      <rect x="4.72"  y="0"     width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="9.43"  y="0"     width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="14.15" y="0"     width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="0"     y="4.72"  width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="4.72"  y="9.43"  width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="9.43"  y="9.43"  width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="0"     y="14.15" width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="4.72"  y="18.86" width="4.715" height="4.715" fill="#faf7f0" />
+      <rect x="14.15" y="18.86" width="4.715" height="4.715" fill="#faf7f0" />
+    </svg>
+  </div>
+
+  <!-- Footer overlay -->
+  <div class="featured-primary__footer">
+    <div class="featured-primary__badges">
+      <Badge label={source} variant="light" />
+      <Badge label={category} variant="filled" />
+    </div>
+    <h2 class="featured-primary__title">{title}</h2>
+    <p class="featured-primary__date">{date}</p>
+  </div>
+</a>
+
+<style>
+  .featured-primary {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--navy-light);
+    border-radius: 6px;
+    overflow: hidden;
+    height: 722px;
+    flex: 0 0 922px;
+    text-decoration: none;
+  }
+
+  .featured-primary__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+  }
+
+  .featured-primary__logomark {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+  }
+
+  .featured-primary__footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+    background: linear-gradient(to bottom, rgba(114, 114, 114, 0), rgba(25, 27, 65, 0.5));
+    border-radius: 6px;
+  }
+
+  .featured-primary__badges {
+    display: flex;
+    gap: 10px;
+  }
+
+  .featured-primary__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 54px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.1;
+    color: var(--sepia-light);
+  }
+
+  .featured-primary__date {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--sepia-light);
+    white-space: nowrap;
+  }
+</style>
