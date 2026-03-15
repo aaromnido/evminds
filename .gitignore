@@ -12,6 +12,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# temp files and folders
+.temp/
+*.temp
+
 
 # environment variables
 .env
