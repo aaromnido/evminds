@@ -5,26 +5,40 @@ import Badge from "@/components/Badge.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
+import { getLiveCollection } from "astro:content";
+import { formatDate } from "@/lib/date-utils";
+import type { ArticleData } from "@/loaders/supabase-loader";
 
-// Image assets from Figma (valid 7 days from 2026-03-15)
-const IMG_PORSCHE =
-  "https://www.figma.com/api/mcp/asset/c7595055-47a1-4321-b28d-d5cf982a34ad";
-const IMG_MINI =
-  "https://www.figma.com/api/mcp/asset/b065001a-81d2-4c8e-a517-6e9ac69e288c";
-const IMG_HYUNDAI =
-  "https://www.figma.com/api/mcp/asset/69cd14be-e595-4064-8164-4bf3fa70c1e5";
-const IMG_NIO =
-  "https://www.figma.com/api/mcp/asset/4b52a9a1-75d9-41eb-9468-39ec8d1e6083";
+// Fetch articles using Live Content Collections (runtime, not build-time)
+const { entries, error } = await getLiveCollection("articles");
 
-const articles = Array(9).fill({
-  image: IMG_NIO,
-  title: "NIO presenta Firefly, su marca de eléctricos baratos para Europa",
-  date: "20 de enero de 2024",
-  excerpt:
-    "La nueva marca Firefly ya es oficial, y su primer coche eléctrico se empezará a entregar durante la primera mitad del año 2025. Se presentará de forma oficial...",
-  source: "forococheselectricos.com",
-  category: "Coches Eléctricos",
-});
+if (error) {
+  console.error("Failed to fetch articles:", error);
+}
+
+// Extract article data from entries and limit to 12
+const articles = entries?.slice(0, 12).map((entry) => entry.data) || [];
+
+// Featured articles (top 3)
+const featuredPrimary = articles[0];
+const featuredSecondary1 = articles[1];
+const featuredSecondary2 = articles[2];
+
+// Grid articles (remaining)
+const gridArticles = articles.slice(3);
+
+// Helper to map article to component props
+function mapArticleToProps(article: ArticleData) {
+  return {
+    image: article.image_url || "/placeholder-image.jpg",
+    title: article.title,
+    date: formatDate(article.published_at.toISOString()),
+    excerpt: article.excerpt,
+    source: article.source_name,
+    category: article.category,
+    href: article.article_url,
+  };
+}
 ---
 
 <BaseLayout>
@@ -45,50 +59,42 @@ const articles = Array(9).fill({
     </section>
 
     <!-- Featured news -->
-    <section class="featured" aria-label="Noticias destacadas">
-      <FeaturedPrimary
-        image={IMG_PORSCHE}
-        title="Nuevo Porsche Macan Eléctrico
-La revolución SUV"
-        date="20 de enero de 2024"
-        source="forococheselectricos.com"
-        category="Coches eléctricos"
-      />
+    {
+      featuredPrimary && (
+        <section class="featured" aria-label="Noticias destacadas">
+          <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
 
-      <div class="featured__right">
-        <FeaturedSecondary
-          image={IMG_MINI}
-          title="Nuevo MINI Cooper SE 2024
-El urbano eléctrico se reinventa"
-          date="20 de enero de 2024"
-          source="motor.es"
-          category="Coches eléctricos"
-          categoryVariant="filled"
-        />
-        <FeaturedSecondary
-          image={IMG_HYUNDAI}
-          title="Prueba Hyundai IONIQ 6
-El sedán eléctrico más eficiente"
-          date="20 de enero de 2024"
-          source="hibridosyelectricos.com"
-          category="Industria"
-          categoryVariant="green"
-        />
-      </div>
-    </section>
+          <div class="featured__right">
+            {featuredSecondary1 && (
+              <FeaturedSecondary {...mapArticleToProps(featuredSecondary1)} />
+            )}
+            {featuredSecondary2 && (
+              <FeaturedSecondary {...mapArticleToProps(featuredSecondary2)} />
+            )}
+          </div>
+        </section>
+      )
+    }
 
     <!-- News grid -->
-    <section class="news" aria-label="Últimas noticias">
-      {
-        [0, 1, 2].map((row) => (
-          <div class="news__row">
-            {articles.slice(row * 3, row * 3 + 3).map((article) => (
-              <ArticleCard {...article} />
-            ))}
-          </div>
-        ))
-      }
-    </section>
+    {
+      gridArticles.length > 0 && (
+        <section class="news" aria-label="Últimas noticias">
+          {[0, 1, 2].map((row) => {
+            const rowArticles = gridArticles.slice(row * 3, row * 3 + 3);
+            return (
+              rowArticles.length > 0 && (
+                <div class="news__row">
+                  {rowArticles.map((article) => (
+                    <ArticleCard {...mapArticleToProps(article)} />
+                  ))}
+                </div>
+              )
+            );
+          })}
+        </section>
+      )
+    }
   </main>
 </BaseLayout>
 

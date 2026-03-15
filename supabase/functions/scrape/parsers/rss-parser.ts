@@ -7,6 +7,24 @@
 import type { RawArticle } from '../types.ts';
 
 /**
+ * Decodes HTML entities (&#039;, &quot;, &amp;, etc.)
+ */
+function decodeHTMLEntities(text: string): string {
+  return text
+    // Decode numeric entities (decimal: &#39;)
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    // Decode hex entities (&#x27;)
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    // Decode named entities
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#039;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&'); // Must be last to avoid double-decoding
+}
+
+/**
  * Extracts text content between XML tags
  */
 function extractTag(xml: string, tag: string): string | null {
@@ -53,12 +71,21 @@ export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawA
         continue;
       }
 
-      // Extract image from content:encoded (WordPress feeds)
-      const contentEncoded = extractTag(itemXml, 'content:encoded') || '';
-      const imageMatch = contentEncoded.match(/<img[^>]+src=["']([^"']+)["']/);
-      let image = imageMatch?.[1] || null;
+      // Extract image from multiple sources (try in order of priority)
+      let image: string | null = null;
 
-      // Fallback: try media:content or media:thumbnail attributes
+      // 1. Try content:encoded (WordPress full content)
+      const contentEncoded = extractTag(itemXml, 'content:encoded') || '';
+      const contentImageMatch = contentEncoded.match(/<img[^>]+src=["']([^"']+)["']/);
+      image = contentImageMatch?.[1] || null;
+
+      // 2. Fallback to description (Electrek, many WordPress sites)
+      if (!image && description) {
+        const descImageMatch = description.match(/<img[^>]+src=["']([^"']+)["']/);
+        image = descImageMatch?.[1] || null;
+      }
+
+      // 3. Fallback to media:thumbnail or media:content
       if (!image) {
         const mediaThumbnailMatch = itemXml.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
         const mediaContentMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/i);
@@ -66,16 +93,18 @@ export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawA
       }
 
       // Clean description (remove HTML tags and CDATA)
-      const cleanExcerpt = (description || '')
-        .replace(/<!\[CDATA\[/g, '')
-        .replace(/\]\]>/g, '')
-        .replace(/<[^>]*>/g, '')
-        .replace(/\n/g, ' ')
-        .trim()
-        .substring(0, 300);
+      const cleanExcerpt = decodeHTMLEntities(
+        (description || '')
+          .replace(/<!\[CDATA\[/g, '')
+          .replace(/\]\]>/g, '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\n/g, ' ')
+          .trim()
+          .substring(0, 300)
+      );
 
       articles.push({
-        title: title.trim(),
+        title: decodeHTMLEntities(title.trim()),
         article_url: link.trim(),
         excerpt: cleanExcerpt,
         image_url: image,

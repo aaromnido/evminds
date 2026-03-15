@@ -13,7 +13,7 @@ interface Props {
 const { image, title, date, source, category, href = "#" } = Astro.props;
 ---
 
-<a href={href} class="featured-primary">
+<a href={href} class="featured-primary" target="_blank" rel="noopener noreferrer">
   <!-- Background image -->
   <img
     src={image}
@@ -73,6 +73,11 @@ const { image, title, date, source, category, href = "#" } = Astro.props;
     height: 100%;
     object-fit: cover;
     opacity: 0.9;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .featured-primary:hover .featured-primary__image {
+    transform: scale(1.05);
   }
 
   .featured-primary__logomark {
@@ -109,6 +114,11 @@ const { image, title, date, source, category, href = "#" } = Astro.props;
     font-style: italic;
     line-height: 1.1;
     color: var(--sepia-light);
+    transition: text-decoration 0.2s ease;
+  }
+
+  .featured-primary:hover .featured-primary__title {
+    text-decoration: underline;
   }
 
   .featured-primary__date {

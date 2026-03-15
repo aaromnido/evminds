@@ -23,7 +23,7 @@ const {
 ---
 
 <article class="article-card">
-  <a href={href} class="article-card__photo-link">
+  <a href={href} class="article-card__photo-link" target="_blank" rel="noopener noreferrer">
     <div class="article-card__photo">
       <img src={image} alt={title} loading="lazy" />
     </div>
@@ -31,7 +31,7 @@ const {
 
   <div class="article-card__content">
     <div class="article-card__header">
-      <a href={href} class="article-card__title-link">
+      <a href={href} class="article-card__title-link" target="_blank" rel="noopener noreferrer">
         <h3 class="article-card__title">{title}</h3>
         <p class="article-card__date">{date}</p>
       </a>
@@ -87,6 +87,11 @@ const {
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .article-card:hover .article-card__photo img {
+    transform: scale(1.05);
   }
 
   .article-card__content {
@@ -113,6 +118,11 @@ const {
     font-weight: 700;
     line-height: 1.2;
     color: var(--navy-light);
+    transition: text-decoration 0.2s ease;
+  }
+
+  .article-card:hover .article-card__title {
+    text-decoration: underline;
   }
 
   .article-card__arrow {

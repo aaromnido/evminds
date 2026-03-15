@@ -22,7 +22,7 @@ const {
 } = Astro.props;
 ---
 
-<a href={href} class="featured-secondary">
+<a href={href} class="featured-secondary" target="_blank" rel="noopener noreferrer">
   <img
     src={image}
     alt={title}
@@ -62,6 +62,11 @@ const {
     height: 100%;
     object-fit: cover;
     opacity: 0.75;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .featured-secondary:hover .featured-secondary__image {
+    transform: scale(1.05);
   }
 
   .featured-secondary__footer {
@@ -92,6 +97,11 @@ const {
     font-style: italic;
     line-height: 1.1;
     color: var(--sepia-light);
+    transition: text-decoration 0.2s ease;
+  }
+
+  .featured-secondary:hover .featured-secondary__title {
+    text-decoration: underline;
   }
 
   .featured-secondary__date {
