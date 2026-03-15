@@ -1,9 +1,10 @@
 ---
-import Badge from './Badge.astro';
+import Badge from "./Badge.astro";
 
 interface Props {
   image: string;
   title: string;
+  date: string;
   excerpt: string;
   source: string;
   category: string;
@@ -13,10 +14,11 @@ interface Props {
 const {
   image,
   title,
+  date,
   excerpt,
   source,
   category,
-  href = '#',
+  href = "#",
 } = Astro.props;
 ---
 
@@ -31,13 +33,24 @@ const {
     <div class="article-card__header">
       <a href={href} class="article-card__title-link">
         <h3 class="article-card__title">{title}</h3>
+        <p class="article-card__date">{date}</p>
       </a>
-      <svg class="article-card__arrow" width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-        <path d="M1 10L10 1M10 1H3M10 1V8" stroke="#191b41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg
+        class="article-card__arrow"
+        width="11"
+        height="11"
+        viewBox="0 0 11 11"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M1 10L10 1M10 1H3M10 1V8"
+          stroke="#191b41"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
       </svg>
     </div>
-
-    <p class="article-card__excerpt">{excerpt}</p>
 
     <div class="article-card__badges">
       <Badge label={source} variant="filled" />
@@ -95,7 +108,7 @@ const {
   }
 
   .article-card__title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
@@ -107,8 +120,17 @@ const {
     margin-top: 4px;
   }
 
+  .article-card__date {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--navy-light);
+    margin-top: 10px;
+  }
+
   .article-card__excerpt {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;

@@ -1,71 +1,32 @@
 ---
 interface Props {
   size?: 'sm' | 'lg';
-  inverted?: boolean;
 }
 
-const { size = 'sm', inverted = false } = Astro.props;
-const dotColor = inverted ? '#faf7f0' : '#0076f4';
-const tealColor = inverted ? '#faf7f0' : '#00bcbc';
-const textColor = inverted ? '#faf7f0' : '#191b41';
+const { size = 'sm' } = Astro.props;
 ---
 
 <a href="/" class:list={['logo', `logo--${size}`]} aria-label="evminds.es">
-  <!-- Pixel dot grid forming an "e" lettermark -->
-  <svg
-    width="19"
-    height="24"
-    viewBox="0 0 18.865 23.575"
-    fill="none"
-    aria-hidden="true"
-    class="logo__dots"
-  >
-    <!-- Row 0 -->
-    <rect x="4.72" y="0" width="4.715" height="4.715" fill={dotColor} />
-    <rect x="9.43" y="0" width="4.715" height="4.715" fill={dotColor} />
-    <rect x="14.15" y="0" width="4.715" height="4.715" fill={dotColor} />
-    <!-- Row 1 -->
-    <rect x="0" y="4.72" width="4.715" height="4.715" fill={dotColor} />
-    <!-- Row 2 -->
-    <rect x="4.72" y="9.43" width="4.715" height="4.715" fill={dotColor} />
-    <rect x="9.43" y="9.43" width="4.715" height="4.715" fill={dotColor} />
-    <!-- Row 3 -->
-    <rect x="0" y="14.15" width="4.715" height="4.715" fill={dotColor} />
-    <!-- Row 4 -->
-    <rect x="4.72" y="18.86" width="4.715" height="4.715" fill={dotColor} />
-    <rect x="14.15" y="18.86" width="4.715" height="4.715" fill={tealColor} />
-  </svg>
-
-  <span class="logo__wordmark" style={`color: ${textColor}`}>
-    <span class="logo__name">evminds</span><span class="logo__tld">.es</span>
-  </span>
+  <img src="/logo.svg" alt="evminds.es" class="logo__img" />
 </a>
 
 <style>
   .logo {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-block;
     text-decoration: none;
     flex-shrink: 0;
   }
 
-  .logo__dots {
-    flex-shrink: 0;
+  .logo__img {
+    display: block;
+    height: auto;
   }
 
-  .logo__wordmark {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    white-space: nowrap;
-    letter-spacing: -0.02em;
-    line-height: 1;
+  .logo--sm .logo__img {
+    width: 160px;
   }
 
-  .logo--sm .logo__name { font-size: 14px; }
-  .logo--sm .logo__tld  { font-size: 18px; }
-
-  .logo--lg .logo__dots { width: 76px; height: 96px; }
-  .logo--lg .logo__name { font-size: 56px; }
-  .logo--lg .logo__tld  { font-size: 72px; }
+  .logo--lg .logo__img {
+    width: 240px;
+  }
 </style>

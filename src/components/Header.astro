@@ -1,26 +1,26 @@
 ---
-import Logo from './Logo.astro';
+import Logo from "./Logo.astro";
 
 const navItems = [
-  { label: 'Home', href: '/', active: true },
-  { label: 'Acerca de', href: '/about' },
-  { label: 'Recursos', href: '/recursos' },
-  { label: 'Colaboraciones', href: '/colaboraciones' },
-  { label: 'Contacto', href: '/contacto' },
+  { label: "Home", href: "/", active: true },
+  { label: "Acerca de", href: "/about" },
+  { label: "Contacto", href: "/contacto" },
 ];
 ---
 
 <header class="site-header">
   <Logo />
   <nav class="nav" aria-label="Navegación principal">
-    {navItems.map((item) => (
-      <a
-        href={item.href}
-        class:list={['nav__item', { 'nav__item--active': item.active }]}
-      >
-        {item.label}
-      </a>
-    ))}
+    {
+      navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={["nav__item", { "nav__item--active": item.active }]}
+        >
+          {item.label}
+        </a>
+      ))
+    }
   </nav>
 </header>
 
@@ -41,7 +41,7 @@ const navItems = [
   }
 
   .nav__item {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 14px;
     font-weight: 500;
     color: var(--navy-2);
