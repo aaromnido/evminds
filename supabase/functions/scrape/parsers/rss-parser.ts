@@ -1,16 +1,27 @@
 /**
  * Parser: Generic RSS feed parser
  * Extracts articles from RSS feeds (electrek.co, cnevpost.com, motor.es, forococheselectricos.com)
+ * Uses regex-based parsing compatible with Deno Edge Runtime
  */
 
 import type { RawArticle } from '../types.ts';
 
 /**
+ * Extracts text content between XML tags
+ */
+function extractTag(xml: string, tag: string): string | null {
+  const regex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([^\\]]+)\\]\\]><\/${tag}>|<${tag}[^>]*>([^<]+)<\/${tag}>`, 'i');
+  const match = xml.match(regex);
+  return match ? (match[1] || match[2] || '').trim() : null;
+}
+
+/**
  * Parses an RSS feed and extracts article data
  * @param feedUrl - URL of the RSS feed
+ * @param limit - Maximum number of articles to extract (default: 5)
  * @returns Array of raw articles
  */
-export async function parseRSS(feedUrl: string): Promise<RawArticle[]> {
+export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawArticle[]> {
   try {
     const response = await fetch(feedUrl);
 
@@ -20,24 +31,22 @@ export async function parseRSS(feedUrl: string): Promise<RawArticle[]> {
 
     const xml = await response.text();
 
-    // Parse XML using DOMParser
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-
-    // Check for parsing errors
-    const parserError = doc.querySelector('parsererror');
-    if (parserError) {
-      throw new Error('XML parsing failed');
-    }
-
-    const items = doc.querySelectorAll('item');
+    // Extract all <item> blocks
+    const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    const items = xml.match(itemRegex) || [];
     const articles: RawArticle[] = [];
+    let count = 0;
 
-    for (const item of items) {
-      const title = item.querySelector('title')?.textContent || '';
-      const link = item.querySelector('link')?.textContent || '';
-      const description = item.querySelector('description')?.textContent || '';
-      const pubDate = item.querySelector('pubDate')?.textContent || '';
+    for (const itemXml of items) {
+      // Stop if we've reached the limit
+      if (count >= limit) {
+        break;
+      }
+
+      const title = extractTag(itemXml, 'title');
+      const link = extractTag(itemXml, 'link');
+      const description = extractTag(itemXml, 'description');
+      const pubDate = extractTag(itemXml, 'pubDate');
 
       // Skip if essential fields are missing
       if (!title || !link) {
@@ -45,21 +54,21 @@ export async function parseRSS(feedUrl: string): Promise<RawArticle[]> {
       }
 
       // Extract image from content:encoded (WordPress feeds)
-      const contentEncoded = item.querySelector('encoded')?.textContent || '';
+      const contentEncoded = extractTag(itemXml, 'content:encoded') || '';
       const imageMatch = contentEncoded.match(/<img[^>]+src=["']([^"']+)["']/);
       let image = imageMatch?.[1] || null;
 
-      // Fallback: try media:content or media:thumbnail
+      // Fallback: try media:content or media:thumbnail attributes
       if (!image) {
-        const mediaThumbnail = item.querySelector('thumbnail');
-        const mediaContent = item.querySelector('content');
-        image = mediaThumbnail?.getAttribute('url') ||
-                mediaContent?.getAttribute('url') ||
-                null;
+        const mediaThumbnailMatch = itemXml.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
+        const mediaContentMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+        image = mediaThumbnailMatch?.[1] || mediaContentMatch?.[1] || null;
       }
 
-      // Clean description (remove HTML tags)
-      const cleanExcerpt = description
+      // Clean description (remove HTML tags and CDATA)
+      const cleanExcerpt = (description || '')
+        .replace(/<!\[CDATA\[/g, '')
+        .replace(/\]\]>/g, '')
         .replace(/<[^>]*>/g, '')
         .replace(/\n/g, ' ')
         .trim()
@@ -72,6 +81,8 @@ export async function parseRSS(feedUrl: string): Promise<RawArticle[]> {
         image_url: image,
         published_at: pubDate ? new Date(pubDate) : new Date()
       });
+
+      count++;
     }
 
     return articles;
