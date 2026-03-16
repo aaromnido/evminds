@@ -98,18 +98,19 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
           >eléctricas</strong
         >
       </h1>
-      <p class="subheader__subtitle">
-        Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a
-        la movilidad eléctrica y las energías renovables
-      </p>
+      <div class="subheader__row">
+        <p class="subheader__subtitle">
+          Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a
+          la movilidad eléctrica y las energías renovables
+        </p>
+        <!-- Category filter -->
+        <CategoryFilter
+          availableCategorySlugs={availableCategorySlugs}
+          activeSource={activeSource}
+          availableSourceSlugs={availableSourceSlugs}
+        />
+      </div>
     </section>
-
-    <!-- Category filter -->
-    <CategoryFilter
-      availableCategorySlugs={availableCategorySlugs}
-      activeSource={activeSource}
-      availableSourceSlugs={availableSourceSlugs}
-    />
 
     <!-- Featured news -->
     {
@@ -435,7 +436,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     flex-direction: column;
     align-items: flex-start;
     gap: 24px;
-    max-width: 1105px;
+    width: 100%;
   }
 
   .subheader__title {
@@ -450,6 +451,14 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
   .subheader__title strong {
     font-weight: 600;
+  }
+
+  .subheader__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 24px;
   }
 
   .subheader__subtitle {
@@ -490,6 +499,11 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
   /* Tablet */
   @media (max-width: 1024px) {
+    .subheader__row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
     .featured {
       grid-template-columns: 1fr;
     }
