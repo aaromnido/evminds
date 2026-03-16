@@ -22,7 +22,12 @@ const {
 } = Astro.props;
 ---
 
-<a href={href} class="featured-secondary" target="_blank" rel="noopener noreferrer">
+<a
+  href={href}
+  class="featured-secondary"
+  target="_blank"
+  rel="noopener noreferrer"
+>
   <img
     src={image}
     alt={title}
@@ -53,7 +58,7 @@ const {
     text-decoration: none;
     background-color: var(--ev-teal);
     flex-shrink: 0;
-    border: 1px solid #E2DED6;
+    border: 1px solid #e2ded6;
   }
 
   .featured-secondary__image {
@@ -111,5 +116,12 @@ const {
     font-weight: 400;
     color: var(--sepia-light);
     white-space: nowrap;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .featured-secondary {
+      height: 340px;
+    }
   }
 </style>
