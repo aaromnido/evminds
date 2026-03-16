@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title?: string;
@@ -69,6 +70,9 @@ const ogImageURL = new URL(image, Astro.site);
         data-website-id={umamiWebsiteId}
       ></script>
     )}
+
+    <!-- Client Router for smooth page transitions -->
+    <ClientRouter />
   </head>
   <body>
     <slot />
