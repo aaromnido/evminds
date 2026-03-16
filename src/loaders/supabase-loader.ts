@@ -7,6 +7,7 @@ import type { Database } from "@/lib/database.types";
  */
 export interface ArticleData {
   id: string;
+  slug: string;
   title: string;
   excerpt: string;
   image_url: string | null;
@@ -97,6 +98,7 @@ export function createSupabaseArticlesLoader(
               id: article.id,
               data: {
                 id: article.id,
+                slug: article.slug,
                 title: article.title,
                 excerpt: article.excerpt,
                 image_url: article.image_url,
@@ -177,6 +179,7 @@ export function createSupabaseArticlesLoader(
 
         const articleData: ArticleData = {
           id: data.id,
+          slug: data.slug,
           title: data.title,
           excerpt: data.excerpt,
           image_url: data.image_url,

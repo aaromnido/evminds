@@ -25,6 +25,7 @@ export interface Database {
           id: string;
           source_id: string;
           title: string;
+          slug: string;
           excerpt: string;
           image_url: string | null;
           article_url: string;

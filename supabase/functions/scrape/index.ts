@@ -27,6 +27,22 @@ import { categorize } from './services/categorizer.ts';
 import { cacheImage } from './services/image-cache.ts';
 import type { Source, RawArticle, ScraperResult } from './types.ts';
 
+/**
+ * Generate a URL-safe slug from a title string
+ */
+function slugify(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ñ/g, 'n')
+    .replace(/Ñ/g, 'N')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 serve(async (req) => {
   try {
     // Authentication check (JWT verification disabled in config.toml)
@@ -127,12 +143,28 @@ serve(async (req) => {
               imageUrl = await cacheImage(imageUrl, articleId, supabaseClient);
             }
 
+            // Generate unique slug from title
+            let baseSlug = slugify(title);
+            let slug = baseSlug;
+            let suffix = 2;
+            while (true) {
+              const { data: slugExists } = await supabaseClient
+                .from('articles')
+                .select('id')
+                .eq('slug', slug)
+                .single();
+              if (!slugExists) break;
+              slug = `${baseSlug}-${suffix}`;
+              suffix++;
+            }
+
             // Insert into database
             const { error: insertError } = await supabaseClient
               .from('articles')
               .insert({
                 source_id: source.id,
                 title,
+                slug,
                 excerpt,
                 image_url: imageUrl,
                 article_url: article.article_url,

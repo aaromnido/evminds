@@ -11,13 +11,13 @@ import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getArticleUrl } from "@/lib/article-url";
 
-const { id } = Astro.params;
+const { slug } = Astro.params;
 
 // Fetch article with source info
 const { data: article, error } = await supabase
   .from("articles")
   .select("*, source:sources!inner(name, url)")
-  .eq("id", id)
+  .eq("slug", slug)
   .single();
 
 if (error || !article) {
@@ -44,7 +44,7 @@ const relatedArticles = (relatedData || []).map((a: any) => {
     excerpt: a.excerpt,
     source: s.name,
     category: a.category,
-    href: getArticleUrl(a.id),
+    href: getArticleUrl(a.slug),
   };
 });
 
@@ -52,7 +52,7 @@ const relatedArticles = (relatedData || []).map((a: any) => {
 const heroImage = article.image_url || "/placeholder-image.jpg";
 const formattedDate = formatDate(article.published_at);
 const categorySlug = getCategorySlugByName(article.category);
-const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
+const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString();
 ---
 
 <BaseLayout

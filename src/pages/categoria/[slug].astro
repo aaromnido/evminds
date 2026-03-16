@@ -57,6 +57,7 @@ const articles: ArticleData[] = (articleData || []).map((a: any) => {
   const source = Array.isArray(a.source) ? a.source[0] : a.source;
   return {
     id: a.id,
+    slug: a.slug,
     title: a.title,
     excerpt: a.excerpt,
     image_url: a.image_url,
@@ -92,7 +93,7 @@ function mapArticleToProps(article: ArticleData) {
     excerpt: article.excerpt,
     source: article.source_name,
     category: article.category,
-    href: getArticleUrl(article.id),
+    href: getArticleUrl(article.slug),
   };
 }
 
@@ -217,7 +218,7 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     const date = formatDate(article.published_at);
     const source = article.source.name;
     const category = article.category;
-    const href = '/articulo/' + article.id;
+    const href = '/articulo/' + article.slug;
 
     // Create article element
     const articleEl = document.createElement("article");

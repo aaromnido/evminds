@@ -1,6 +1,6 @@
 /**
- * Generate internal article detail URL from article UUID
+ * Generate internal article detail URL from article slug
  */
-export function getArticleUrl(articleId: string): string {
-  return `/articulo/${articleId}`;
+export function getArticleUrl(slug: string): string {
+  return `/articulo/${slug}`;
 }
