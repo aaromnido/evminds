@@ -28,7 +28,7 @@ import type { Source, RawArticle, ScraperResult } from './types.ts';
 
 serve(async (req) => {
   try {
-    // Authentication check
+    // Authentication check (JWT verification disabled in config.toml)
     const authHeader = req.headers.get('Authorization');
     const scrapeSecret = Deno.env.get('SCRAPE_SECRET');
 

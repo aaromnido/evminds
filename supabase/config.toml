@@ -1,0 +1,5 @@
+# Supabase Functions Configuration
+# https://supabase.com/docs/guides/functions/function-configuration
+
+[functions.scrape]
+verify_jwt = false
