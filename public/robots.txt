@@ -1,0 +1,8 @@
+# robots.txt for evminds.es
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://evminds.es/sitemap-index.xml

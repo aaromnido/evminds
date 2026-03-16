@@ -3,10 +3,21 @@ import '@/styles/global.css';
 
 interface Props {
   title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
 }
 
-const { title = 'evminds.es — Movilidad Eléctrica' } = Astro.props;
+const {
+  title = 'evminds.es — Movilidad Eléctrica',
+  description = 'Un único lugar donde leer todas las noticias relevantes sobre movilidad eléctrica en español. Coches eléctricos, baterías, renovables e infraestructura de carga.',
+  image = '/logo.svg',
+  type = 'website',
+} = Astro.props;
+
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = new URL(image, Astro.site);
 ---
 
 <!doctype html>
@@ -17,7 +28,33 @@ const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary Meta Tags -->
     <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:site_name" content="EVMinds.es" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={ogImageURL} />
+
+    <!-- Additional SEO -->
+    <meta name="keywords" content="movilidad eléctrica, coches eléctricos, baterías, energías renovables, infraestructura de carga, vehículos eléctricos, EV, noticias EV" />
+    <meta name="author" content="EVMinds.es" />
+    <meta name="robots" content="index, follow" />
 
     <!-- Umami Analytics -->
     {umamiWebsiteId && (

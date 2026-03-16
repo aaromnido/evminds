@@ -5,9 +5,13 @@ import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import netlify from '@astrojs/netlify';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+  // Site URL for sitemap generation
+  site: 'https://evminds.es',
+
   // Enable server-side rendering for Live Collections
   output: 'server',
   adapter: netlify(),
@@ -22,5 +26,8 @@ export default defineConfig({
     },
   },
 
-  integrations: [react()]
+  integrations: [
+    react(),
+    sitemap(),
+  ]
 });
