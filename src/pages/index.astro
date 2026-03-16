@@ -10,7 +10,13 @@ import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
 import { getLiveCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
+import { getSourceBySlug, getSourceSlugByName } from "@/lib/sources";
 import type { ArticleData } from "@/loaders/supabase-loader";
+
+// Get source filter from URL
+const urlParams = new URL(Astro.request.url).searchParams;
+const sourceParam = urlParams.get("source");
+const activeSource = sourceParam && getSourceBySlug(sourceParam) ? sourceParam : null;
 
 // Fetch initial articles using Live Content Collections (runtime, not build-time)
 const { entries, error } = await getLiveCollection("articles");
@@ -19,8 +25,16 @@ if (error) {
   console.error("Failed to fetch articles:", error);
 }
 
-// Extract article data from entries and limit to initial load
-const articles = entries?.slice(0, 23).map((entry) => entry.data) || [];
+// Filter articles by source if activeSource is set
+const filteredEntries = activeSource
+  ? entries?.filter((entry) => {
+      const articleSource = getSourceSlugByName(entry.data.source_name);
+      return articleSource === activeSource;
+    })
+  : entries;
+
+// Extract article data from filtered entries and limit to initial load
+const articles = filteredEntries?.slice(0, 23).map((entry) => entry.data) || [];
 
 // Get unique categories that have articles (for CategoryFilter)
 const availableCategorySlugs: string[] = entries
@@ -30,6 +44,19 @@ const availableCategorySlugs: string[] = entries
           .map((entry) => entry.data.category)
           .filter(Boolean)
           .map((categoryName) => getCategorySlugByName(categoryName))
+          .filter((slug) => slug !== undefined) as string[]
+      )
+    )
+  : [];
+
+// Get unique sources that have articles (for CategoryFilter)
+const availableSourceSlugs: string[] = entries
+  ? Array.from(
+      new Set(
+        entries
+          .map((entry) => entry.data.source_name)
+          .filter(Boolean)
+          .map((sourceName) => getSourceSlugByName(sourceName))
           .filter((slug) => slug !== undefined) as string[]
       )
     )
@@ -78,7 +105,11 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     </section>
 
     <!-- Category filter -->
-    <CategoryFilter availableCategorySlugs={availableCategorySlugs} />
+    <CategoryFilter
+      availableCategorySlugs={availableCategorySlugs}
+      activeSource={activeSource}
+      availableSourceSlugs={availableSourceSlugs}
+    />
 
     <!-- Featured news -->
     {
@@ -123,7 +154,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   </main>
 </BaseLayout>
 
-<script is:inline define:vars={{ initialCursor }}>
+<script is:inline define:vars={{ initialCursor, sourceSlug: activeSource }}>
   // Infinite scroll implementation with IntersectionObserver
   let cursor = initialCursor;
   let isLoading = false;
@@ -286,7 +317,14 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
     try {
       const limit = getLimitForBreakpoint();
-      const response = await fetch(`/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}`);
+      let url = `/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}`;
+
+      // Add source filter if present
+      if (sourceSlug) {
+        url += `&source=${encodeURIComponent(sourceSlug)}`;
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error("Failed to fetch articles");
@@ -337,6 +375,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
    */
   function setupObserver() {
     if (observer) observer.disconnect();
+    if (!articlesGrid) return;
 
     const cards = articlesGrid.querySelectorAll(".article-card");
     if (cards.length < 2) return;

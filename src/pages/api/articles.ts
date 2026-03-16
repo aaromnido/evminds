@@ -1,16 +1,18 @@
 import type { APIRoute } from "astro";
 import { supabase } from "@/lib/supabase";
 import type { ArticleWithSource } from "@/lib/database.types";
+import { getSourceBySlug } from "@/lib/sources";
 
 /**
  * GET /api/articles
  *
- * Fetch articles with cursor-based pagination and optional category filtering
+ * Fetch articles with cursor-based pagination and optional filtering
  *
  * Query params:
  * - limit: number of articles per page (default: 12)
  * - cursor: ISO timestamp for pagination (scraped_at of last article from previous page)
  * - category: filter by category (optional)
+ * - source: filter by source slug (optional)
  *
  * Response:
  * - articles: ArticleWithSource[]
@@ -20,17 +22,18 @@ export const GET: APIRoute = async ({ url }) => {
   const limit = parseInt(url.searchParams.get("limit") || "12", 10);
   const cursor = url.searchParams.get("cursor");
   const category = url.searchParams.get("category");
+  const sourceSlug = url.searchParams.get("source");
 
   try {
-    // Build query with source join
+    // Use !inner join when filtering by source so PostgREST excludes non-matching articles
+    const useInnerJoin = Boolean(sourceSlug && getSourceBySlug(sourceSlug));
+    const joinClause = useInnerJoin
+      ? `*, source:sources!inner(*)`
+      : `*, source:sources(*)`;
+
     let query = supabase
       .from("articles")
-      .select(
-        `
-        *,
-        source:sources(*)
-      `
-      )
+      .select(joinClause)
       .order("scraped_at", { ascending: false })
       .limit(limit);
 
@@ -42,6 +45,14 @@ export const GET: APIRoute = async ({ url }) => {
     // Apply category filter
     if (category) {
       query = query.eq("category", category);
+    }
+
+    // Apply source filter
+    if (sourceSlug) {
+      const source = getSourceBySlug(sourceSlug);
+      if (source) {
+        query = query.eq("source.name", source.name);
+      }
     }
 
     const { data, error } = await query;
