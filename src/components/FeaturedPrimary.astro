@@ -25,6 +25,9 @@ const { image, title, date, source, category, href = "#" } = Astro.props;
     alt={title}
     class="featured-primary__image"
     loading="eager"
+    fetchpriority="high"
+    width="1200"
+    height="600"
   />
 
   <!-- Logo mark (white dots) top-left -->
