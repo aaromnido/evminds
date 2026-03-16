@@ -1,20 +1,18 @@
 ---
 import { CATEGORIES } from "@/lib/categories";
-import { SOURCES } from "@/lib/sources";
+import { loadSources } from "@/lib/sources";
 import Select from "./Select.astro";
 
 interface Props {
   activeCategory?: string | null;
   availableCategorySlugs?: string[];
   activeSource?: string | null;
-  availableSourceSlugs?: string[];
 }
 
 const {
   activeCategory = null,
   availableCategorySlugs,
   activeSource = null,
-  availableSourceSlugs,
 } = Astro.props;
 
 // Filter categories to only show those with articles (if availableCategorySlugs is provided)
@@ -22,8 +20,8 @@ const visibleCategories = availableCategorySlugs
   ? CATEGORIES.filter((cat) => availableCategorySlugs.includes(cat.slug))
   : CATEGORIES;
 
-// Always show all sources for now (we'll filter later when we have data)
-const visibleSources = SOURCES;
+// Load all active sources from database
+const visibleSources = await loadSources();
 
 // Get current URL for constructing filter links
 const currentUrl = new URL(Astro.request.url);

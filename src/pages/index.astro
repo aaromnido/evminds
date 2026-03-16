@@ -12,52 +12,60 @@ import { getLiveCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getSourceBySlug, getSourceSlugByName } from "@/lib/sources";
+import { supabase } from "@/lib/supabase";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
 // Get source filter from URL
 const urlParams = new URL(Astro.request.url).searchParams;
 const sourceParam = urlParams.get("source");
-const activeSource = sourceParam && getSourceBySlug(sourceParam) ? sourceParam : null;
+const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
+const activeSource = sourceObj ? sourceParam : null;
 
-// Fetch initial articles using Live Content Collections (runtime, not build-time)
-const { entries, error } = await getLiveCollection("articles");
+// Fetch initial articles
+let articles: ArticleData[] = [];
 
-if (error) {
-  console.error("Failed to fetch articles:", error);
+if (activeSource && sourceObj) {
+  // When filtering by source, query Supabase directly to get filtered results
+  const { data } = await supabase
+    .from("articles")
+    .select("*, source:sources!inner(name, url)")
+    .eq("source.name", sourceObj.name)
+    .order("scraped_at", { ascending: false })
+    .limit(23);
+
+  articles = (data || []).map((a) => {
+    const source = Array.isArray(a.source) ? a.source[0] : a.source;
+    return {
+      id: a.id,
+      title: a.title,
+      excerpt: a.excerpt,
+      image_url: a.image_url,
+      article_url: a.article_url,
+      category: a.category,
+      published_at: new Date(a.published_at),
+      scraped_at: new Date(a.scraped_at),
+      source_name: source.name,
+      source_url: source.url,
+    };
+  });
+} else {
+  // No source filter: use Live Collection
+  const { entries, error } = await getLiveCollection("articles");
+  if (error) console.error("Failed to fetch articles:", error);
+  articles = entries?.slice(0, 23).map((entry) => entry.data) || [];
 }
 
-// Filter articles by source if activeSource is set
-const filteredEntries = activeSource
-  ? entries?.filter((entry) => {
-      const articleSource = getSourceSlugByName(entry.data.source_name);
-      return articleSource === activeSource;
-    })
-  : entries;
-
-// Extract article data from filtered entries and limit to initial load
-const articles = filteredEntries?.slice(0, 23).map((entry) => entry.data) || [];
+// For category filter, we need all entries (unfiltered)
+const { entries: allEntries } = await getLiveCollection("articles");
 
 // Get unique categories that have articles (for CategoryFilter)
-const availableCategorySlugs: string[] = entries
+const availableCategorySlugs: string[] = allEntries
   ? Array.from(
       new Set(
-        entries
+        allEntries
           .map((entry) => entry.data.category)
           .filter(Boolean)
           .map((categoryName) => getCategorySlugByName(categoryName))
-          .filter((slug) => slug !== undefined) as string[]
-      )
-    )
-  : [];
-
-// Get unique sources that have articles (for CategoryFilter)
-const availableSourceSlugs: string[] = entries
-  ? Array.from(
-      new Set(
-        entries
-          .map((entry) => entry.data.source_name)
-          .filter(Boolean)
-          .map((sourceName) => getSourceSlugByName(sourceName))
           .filter((slug) => slug !== undefined) as string[]
       )
     )
@@ -100,7 +108,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       <CategoryFilter
         availableCategorySlugs={availableCategorySlugs}
         activeSource={activeSource}
-        availableSourceSlugs={availableSourceSlugs}
       />
     </Subheader>
 

@@ -1,88 +1,117 @@
 /**
  * Sources (Media outlets) for EVMinds content
+ * Loaded dynamically from Supabase — no need to update this file when activating/deactivating sources
  */
+
+import { supabase } from "./supabase";
 
 export interface Source {
   id: string;
   slug: string;
   name: string; // Name as it appears in database (e.g., "electrek.co")
-  displayName: string; // Clean name for display (e.g., "Elektrek")
+  displayName: string; // Clean name for display without domain (e.g., "electrek")
   url: string;
 }
 
 /**
- * All available sources in the system
- * These match the source names in Supabase (with domain)
+ * Strip domain extension from source name to create a clean display name
  */
-export const SOURCES: Source[] = [
-  {
-    id: "elektrek",
-    slug: "elektrek",
-    name: "electrek.co",
-    displayName: "Elektrek",
-    url: "https://electrek.co",
-  },
-  {
-    id: "insideevs",
-    slug: "insideevs",
-    name: "insideevs.com",
-    displayName: "InsideEVs",
-    url: "https://insideevs.com",
-  },
-  {
-    id: "cnevpost",
-    slug: "cnevpost",
-    name: "cnevpost.com",
-    displayName: "CnEVPost",
-    url: "https://cnevpost.com",
-  },
-];
+function toDisplayName(name: string): string {
+  return name.replace(/\.(com|co|org|net|io|es)$/i, "");
+}
+
+/**
+ * Create a URL-safe slug from source name
+ */
+function toSlug(name: string): string {
+  return toDisplayName(name).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+// Cache loaded sources to avoid repeated queries within the same request lifecycle
+let _sourcesCache: Source[] | null = null;
+
+/**
+ * Fetch all active sources from Supabase
+ */
+export async function loadSources(): Promise<Source[]> {
+  if (_sourcesCache) return _sourcesCache;
+
+  const { data, error } = await supabase
+    .from("sources")
+    .select("id, name, url")
+    .eq("active", true)
+    .order("name");
+
+  if (error) {
+    console.error("Failed to load sources:", error);
+    return [];
+  }
+
+  type SourceRow = { id: string; name: string; url: string };
+  _sourcesCache = ((data ?? []) as SourceRow[]).map((s) => ({
+    id: s.id,
+    slug: toSlug(s.name),
+    name: s.name,
+    displayName: toDisplayName(s.name),
+    url: s.url,
+  }));
+
+  return _sourcesCache;
+}
 
 /**
  * Get source by slug
  */
-export function getSourceBySlug(slug: string): Source | undefined {
-  return SOURCES.find((source) => source.slug === slug);
+export async function getSourceBySlug(
+  slug: string
+): Promise<Source | undefined> {
+  const sources = await loadSources();
+  return sources.find((source) => source.slug === slug);
 }
 
 /**
  * Get source by name (matches against database name, e.g., "electrek.co")
  */
-export function getSourceByName(name: string): Source | undefined {
+export async function getSourceByName(
+  name: string
+): Promise<Source | undefined> {
+  const sources = await loadSources();
+
   // Direct match first
-  const directMatch = SOURCES.find(
+  const directMatch = sources.find(
     (source) => source.name.toLowerCase() === name.toLowerCase()
   );
   if (directMatch) return directMatch;
 
-  // Fallback: try to match by removing domain extension
-  const cleanName = name.replace(/\.(com|co|org|net|io)$/i, "").toLowerCase();
-  return SOURCES.find((source) => {
-    const sourceCleanName = source.name
-      .replace(/\.(com|co|org|net|io)$/i, "")
-      .toLowerCase();
-    return sourceCleanName === cleanName;
-  });
+  // Fallback: match by cleaned name
+  const cleanName = toDisplayName(name).toLowerCase();
+  return sources.find(
+    (source) => toDisplayName(source.name).toLowerCase() === cleanName
+  );
 }
 
 /**
  * Get all source slugs
  */
-export function getAllSourceSlugs(): string[] {
-  return SOURCES.map((source) => source.slug);
+export async function getAllSourceSlugs(): Promise<string[]> {
+  const sources = await loadSources();
+  return sources.map((source) => source.slug);
 }
 
 /**
  * Check if a source slug is valid
  */
-export function isValidSourceSlug(slug: string): boolean {
-  return SOURCES.some((source) => source.slug === slug);
+export async function isValidSourceSlug(slug: string): Promise<boolean> {
+  const sources = await loadSources();
+  return sources.some((source) => source.slug === slug);
 }
 
 /**
  * Get source slug from name (matches against database name)
  */
-export function getSourceSlugByName(name: string): string | undefined {
-  const source = getSourceByName(name);
+export async function getSourceSlugByName(
+  name: string
+): Promise<string | undefined> {
+  const source = await getSourceByName(name);
   return source?.slug;
 }

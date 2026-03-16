@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   try {
     // Use !inner join when filtering by source so PostgREST excludes non-matching articles
-    const useInnerJoin = Boolean(sourceSlug && getSourceBySlug(sourceSlug));
+    const useInnerJoin = Boolean(sourceSlug && (await getSourceBySlug(sourceSlug)));
     const joinClause = useInnerJoin
       ? `*, source:sources!inner(*)`
       : `*, source:sources(*)`;
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Apply source filter
     if (sourceSlug) {
-      const source = getSourceBySlug(sourceSlug);
+      const source = await getSourceBySlug(sourceSlug);
       if (source) {
         query = query.eq("source.name", source.name);
       }
