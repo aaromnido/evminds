@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import SkeletonCard from "@/components/SkeletonCard.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
@@ -98,6 +99,9 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
         </section>
       )
     }
+
+    <!-- Footer -->
+    <Footer />
   </main>
 </BaseLayout>
 
