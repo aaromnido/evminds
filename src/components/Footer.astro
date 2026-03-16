@@ -1,6 +1,17 @@
 ---
 import { CATEGORIES } from "@/lib/categories";
 import Logo from "./Logo.astro";
+
+interface Props {
+  availableCategorySlugs?: string[];
+}
+
+const { availableCategorySlugs } = Astro.props;
+
+// Filter categories to only show those with articles (if availableCategorySlugs is provided)
+const visibleCategories = availableCategorySlugs
+  ? CATEGORIES.filter((cat) => availableCategorySlugs.includes(cat.slug))
+  : CATEGORIES;
 ---
 
 <footer class="site-footer">
@@ -40,9 +51,9 @@ import Logo from "./Logo.astro";
       <nav aria-label="Categorías de contenido">
         <ul class="footer__list">
           {
-            CATEGORIES.map((category) => (
+            visibleCategories.map((category) => (
               <li>
-                <a href="#" class="footer__link">
+                <a href={`/categoria/${category.slug}`} class="footer__link">
                   {category.name}
                 </a>
               </li>

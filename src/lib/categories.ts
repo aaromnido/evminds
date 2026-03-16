@@ -87,3 +87,10 @@ export function getAllCategorySlugs(): string[] {
 export function isValidCategorySlug(slug: string): boolean {
   return CATEGORIES.some((cat) => cat.slug === slug);
 }
+
+/**
+ * Get category slug from name
+ */
+export function getCategorySlugByName(name: string): string | undefined {
+  return CATEGORIES.find((cat) => cat.name === name)?.slug;
+}

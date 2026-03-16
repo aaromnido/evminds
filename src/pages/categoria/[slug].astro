@@ -5,22 +5,46 @@ import Footer from "@/components/Footer.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import SkeletonCard from "@/components/SkeletonCard.astro";
-import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
-import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
 import { getLiveCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
-import { getCategorySlugByName } from "@/lib/categories";
+import {
+  CATEGORIES,
+  getCategoryBySlug,
+  getAllCategorySlugs,
+  getCategorySlugByName,
+} from "@/lib/categories";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
-// Fetch initial articles using Live Content Collections (runtime, not build-time)
+// Generate static paths for all categories
+export async function getStaticPaths() {
+  const categorySlugs = getAllCategorySlugs();
+  return categorySlugs.map((slug) => ({
+    params: { slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const category = getCategoryBySlug(slug!);
+
+// If category not found, return 404
+if (!category) {
+  return Astro.redirect("/404");
+}
+
+// Fetch articles filtered by category using Live Content Collections
 const { entries, error } = await getLiveCollection("articles");
 
 if (error) {
   console.error("Failed to fetch articles:", error);
 }
 
-// Extract article data from entries and limit to initial load
-const articles = entries?.slice(0, 23).map((entry) => entry.data) || [];
+// Filter articles by category and limit to initial load
+const allArticles =
+  entries
+    ?.map((entry) => entry.data)
+    .filter((article) => article.category === category.name) || [];
+
+const articles = allArticles.slice(0, 23);
 
 // Get unique categories that have articles (for CategoryFilter)
 const availableCategorySlugs: string[] = entries
@@ -35,14 +59,6 @@ const availableCategorySlugs: string[] = entries
     )
   : [];
 
-// Featured articles (top 3)
-const featuredPrimary = articles[0];
-const featuredSecondary1 = articles[1];
-const featuredSecondary2 = articles[2];
-
-// Grid articles (remaining 20 for desktop initial load)
-const gridArticles = articles.slice(3);
-
 // Helper to map article to component props
 function mapArticleToProps(article: ArticleData) {
   return {
@@ -56,54 +72,43 @@ function mapArticleToProps(article: ArticleData) {
   };
 }
 
-// Calculate initial cursor for pagination (scraped_at of last article)
-const initialCursor = articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
+// Calculate initial cursor for pagination
+const initialCursor =
+  articles.length > 0
+    ? articles[articles.length - 1].scraped_at.toISOString()
+    : null;
+
+// Page metadata
+const pageTitle = `${category.name} - EVMinds`;
+const pageDescription = `${category.description}. Últimas noticias sobre ${category.name.toLowerCase()} en EVMinds.`;
 ---
 
-<BaseLayout>
+<BaseLayout title={pageTitle} description={pageDescription}>
   <main class="page">
     <Header />
 
     <!-- Subheader -->
     <section class="subheader">
       <h1 class="subheader__title">
-        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong
-          >eléctricas</strong
-        >
+        {category.name}
       </h1>
       <p class="subheader__subtitle">
-        Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a
-        la movilidad eléctrica y las energías renovables
+        {category.description}
       </p>
     </section>
 
     <!-- Category filter -->
-    <CategoryFilter availableCategorySlugs={availableCategorySlugs} />
-
-    <!-- Featured news -->
-    {
-      featuredPrimary && (
-        <section class="featured" aria-label="Noticias destacadas">
-          <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
-
-          <div class="featured__right">
-            {featuredSecondary1 && (
-              <FeaturedSecondary {...mapArticleToProps(featuredSecondary1)} />
-            )}
-            {featuredSecondary2 && (
-              <FeaturedSecondary {...mapArticleToProps(featuredSecondary2)} />
-            )}
-          </div>
-        </section>
-      )
-    }
+    <CategoryFilter
+      activeCategory={category.slug}
+      availableCategorySlugs={availableCategorySlugs}
+    />
 
     <!-- News grid -->
     {
-      gridArticles.length > 0 && (
-        <section class="news" aria-label="Últimas noticias">
+      articles.length > 0 ? (
+        <section class="news" aria-label={`Noticias sobre ${category.name}`}>
           <div id="articles-grid" class="news__grid">
-            {gridArticles.map((article) => (
+            {articles.map((article) => (
               <ArticleCard {...mapArticleToProps(article)} />
             ))}
           </div>
@@ -115,6 +120,20 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
             <SkeletonCard />
           </div>
         </section>
+      ) : (
+        <div class="empty-state">
+          <img
+            src="/icon-empty.svg"
+            alt=""
+            class="empty-state__icon"
+            width="105"
+            height="131"
+            aria-hidden="true"
+          />
+          <p class="empty-state__text">
+            Aún <strong>no hay artículos</strong> en esta categoría.
+          </p>
+        </div>
       )
     }
 
@@ -123,8 +142,8 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   </main>
 </BaseLayout>
 
-<script is:inline define:vars={{ initialCursor }}>
-  // Infinite scroll implementation with IntersectionObserver
+<script is:inline define:vars={{ initialCursor, categorySlug: category.slug }}>
+  // Infinite scroll implementation with category filtering
   let cursor = initialCursor;
   let isLoading = false;
   let hasMore = true;
@@ -136,9 +155,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
   /**
    * Get limit based on current breakpoint
-   * Mobile (<768px): 10 cards
-   * Tablet (768-1024px): 16 cards
-   * Desktop (>1024px): 20 cards
    */
   function getLimitForBreakpoint() {
     const width = window.innerWidth;
@@ -168,7 +184,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   }
 
   /**
-   * Render article card using safe DOM methods (XSS-safe)
+   * Render article card using safe DOM methods
    */
   function renderArticleCard(article) {
     const image = article.image_url || "/placeholder-image.jpg";
@@ -226,8 +242,11 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     titleLink.appendChild(titleEl);
     titleLink.appendChild(dateEl);
 
-    // Arrow SVG (static, safe)
-    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    // Arrow SVG
+    const arrowSvg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg"
+    );
     arrowSvg.setAttribute("class", "article-card__arrow");
     arrowSvg.setAttribute("width", "11");
     arrowSvg.setAttribute("height", "11");
@@ -274,7 +293,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   }
 
   /**
-   * Fetch next page of articles
+   * Fetch next page of articles with category filter
    */
   async function loadMoreArticles() {
     if (isLoading || !hasMore || !cursor) return;
@@ -284,7 +303,9 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
     try {
       const limit = getLimitForBreakpoint();
-      const response = await fetch(`/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}`);
+      const response = await fetch(
+        `/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}&category=${encodeURIComponent(categorySlug)}`
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch articles");
@@ -301,7 +322,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
         return;
       }
 
-      // Render new articles using safe DOM methods
+      // Render new articles
       const fragment = document.createDocumentFragment();
 
       data.articles.forEach((article) => {
@@ -311,7 +332,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
       articlesGrid.appendChild(fragment);
 
-      // Update cursor for next load
+      // Update cursor
       cursor = data.nextCursor;
 
       // If no more articles, disconnect observer
@@ -336,10 +357,9 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   function setupObserver() {
     if (observer) observer.disconnect();
 
-    const cards = articlesGrid.querySelectorAll(".article-card");
-    if (cards.length < 2) return;
+    const cards = articlesGrid?.querySelectorAll(".article-card");
+    if (!cards || cards.length < 2) return;
 
-    // Observe the second-to-last card
     const targetCard = cards[cards.length - 2];
 
     observer = new IntersectionObserver(
@@ -351,7 +371,7 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
         });
       },
       {
-        rootMargin: "200px", // Trigger 200px before card enters viewport
+        rootMargin: "200px",
         threshold: 0.1,
       }
     );
@@ -359,12 +379,12 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     observer.observe(targetCard);
   }
 
-  // Initialize observer on page load
+  // Initialize observer
   if (articlesGrid && cursor && hasMore) {
     setupObserver();
   }
 
-  // Re-setup observer on window resize (breakpoint change)
+  // Re-setup on resize
   let resizeTimer;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
@@ -393,44 +413,28 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 24px;
+    gap: 16px;
     max-width: 1105px;
   }
 
   .subheader__title {
     font-family: "Playfair Display", serif;
-    font-size: 48px;
+    font-size: 42px;
     font-style: italic;
-    font-weight: 300;
-    line-height: 1;
+    font-weight: 600;
+    line-height: 1.1;
     color: var(--navy-2);
     letter-spacing: -0.01em;
-  }
-
-  .subheader__title strong {
-    font-weight: 600;
   }
 
   .subheader__subtitle {
     font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 400;
     color: var(--navy-2);
     letter-spacing: -0.01em;
-    line-height: 1;
-  }
-
-  /* Featured section */
-  .featured {
-    display: grid;
-    grid-template-columns: calc(66.667% - 8px) calc(33.333%);
-    gap: 24px;
-  }
-
-  .featured__right {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    line-height: 1.4;
+    opacity: 0.8;
   }
 
   /* News grid */
@@ -447,18 +451,37 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     align-items: flex-start;
   }
 
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 120px 24px;
+    min-height: 400px;
+  }
+
+  .empty-state__icon {
+    width: 105px;
+    height: 131px;
+  }
+
+  .empty-state__text {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--navy-2);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .empty-state__text strong {
+    font-weight: 600;
+  }
+
   /* Tablet */
   @media (max-width: 1024px) {
-    .featured {
-      grid-template-columns: 1fr;
-    }
-
-    .featured__right {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
     .news__grid {
       grid-template-columns: 1fr 1fr;
     }
@@ -471,32 +494,34 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     }
 
     .subheader__title {
-      font-size: 24px;
+      font-size: 28px;
     }
 
     .subheader__subtitle {
-      font-size: 13.5px;
-    }
-
-    .featured {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
-
-    .featured__right {
-      display: flex;
-      flex-direction: column;
-      gap: 48px;
+      font-size: 14px;
     }
 
     .news {
-      gap: 72px;
-      margin-top: 24px;
+      gap: 48px;
     }
 
     .news__grid {
       grid-template-columns: 1fr;
       gap: 48px;
+    }
+
+    .empty-state {
+      padding: 80px 24px;
+      min-height: 300px;
+    }
+
+    .empty-state__text {
+      font-size: 16px;
+    }
+
+    .empty-state__icon {
+      width: 84px;
+      height: 105px;
     }
   }
 </style>
