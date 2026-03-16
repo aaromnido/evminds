@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import SkeletonCard from "@/components/SkeletonCard.astro";
@@ -92,25 +93,16 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     <Header />
 
     <!-- Subheader -->
-    <section class="subheader">
-      <h1 class="subheader__title">
-        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong
-          >eléctricas</strong
-        >
-      </h1>
-      <div class="subheader__row">
-        <p class="subheader__subtitle">
-          Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a
-          la movilidad eléctrica y las energías renovables
-        </p>
-        <!-- Category filter -->
-        <CategoryFilter
-          availableCategorySlugs={availableCategorySlugs}
-          activeSource={activeSource}
-          availableSourceSlugs={availableSourceSlugs}
-        />
-      </div>
-    </section>
+    <Subheader subtitle="Aquí encontrarás noticias, análisis, recursos, y una comunidad entorno a la movilidad eléctrica y las energías renovables">
+      <Fragment slot="title">
+        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong>eléctricas</strong>
+      </Fragment>
+      <CategoryFilter
+        availableCategorySlugs={availableCategorySlugs}
+        activeSource={activeSource}
+        availableSourceSlugs={availableSourceSlugs}
+      />
+    </Subheader>
 
     <!-- Featured news -->
     {
@@ -430,46 +422,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     min-height: 100vh;
   }
 
-  /* Subheader */
-  .subheader {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-    width: 100%;
-  }
-
-  .subheader__title {
-    font-family: "Playfair Display", serif;
-    font-size: 48px;
-    font-style: italic;
-    font-weight: 300;
-    line-height: 1;
-    color: var(--navy-2);
-    letter-spacing: -0.01em;
-  }
-
-  .subheader__title strong {
-    font-weight: 600;
-  }
-
-  .subheader__row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    gap: 24px;
-  }
-
-  .subheader__subtitle {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--navy-2);
-    letter-spacing: -0.01em;
-    line-height: 1;
-  }
-
   /* Featured section */
   .featured {
     display: grid;
@@ -499,11 +451,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 
   /* Tablet */
   @media (max-width: 1024px) {
-    .subheader__row {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
     .featured {
       grid-template-columns: 1fr;
     }
@@ -523,14 +470,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   @media (max-width: 768px) {
     .page {
       padding: 0 12px 48px;
-    }
-
-    .subheader__title {
-      font-size: 24px;
-    }
-
-    .subheader__subtitle {
-      font-size: 13.5px;
     }
 
     .featured {
