@@ -13,17 +13,22 @@ import { getArticleUrl } from "@/lib/article-url";
 
 const { slug } = Astro.params;
 
+if (!slug) {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+
 // Fetch article with source info
-const { data: article, error } = await supabase
+const { data, error } = await supabase
   .from("articles")
   .select("*, source:sources!inner(name, url)")
   .eq("slug", slug)
   .single();
 
-if (error || !article) {
+if (error || !data) {
   return new Response(null, { status: 404, statusText: "Not Found" });
 }
 
+const article = data as any;
 const source = Array.isArray(article.source) ? article.source[0] : article.source;
 
 // Fetch 3 related articles (same category, excluding current)
