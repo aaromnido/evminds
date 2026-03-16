@@ -31,3 +31,6 @@ pnpm-debug.log*
 # local context and planning docs
 CLAUDE.md
 context/
+
+# Local Netlify folder
+.netlify

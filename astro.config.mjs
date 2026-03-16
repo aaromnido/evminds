@@ -4,18 +4,17 @@ import { fileURLToPath } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
-import node from '@astrojs/node';
+import netlify from '@astrojs/netlify';
 
 // https://astro.build/config
 export default defineConfig({
   // Enable server-side rendering for Live Collections
   output: 'server',
-  adapter: node({
-    mode: 'standalone',
-  }),
+  adapter: netlify(),
 
   vite: {
-    plugins: [tailwindcss()],
+    // @ts-expect-error - Vite peer dependency type conflict in pnpm
+    plugins: [...tailwindcss()],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
