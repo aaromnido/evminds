@@ -1,0 +1,65 @@
+---
+interface Props {
+  identifier: string;
+  url: string;
+  title: string;
+}
+
+const { identifier, url, title } = Astro.props;
+const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
+---
+
+{shortname && (
+  <section class="disqus-comments" aria-label="Comentarios">
+    <h2 class="disqus-comments__title">Comentarios</h2>
+    <div id="disqus_thread" style="color-scheme: light; color: #191b41; background-color: #F6F2E6;"></div>
+
+    <script
+      is:inline
+      define:vars={{ shortname, identifier, url, title }}
+    >
+      function loadDisqus() {
+        if (!shortname || !document.getElementById('disqus_thread')) return;
+
+        window.disqus_config = function () {
+          this.page.url = url;
+          this.page.identifier = identifier;
+          this.page.title = title;
+        };
+
+        if (typeof DISQUS !== 'undefined') {
+          DISQUS.reset({
+            reload: true,
+            config: window.disqus_config,
+          });
+        } else {
+          var d = document;
+          var s = d.createElement('script');
+          s.src = 'https://' + shortname + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', String(+new Date()));
+          (d.head || d.body).appendChild(s);
+        }
+      }
+
+      // Load immediately + handle View Transitions for subsequent navigations
+      loadDisqus();
+      document.addEventListener('astro:page-load', loadDisqus);
+    </script>
+  </section>
+)}
+
+<style>
+  .disqus-comments {
+    margin-top: 48px;
+    padding-top: 36px;
+    border-top: 1px solid #E2DED6;
+  }
+
+  .disqus-comments__title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy-light);
+    margin-bottom: 24px;
+  }
+</style>

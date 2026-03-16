@@ -7,6 +7,7 @@ interface Props {
   description?: string;
   image?: string;
   type?: 'website' | 'article';
+  publishedAt?: string;
 }
 
 const {
@@ -14,11 +15,27 @@ const {
   description = 'Un único lugar donde encontrar todas las noticias relevantes sobre movilidad eléctrica en español. Coches eléctricos, baterías, renovables e infraestructura de carga.',
   image = '/logo.svg',
   type = 'website',
+  publishedAt,
 } = Astro.props;
 
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
+
+const jsonLd = type === 'article' ? JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": title,
+  "description": description,
+  "image": ogImageURL.toString(),
+  "datePublished": publishedAt,
+  "url": canonicalURL.toString(),
+  "publisher": {
+    "@type": "Organization",
+    "name": "EVMinds.es",
+    "url": Astro.site?.toString(),
+  },
+}) : null;
 ---
 
 <!doctype html>
@@ -69,6 +86,16 @@ const ogImageURL = new URL(image, Astro.site);
         src="https://cloud.umami.is/script.js"
         data-website-id={umamiWebsiteId}
       ></script>
+    )}
+
+    <!-- Article-specific meta tags -->
+    {type === 'article' && publishedAt && (
+      <meta property="article:published_time" content={publishedAt} />
+    )}
+
+    <!-- JSON-LD structured data for articles -->
+    {jsonLd && (
+      <script is:inline type="application/ld+json" set:html={jsonLd} />
     )}
 
     <!-- Client Router for smooth page transitions -->

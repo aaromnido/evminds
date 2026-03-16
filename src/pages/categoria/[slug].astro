@@ -14,6 +14,7 @@ import {
 } from "@/lib/categories";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
+import { getArticleUrl } from "@/lib/article-url";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
 // Generate static paths for all categories
@@ -91,7 +92,7 @@ function mapArticleToProps(article: ArticleData) {
     excerpt: article.excerpt,
     source: article.source_name,
     category: article.category,
-    href: article.article_url,
+    href: getArticleUrl(article.id),
   };
 }
 
@@ -216,7 +217,7 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     const date = formatDate(article.published_at);
     const source = article.source.name;
     const category = article.category;
-    const href = article.article_url;
+    const href = '/articulo/' + article.id;
 
     // Create article element
     const articleEl = document.createElement("article");
@@ -226,8 +227,6 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     const photoLink = document.createElement("a");
     photoLink.href = href;
     photoLink.className = "article-card__photo-link";
-    photoLink.target = "_blank";
-    photoLink.rel = "noopener noreferrer";
 
     const photoDiv = document.createElement("div");
     photoDiv.className = "article-card__photo";
@@ -254,8 +253,6 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     const titleLink = document.createElement("a");
     titleLink.href = href;
     titleLink.className = "article-card__title-link";
-    titleLink.target = "_blank";
-    titleLink.rel = "noopener noreferrer";
 
     const titleEl = document.createElement("h3");
     titleEl.className = "article-card__title";
