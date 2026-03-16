@@ -15,7 +15,10 @@ const navItems = [
 ---
 
 <header class="site-header">
-  <Logo />
+  <div class="header__brand">
+    <Logo />
+    <span class="header__beta-badge">Beta</span>
+  </div>
 
   {/* Desktop Navigation */}
   <nav class="nav" aria-label="Navegación principal">
@@ -43,6 +46,24 @@ const navItems = [
     padding: 12px 0;
     border-bottom: 2px solid var(--navy-2);
     width: 100%;
+  }
+
+  .header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header__beta-badge {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy-2);
+    background: transparent;
+    border: 1.5px solid var(--navy-2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    letter-spacing: 0.02em;
   }
 
   .nav {
