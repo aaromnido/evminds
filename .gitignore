@@ -15,6 +15,7 @@ pnpm-debug.log*
 # temp files and folders
 .temp/
 *.temp
+.screenshots/
 
 
 # environment variables
