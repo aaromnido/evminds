@@ -129,4 +129,15 @@ const { image, title, date, source, category, href = "#" } = Astro.props;
     color: var(--sepia-light);
     white-space: nowrap;
   }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .featured-primary__title {
+      font-size: 27px;
+    }
+
+    .featured-primary__date {
+      font-size: 13.5px;
+    }
+  }
 </style>
