@@ -1,8 +1,9 @@
 -- Setup pg_cron for automatic article scraping
 -- Run this migration manually in Supabase SQL Editor
 
--- Enable pg_cron extension (only needed once)
+-- Enable required extensions (only needed once)
 CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
 -- Grant permissions to cron schema
 GRANT USAGE ON SCHEMA cron TO postgres;

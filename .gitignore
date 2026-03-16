@@ -35,6 +35,7 @@ lighthouse*.json
 # local context and planning docs
 CLAUDE.md
 context/
+.claude/
 
 # Local Netlify folder
 .netlify
