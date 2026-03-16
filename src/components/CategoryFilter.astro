@@ -1,6 +1,7 @@
 ---
 import { CATEGORIES } from "@/lib/categories";
 import { SOURCES } from "@/lib/sources";
+import Select from "./Select.astro";
 
 interface Props {
   activeCategory?: string | null;
@@ -27,165 +28,70 @@ const visibleSources = SOURCES;
 // Get current URL for constructing filter links
 const currentUrl = new URL(Astro.request.url);
 const currentPath = currentUrl.pathname;
+
+// Prepare category options
+const categoryOptions = [
+  {
+    label: "Todas las categorías",
+    href: "/",
+    isActive: !activeCategory,
+  },
+  ...visibleCategories.map((category) => ({
+    label: category.name,
+    href: `/categoria/${category.slug}`,
+    slug: category.slug,
+    isActive: activeCategory === category.slug,
+  })),
+];
+
+// Prepare source options
+const sourceOptions = [
+  {
+    label: "Todos los medios",
+    href: activeCategory ? `/categoria/${activeCategory}` : "/",
+    isActive: !activeSource,
+  },
+  ...visibleSources.map((source) => {
+    const queryParams = new URLSearchParams();
+    queryParams.set("source", source.slug);
+    const href = `${currentPath}?${queryParams.toString()}`;
+
+    return {
+      label: source.displayName,
+      href,
+      slug: source.slug,
+      isActive: activeSource === source.slug,
+    };
+  }),
+];
+
+// Get active labels
+const activeCategoryLabel = activeCategory
+  ? visibleCategories.find((c) => c.slug === activeCategory)?.name
+  : undefined;
+
+const activeSourceLabel = activeSource
+  ? visibleSources.find((s) => s.slug === activeSource)?.displayName
+  : undefined;
 ---
 
 <nav class="category-filter" aria-label="Filtrar por categoría y medio">
   <div class="category-filter__wrapper">
-    <!-- Category Select Dropdown -->
-    <div class="category-select" data-category-select>
-      <button
-        type="button"
-        class:list={[
-          "category-select__trigger",
-          { "category-select__trigger--active": activeCategory },
-        ]}
-        aria-haspopup="listbox"
-        aria-expanded="false"
-        data-category-trigger
-      >
-        <span class="category-select__label">
-          {
-            activeCategory
-              ? visibleCategories.find((c) => c.slug === activeCategory)
-                  ?.name || "Categoría"
-              : "Todas las categorías"
-          }
-        </span>
-        <svg
-          class="category-select__icon"
-          width="12"
-          height="8"
-          viewBox="0 0 12 8"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M1 1.5L6 6.5L11 1.5"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
-        </svg>
-      </button>
+    <Select
+      label="Todas las categorías"
+      activeLabel={activeCategoryLabel}
+      options={categoryOptions}
+      dataSelector="category"
+      minWidth="200px"
+    />
 
-      <div
-        class="category-select__dropdown"
-        role="listbox"
-        data-category-dropdown
-      >
-        <a
-          href="/"
-          class:list={[
-            "category-select__option",
-            { "category-select__option--active": !activeCategory },
-          ]}
-          role="option"
-          aria-selected={!activeCategory}
-          data-category-option
-        >
-          Todas las categorías
-        </a>
-        {
-          visibleCategories.map((category) => (
-            <a
-              href={`/categoria/${category.slug}`}
-              class:list={[
-                "category-select__option",
-                {
-                  "category-select__option--active":
-                    activeCategory === category.slug,
-                },
-              ]}
-              role="option"
-              aria-selected={activeCategory === category.slug}
-              data-category-option
-              data-category={category.slug}
-            >
-              {category.name}
-            </a>
-          ))
-        }
-      </div>
-    </div>
-
-    <!-- Media Select Dropdown -->
-    <div class="media-select" data-media-select>
-      <button
-        type="button"
-        class:list={[
-          "media-select__trigger",
-          { "media-select__trigger--active": activeSource },
-        ]}
-        aria-haspopup="listbox"
-        aria-expanded="false"
-        data-media-trigger
-      >
-        <span class="media-select__label">
-          {
-            activeSource
-              ? visibleSources.find((s) => s.slug === activeSource)
-                  ?.displayName || "Medio"
-              : "Todos los medios"
-          }
-        </span>
-        <svg
-          class="media-select__icon"
-          width="12"
-          height="8"
-          viewBox="0 0 12 8"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M1 1.5L6 6.5L11 1.5"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
-        </svg>
-      </button>
-
-      <div class="media-select__dropdown" role="listbox" data-media-dropdown>
-        <a
-          href={activeCategory ? `/categoria/${activeCategory}` : "/"}
-          class:list={[
-            "media-select__option",
-            { "media-select__option--active": !activeSource },
-          ]}
-          role="option"
-          aria-selected={!activeSource}
-          data-media-option
-        >
-          Todos los medios
-        </a>
-        {
-          visibleSources.map((source) => {
-            const queryParams = new URLSearchParams();
-            queryParams.set("source", source.slug);
-            const href = `${currentPath}?${queryParams.toString()}`;
-
-            return (
-              <a
-                href={href}
-                class:list={[
-                  "media-select__option",
-                  {
-                    "media-select__option--active":
-                      activeSource === source.slug,
-                  },
-                ]}
-                role="option"
-                aria-selected={activeSource === source.slug}
-                data-media-option
-                data-source={source.slug}
-              >
-                {source.displayName}
-              </a>
-            );
-          })
-        }
-      </div>
-    </div>
+    <Select
+      label="Todos los medios"
+      activeLabel={activeSourceLabel}
+      options={sourceOptions}
+      dataSelector="media"
+      minWidth="160px"
+    />
   </div>
 </nav>
 
@@ -201,324 +107,9 @@ const currentPath = currentUrl.pathname;
     padding: 4px 0;
   }
 
-  /* Category Select Styles */
-  .category-select {
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .category-select__trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 18px;
-    min-width: 200px;
-    border-radius: 100px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-    border: 1.5px solid var(--navy-2);
-    color: var(--navy-2);
-    background-color: transparent;
-    cursor: pointer;
-  }
-
-  .category-select__trigger:hover {
-    background-color: color-mix(in srgb, var(--navy-2) 5%, transparent);
-  }
-
-  .category-select__trigger--active,
-  .category-select__trigger[aria-expanded="true"] {
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
-    border-color: var(--navy-2);
-  }
-
-  .category-select__trigger--active:hover,
-  .category-select__trigger[aria-expanded="true"]:hover {
-    background-color: color-mix(in srgb, var(--navy-2) 90%, black);
-  }
-
-  .category-select__trigger[aria-expanded="true"] .category-select__icon {
-    transform: rotate(180deg);
-  }
-
-  .category-select__label {
-    flex: 1;
-    text-align: left;
-  }
-
-  .category-select__icon {
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-  }
-
-  .category-select__dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    min-width: 240px;
-    background-color: var(--sepia-light);
-    border: 1.5px solid var(--navy-2);
-    border-radius: 16px;
-    padding: 8px;
-    box-shadow: 0 4px 16px rgba(25, 27, 65, 0.1);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: all 0.2s ease;
-    z-index: 1000;
-    pointer-events: none;
-  }
-
-  .category-select[data-open] .category-select__dropdown {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .category-select__option {
-    display: block;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--navy-2);
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-    cursor: pointer;
-  }
-
-  .category-select__option:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ev-primary-blue) 10%,
-      transparent
-    );
-    color: var(--ev-primary-blue);
-  }
-
-  .category-select__option--active {
-    background-color: color-mix(in srgb, var(--blue) 5%, transparent);
-    color: var(--navy-2);
-  }
-
-  /* Media Select Styles */
-  .media-select {
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .media-select__trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 18px;
-    min-width: 160px;
-    border-radius: 100px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-    border: 1.5px solid var(--navy-2);
-    color: var(--navy-2);
-    background-color: transparent;
-    cursor: pointer;
-  }
-
-  .media-select__trigger:hover {
-    background-color: color-mix(in srgb, var(--navy-2) 5%, transparent);
-  }
-
-  .media-select__trigger--active,
-  .media-select__trigger[aria-expanded="true"] {
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
-    border-color: var(--navy-2);
-  }
-
-  .media-select__trigger--active:hover,
-  .media-select__trigger[aria-expanded="true"]:hover {
-    background-color: color-mix(in srgb, var(--navy-2) 90%, black);
-  }
-
-  .media-select__trigger[aria-expanded="true"] .media-select__icon {
-    transform: rotate(180deg);
-  }
-
-  .media-select__label {
-    flex: 1;
-    text-align: left;
-  }
-
-  .media-select__icon {
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-  }
-
-  .media-select__dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 200px;
-    background-color: var(--sepia-light);
-    border: 1.5px solid var(--navy-2);
-    border-radius: 16px;
-    padding: 8px;
-    box-shadow: 0 4px 16px rgba(25, 27, 65, 0.1);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: all 0.2s ease;
-    z-index: 1000;
-    pointer-events: none;
-  }
-
-  .media-select[data-open] .media-select__dropdown {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  .media-select__option {
-    display: block;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--navy-2);
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-    cursor: pointer;
-  }
-
-  .media-select__option:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ev-primary-blue) 10%,
-      transparent
-    );
-    color: var(--ev-primary-blue);
-  }
-
-  .media-select__option--active {
-    background-color: color-mix(in srgb, var(--blue) 5%, transparent);
-    color: var(--navy-2);
-  }
-
   @media (max-width: 768px) {
     .category-filter__wrapper {
       gap: 8px;
     }
-
-    .category-select__trigger {
-      padding: 8px 14px;
-      font-size: 13px;
-      min-width: 160px;
-      gap: 8px;
-    }
-
-    .category-select__dropdown {
-      min-width: 200px;
-    }
-
-    .category-select__option {
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-
-    .media-select__trigger {
-      padding: 8px 14px;
-      font-size: 13px;
-      min-width: 140px;
-      gap: 8px;
-    }
-
-    .media-select__dropdown {
-      min-width: 180px;
-    }
-
-    .media-select__option {
-      padding: 8px 12px;
-      font-size: 13px;
-    }
   }
 </style>
-
-<script is:inline>
-  document.addEventListener("astro:page-load", function () {
-    // Generic dropdown handler
-    function initDropdown(selectSelector, triggerSelector) {
-      var selects = document.querySelectorAll(selectSelector);
-
-      selects.forEach(function (select) {
-        var trigger = select.querySelector(triggerSelector);
-        if (!trigger || trigger.hasAttribute("data-initialized")) return;
-        trigger.setAttribute("data-initialized", "");
-
-        trigger.addEventListener("click", function (e) {
-          e.stopPropagation();
-
-          var isOpen = select.hasAttribute("data-open");
-
-          // Close all dropdowns
-          document
-            .querySelectorAll("[data-category-select][data-open], [data-media-select][data-open]")
-            .forEach(function (other) {
-              if (other !== select) {
-                other.removeAttribute("data-open");
-                var otherTrigger = other.querySelector("[data-category-trigger], [data-media-trigger]");
-                if (otherTrigger) {
-                  otherTrigger.setAttribute("aria-expanded", "false");
-                }
-              }
-            });
-
-          if (isOpen) {
-            select.removeAttribute("data-open");
-            trigger.setAttribute("aria-expanded", "false");
-          } else {
-            select.setAttribute("data-open", "");
-            trigger.setAttribute("aria-expanded", "true");
-          }
-        });
-
-        // Close on outside click
-        document.addEventListener("click", function (e) {
-          if (!e.target.closest(selectSelector)) {
-            select.removeAttribute("data-open");
-            trigger.setAttribute("aria-expanded", "false");
-          }
-        });
-
-        // Close on escape
-        document.addEventListener("keydown", function (e) {
-          if (e.key === "Escape" && select.hasAttribute("data-open")) {
-            select.removeAttribute("data-open");
-            trigger.setAttribute("aria-expanded", "false");
-            trigger.focus();
-          }
-        });
-      });
-    }
-
-    // Initialize both dropdowns
-    initDropdown("[data-category-select]", "[data-category-trigger]");
-    initDropdown("[data-media-select]", "[data-media-trigger]");
-  });
-</script>

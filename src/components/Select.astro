@@ -1,0 +1,282 @@
+---
+interface Option {
+  label: string;
+  href: string;
+  slug?: string;
+  isActive: boolean;
+}
+
+interface Props {
+  label: string;
+  activeLabel?: string;
+  options: Option[];
+  dataSelector: string;
+  minWidth?: string;
+}
+
+const {
+  label,
+  activeLabel,
+  options,
+  dataSelector,
+  minWidth = "200px",
+} = Astro.props;
+
+const displayLabel = activeLabel || label;
+// Only show active state if there's a specific selection (not the default "All" option)
+const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
+---
+
+<div class="select" data-select={dataSelector}>
+  <button
+    type="button"
+    class:list={[
+      "select__trigger",
+      { "select__trigger--active": hasActiveOption },
+    ]}
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    data-trigger={dataSelector}
+  >
+    <span class="select__label">
+      {displayLabel}
+    </span>
+    <svg
+      class="select__icon"
+      width="12"
+      height="8"
+      viewBox="0 0 12 8"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M1 1.5L6 6.5L11 1.5"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"></path>
+    </svg>
+  </button>
+
+  <div class="select__dropdown" role="listbox" data-dropdown={dataSelector}>
+    {
+      options.map((option) => (
+        <a
+          href={option.href}
+          class:list={[
+            "select__option",
+            { "select__option--active": option.isActive },
+          ]}
+          role="option"
+          aria-selected={option.isActive}
+          data-option={dataSelector}
+          data-value={option.slug}
+        >
+          {option.label}
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<style define:vars={{ minWidth }}>
+  .select {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .select__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+    min-width: var(--minWidth);
+    border-radius: 100px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    border: 1.5px solid var(--navy-2);
+    color: var(--navy-2);
+    background-color: transparent;
+    cursor: pointer;
+  }
+
+  .select__trigger:hover {
+    background-color: color-mix(in srgb, var(--navy-2) 5%, transparent);
+  }
+
+  .select__trigger--active,
+  .select__trigger[aria-expanded="true"] {
+    background-color: var(--navy-2);
+    color: var(--sepia-light);
+    border-color: var(--navy-2);
+  }
+
+  .select__trigger--active:hover,
+  .select__trigger[aria-expanded="true"]:hover {
+    background-color: color-mix(in srgb, var(--navy-2) 90%, black);
+  }
+
+  .select__trigger[aria-expanded="true"] .select__icon {
+    transform: rotate(180deg);
+  }
+
+  .select__label {
+    flex: 1;
+    text-align: left;
+  }
+
+  .select__icon {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .select__dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 240px;
+    background-color: var(--sepia-light);
+    border: 1.5px solid var(--navy-2);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 4px 16px rgba(25, 27, 65, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .select[data-open] .select__dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .select__option {
+    display: block;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--navy-2);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+  }
+
+  .select__option:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--ev-primary-blue) 10%,
+      transparent
+    );
+    color: var(--ev-primary-blue);
+  }
+
+  .select__option--active {
+    background-color: color-mix(in srgb, var(--blue) 5%, transparent);
+    color: var(--navy-2);
+  }
+
+  @media (max-width: 768px) {
+    .select__trigger {
+      padding: 8px 14px;
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    .select__dropdown {
+      min-width: 200px;
+    }
+
+    .select__option {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener("astro:page-load", function () {
+    function initSelects() {
+      var selects = document.querySelectorAll("[data-select]");
+
+      selects.forEach(function (select) {
+        var trigger = select.querySelector("[data-trigger]");
+        if (!trigger || trigger.hasAttribute("data-initialized")) return;
+        trigger.setAttribute("data-initialized", "");
+
+        trigger.addEventListener("click", function (e) {
+          e.stopPropagation();
+
+          var isOpen = select.hasAttribute("data-open");
+
+          // Close all dropdowns
+          document
+            .querySelectorAll("[data-select][data-open]")
+            .forEach(function (other) {
+              if (other !== select) {
+                other.removeAttribute("data-open");
+                var otherTrigger = other.querySelector("[data-trigger]");
+                if (otherTrigger) {
+                  otherTrigger.setAttribute("aria-expanded", "false");
+                }
+              }
+            });
+
+          if (isOpen) {
+            select.removeAttribute("data-open");
+            trigger.setAttribute("aria-expanded", "false");
+          } else {
+            select.setAttribute("data-open", "");
+            trigger.setAttribute("aria-expanded", "true");
+          }
+        });
+      });
+
+      // Close on outside click
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest("[data-select]")) {
+          document
+            .querySelectorAll("[data-select][data-open]")
+            .forEach(function (select) {
+              select.removeAttribute("data-open");
+              var trigger = select.querySelector("[data-trigger]");
+              if (trigger) {
+                trigger.setAttribute("aria-expanded", "false");
+              }
+            });
+        }
+      });
+
+      // Close on escape
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          document
+            .querySelectorAll("[data-select][data-open]")
+            .forEach(function (select) {
+              select.removeAttribute("data-open");
+              var trigger = select.querySelector("[data-trigger]");
+              if (trigger) {
+                trigger.setAttribute("aria-expanded", "false");
+                trigger.focus();
+              }
+            });
+        }
+      });
+    }
+
+    initSelects();
+  });
+</script>
