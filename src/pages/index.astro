@@ -63,13 +63,16 @@ const availableCategorySlugs: string[] = Array.from(
   )
 );
 
-// Featured articles (top 3)
-const featuredPrimary = articles[0];
-const featuredSecondary1 = articles[1];
-const featuredSecondary2 = articles[2];
+// Featured primary — exclude hibridosyelectricos (small images)
+const EXCLUDED_FROM_PRIMARY = "hibridosyelectricos.com";
+const primaryIndex = articles.findIndex((a) => a.source_name !== EXCLUDED_FROM_PRIMARY);
+const featuredPrimary = primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
 
-// Grid articles (remaining 20 for desktop initial load)
-const gridArticles = articles.slice(3);
+// Secondary and grid: everything else in order
+const remaining = articles.filter((_, i) => i !== primaryIndex);
+const featuredSecondary1 = remaining[0];
+const featuredSecondary2 = remaining[1];
+const gridArticles = remaining.slice(2);
 
 // Helper to map article to component props
 function mapArticleToProps(article: ArticleData) {
