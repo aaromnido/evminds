@@ -10,82 +10,69 @@ import Header from "@/components/Header.astro";
     <!-- Hero Section -->
     <section class="hero">
       <h1 class="hero__title">
-        De <strong>aficionado</strong> a <strong>aficionado</strong>
+        Hablemos de <strong>movilidad eléctrica</strong>
       </h1>
       <p class="hero__subtitle">
-        Una historia sobre coches eléctricos, comunidad y devolver lo recibido
+        ¿Tienes una sugerencia, quieres colaborar o simplemente charlar? Aquí
+        estoy
       </p>
     </section>
 
-    <!-- Hero Image -->
-    <div class="hero-image">
-      <img
-        src="/foto.webp"
-        alt="Fernando Val con su coche eléctrico"
-        class="hero-image__img"
-      />
-    </div>
+    <!-- Contact Section -->
+    <section class="contact">
+      <div class="contact__main">
+        <!-- Contact Info -->
+        <div class="contact__info">
+          <div class="contact__item">
+            <h2 class="contact__label">Nombre</h2>
+            <p class="contact__value">Fernando Val</p>
+          </div>
 
-    <!-- Content Section -->
-    <section class="content">
-      <div class="content__main">
-        <div class="content__text">
-          <p class="content__paragraph">
-            Hace años que los <strong>coches eléctricos</strong> dejaron de ser solo
-            un interés para convertirse en una pasión. Lo que empezó como curiosidad
-            por la tecnología se transformó en horas de lectura, comparativas, debates...
-            y sobre todo, <strong>amigos</strong>.
-          </p>
+          <div class="contact__item">
+            <h2 class="contact__label">Email</h2>
+            <a
+              href="#"
+              id="email-link"
+              class="contact__value contact__value--link"
+              data-user="aaromnido"
+              data-domain="gmail.com"
+            >
+              <!-- Email rendered via JavaScript to prevent spam -->
+            </a>
+          </div>
 
-          <p class="content__paragraph">
-            En los comentarios de <strong>forococheselectricos.com</strong> y otros
-            medios, encontré una comunidad increíble. Gente apasionada, informada,
-            dispuesta a compartir experiencias y ayudar. He aprendido más de esas
-            conversaciones que de cualquier manual.
-          </p>
+          <div class="contact__item">
+            <h2 class="contact__label">Web</h2>
+            <a
+              href="https://fernandoval.es/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="contact__value contact__value--link"
+            >
+              fernandoval.es
+            </a>
+          </div>
 
-          <p class="content__paragraph">
-            Como <strong>profesional IT</strong>, siempre he creído que la
-            tecnología debe servir a las personas. Y después de tantos años
-            recibiendo conocimiento, consejos y amistad de esta comunidad, sentí
-            que era el momento de <strong>devolver algo</strong>.
-          </p>
-
-          <p class="content__paragraph">
-            Y entonces, en uno de esos debates interminables que tanto nos
-            gustan, surgió la idea. Gracias a <strong
-              >José Luis el del Picasso</strong
-            >, que con su entusiasmo contagioso, sin el saberlo, me inspiró para
-            dar el paso. Sin él, evminds probablemente seguiría siendo solo una
-            idea en mi cabeza.
-          </p>
-
-          <p class="content__paragraph">
-            Así nació <strong>evminds</strong>: un agregador de noticias sobre
-            movilidad eléctrica y sostenible. No es un proyecto comercial ni una
-            gran startup. Es simplemente mi forma de <strong
-              >aportar mi granito de arena</strong
-            > a una comunidad que tanto me ha dado.
-          </p>
-
-          <!-- Signature -->
-          <p>
-            <strong>Fernando Val</strong>
-          </p>
-
-          <p class="content__paragraph content__paragraph--emphasis">
-            Un lugar donde encontrar las noticias que nos importan, sin ruido,
-            sin agendas. Solo información útil para seguir aprendiendo juntos.
-          </p>
+          <div class="contact__item">
+            <h2 class="contact__label">LinkedIn</h2>
+            <a
+              href="https://www.linkedin.com/in/aaromnido/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="contact__value contact__value--link"
+            >
+              /in/aaromnido
+            </a>
+          </div>
         </div>
 
         <!-- Call to Action -->
         <div class="cta">
           <div class="cta__content">
-            <h2 class="cta__title">Sigamos debatiendo entre amigos</h2>
+            <h2 class="cta__title">Únete a la comunidad</h2>
             <p class="cta__text">
-              Únete al grupo de Telegram donde compartimos noticias, opiniones y
-              seguimos construyendo comunidad.
+              Forma parte del grupo de Telegram donde debatimos sobre movilidad
+              eléctrica, compartimos noticias y construimos comunidad.
             </p>
             <a
               href="https://t.me/evminders"
@@ -112,6 +99,21 @@ import Header from "@/components/Header.astro";
     </section>
   </main>
 </BaseLayout>
+
+<script>
+  // Anti-spam email obfuscation
+  // Renders email via JavaScript to prevent spam bots from scraping it
+  const emailLink = document.getElementById("email-link");
+  if (emailLink) {
+    const user = emailLink.getAttribute("data-user");
+    const domain = emailLink.getAttribute("data-domain");
+    if (user && domain) {
+      const email = `${user}@${domain}`;
+      emailLink.href = `mailto:${email}`;
+      emailLink.textContent = email;
+    }
+  }
+</script>
 
 <style>
   .page {
@@ -162,63 +164,63 @@ import Header from "@/components/Header.astro";
     line-height: 1.4;
   }
 
-  /* Hero Image */
-  .hero-image {
-    width: 100%;
-    max-width: 1200px;
-    margin: -24px auto 0;
-    overflow: hidden;
-    border-radius: 16px;
-  }
-
-  .hero-image__img {
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: cover;
-    max-height: 500px;
-  }
-
-  /* Content Section */
-  .content {
+  /* Contact Section */
+  .contact {
     max-width: 740px;
     margin: 0 auto;
     width: 100%;
   }
 
-  .content__main {
+  .contact__main {
     display: flex;
     flex-direction: column;
     gap: 72px;
   }
 
-  .content__text {
+  .contact__info {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 36px;
   }
 
-  .content__paragraph {
+  .contact__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contact__item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .contact__label {
     font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 19px;
-    font-weight: 400;
-    line-height: 1.7;
-    color: var(--navy-2);
-    letter-spacing: -0.01em;
-  }
-
-  .content__paragraph strong {
+    font-size: 14px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--navy-2);
+    opacity: 0.5;
   }
 
-  .content__paragraph--emphasis {
-    font-size: 21px;
-    font-style: italic;
-    font-weight: 500;
-    padding: 32px 0;
-    border-top: 1px solid rgba(25, 27, 65, 0.1);
-    border-bottom: 1px solid rgba(25, 27, 65, 0.1);
-    margin-top: 20px;
+  .contact__value {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--navy-2);
+    line-height: 1.4;
+  }
+
+  .contact__value--link {
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    width: fit-content;
+  }
+
+  .contact__value--link:hover {
+    opacity: 0.6;
+    text-decoration: underline;
   }
 
   /* Call to Action */
@@ -297,12 +299,8 @@ import Header from "@/components/Header.astro";
       font-size: 18px;
     }
 
-    .content__paragraph {
-      font-size: 18px;
-    }
-
-    .content__paragraph--emphasis {
-      font-size: 19px;
+    .contact__value {
+      font-size: 20px;
     }
 
     .cta {
@@ -334,34 +332,20 @@ import Header from "@/components/Header.astro";
       font-size: 15px;
     }
 
-    .hero-image {
-      border-radius: 12px;
-      margin: -18px -12px 0;
-      width: calc(100% + 24px);
-      max-width: none;
-    }
-
-    .hero-image__img {
-      max-height: 300px;
-    }
-
-    .content__main {
+    .contact__main {
       gap: 48px;
     }
 
-    .content__text {
-      gap: 24px;
+    .contact__info {
+      gap: 28px;
     }
 
-    .content__paragraph {
-      font-size: 16px;
-      line-height: 1.65;
+    .contact__item {
+      padding-bottom: 20px;
     }
 
-    .content__paragraph--emphasis {
-      font-size: 17px;
-      padding: 24px 0;
-      margin-top: 8px;
+    .contact__value {
+      font-size: 18px;
     }
 
     .cta {

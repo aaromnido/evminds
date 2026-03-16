@@ -2,11 +2,16 @@
 import Logo from "./Logo.astro";
 import { MobileMenu } from "./MobileMenu";
 
+const currentPath = Astro.url.pathname;
+
 const navItems = [
-  { label: "Home", href: "/", active: true },
+  { label: "Home", href: "/" },
   { label: "Quienes somos", href: "/quienes-somos" },
   { label: "Contacto", href: "/contacto" },
-];
+].map((item) => ({
+  ...item,
+  active: currentPath === item.href,
+}));
 ---
 
 <header class="site-header">
