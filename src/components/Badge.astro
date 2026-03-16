@@ -9,7 +9,7 @@ const { label, variant = 'outlined' } = Astro.props;
 
 <span class:list={['badge', `badge--${variant}`]}>{label}</span>
 
-<style>
+<style is:global>
   .badge {
     display: inline-flex;
     align-items: center;

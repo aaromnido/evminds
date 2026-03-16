@@ -1,0 +1,104 @@
+---
+/**
+ * Skeleton loading state for ArticleCard
+ * Matches ArticleCard structure with pulsing animation
+ */
+---
+
+<article class="skeleton-card" aria-label="Cargando artículo...">
+  <div class="skeleton-card__photo skeleton-pulse"></div>
+
+  <div class="skeleton-card__content">
+    <div class="skeleton-card__header">
+      <div class="skeleton-card__title-area">
+        <div class="skeleton-card__title skeleton-pulse"></div>
+        <div class="skeleton-card__title skeleton-pulse" style="width: 80%;"></div>
+        <div class="skeleton-card__date skeleton-pulse"></div>
+      </div>
+    </div>
+
+    <div class="skeleton-card__badges">
+      <div class="skeleton-card__badge skeleton-pulse"></div>
+      <div class="skeleton-card__badge skeleton-pulse"></div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    flex: 1 0 0;
+    min-width: 0;
+  }
+
+  .skeleton-card__photo {
+    height: 300px;
+    background-color: #E2DED6;
+    border-radius: 6px;
+    border: 1px solid #E2DED6;
+  }
+
+  .skeleton-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .skeleton-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .skeleton-card__title-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .skeleton-card__title {
+    height: 29px;
+    background-color: #E2DED6;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .skeleton-card__date {
+    height: 20px;
+    background-color: #E2DED6;
+    border-radius: 4px;
+    width: 120px;
+    margin-top: 2px;
+  }
+
+  .skeleton-card__badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .skeleton-card__badge {
+    height: 28px;
+    width: 120px;
+    background-color: #E2DED6;
+    border-radius: 100px;
+  }
+
+  /* Pulsing animation */
+  .skeleton-pulse {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+</style>

@@ -1,30 +1,30 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
-import Badge from "@/components/Badge.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
+import SkeletonCard from "@/components/SkeletonCard.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
 import { getLiveCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
-// Fetch articles using Live Content Collections (runtime, not build-time)
+// Fetch initial articles using Live Content Collections (runtime, not build-time)
 const { entries, error } = await getLiveCollection("articles");
 
 if (error) {
   console.error("Failed to fetch articles:", error);
 }
 
-// Extract article data from entries and limit to 12
-const articles = entries?.slice(0, 12).map((entry) => entry.data) || [];
+// Extract article data from entries and limit to initial load
+const articles = entries?.slice(0, 23).map((entry) => entry.data) || [];
 
 // Featured articles (top 3)
 const featuredPrimary = articles[0];
 const featuredSecondary1 = articles[1];
 const featuredSecondary2 = articles[2];
 
-// Grid articles (remaining)
+// Grid articles (remaining 20 for desktop initial load)
 const gridArticles = articles.slice(3);
 
 // Helper to map article to component props
@@ -39,6 +39,9 @@ function mapArticleToProps(article: ArticleData) {
     href: article.article_url,
   };
 }
+
+// Calculate initial cursor for pagination (scraped_at of last article)
+const initialCursor = articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
 ---
 
 <BaseLayout>
@@ -80,23 +83,276 @@ function mapArticleToProps(article: ArticleData) {
     {
       gridArticles.length > 0 && (
         <section class="news" aria-label="Últimas noticias">
-          {[0, 1, 2].map((row) => {
-            const rowArticles = gridArticles.slice(row * 3, row * 3 + 3);
-            return (
-              rowArticles.length > 0 && (
-                <div class="news__row">
-                  {rowArticles.map((article) => (
-                    <ArticleCard {...mapArticleToProps(article)} />
-                  ))}
-                </div>
-              )
-            );
-          })}
+          <div id="articles-grid" class="news__grid">
+            {gridArticles.map((article) => (
+              <ArticleCard {...mapArticleToProps(article)} />
+            ))}
+          </div>
+
+          <!-- Loading skeletons -->
+          <div id="loading-skeletons" class="news__grid" style="display: none;">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         </section>
       )
     }
   </main>
 </BaseLayout>
+
+<script is:inline define:vars={{ initialCursor }}>
+  // Infinite scroll implementation with IntersectionObserver
+  let cursor = initialCursor;
+  let isLoading = false;
+  let hasMore = true;
+  let observer = null;
+
+  // Get DOM elements
+  const articlesGrid = document.getElementById("articles-grid");
+  const loadingSkeletons = document.getElementById("loading-skeletons");
+
+  /**
+   * Get limit based on current breakpoint
+   * Mobile (<768px): 10 cards
+   * Tablet (768-1024px): 16 cards
+   * Desktop (>1024px): 20 cards
+   */
+  function getLimitForBreakpoint() {
+    const width = window.innerWidth;
+    if (width < 768) return 10;
+    if (width < 1024) return 16;
+    return 20;
+  }
+
+  /**
+   * Format date to Spanish locale
+   */
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Ayer";
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+
+    return date.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  /**
+   * Render article card using safe DOM methods (XSS-safe)
+   */
+  function renderArticleCard(article) {
+    const image = article.image_url || "/placeholder-image.jpg";
+    const title = article.title;
+    const date = formatDate(article.published_at);
+    const source = article.source.name;
+    const category = article.category;
+    const href = article.article_url;
+
+    // Create article element
+    const articleEl = document.createElement("article");
+    articleEl.className = "article-card";
+
+    // Photo link
+    const photoLink = document.createElement("a");
+    photoLink.href = href;
+    photoLink.className = "article-card__photo-link";
+    photoLink.target = "_blank";
+    photoLink.rel = "noopener noreferrer";
+
+    const photoDiv = document.createElement("div");
+    photoDiv.className = "article-card__photo";
+
+    const img = document.createElement("img");
+    img.src = image;
+    img.alt = title;
+    img.loading = "lazy";
+
+    photoDiv.appendChild(img);
+    photoLink.appendChild(photoDiv);
+
+    // Content div
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "article-card__content";
+
+    // Header div
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "article-card__header";
+
+    // Title link
+    const titleLink = document.createElement("a");
+    titleLink.href = href;
+    titleLink.className = "article-card__title-link";
+    titleLink.target = "_blank";
+    titleLink.rel = "noopener noreferrer";
+
+    const titleEl = document.createElement("h3");
+    titleEl.className = "article-card__title";
+    titleEl.textContent = title;
+
+    const dateEl = document.createElement("p");
+    dateEl.className = "article-card__date";
+    dateEl.textContent = date;
+
+    titleLink.appendChild(titleEl);
+    titleLink.appendChild(dateEl);
+
+    // Arrow SVG (static, safe)
+    const arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    arrowSvg.setAttribute("class", "article-card__arrow");
+    arrowSvg.setAttribute("width", "11");
+    arrowSvg.setAttribute("height", "11");
+    arrowSvg.setAttribute("viewBox", "0 0 11 11");
+    arrowSvg.setAttribute("fill", "none");
+    arrowSvg.setAttribute("aria-hidden", "true");
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M1 10L10 1M10 1H3M10 1V8");
+    path.setAttribute("stroke", "#191b41");
+    path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+
+    arrowSvg.appendChild(path);
+
+    headerDiv.appendChild(titleLink);
+    headerDiv.appendChild(arrowSvg);
+
+    // Badges div
+    const badgesDiv = document.createElement("div");
+    badgesDiv.className = "article-card__badges";
+
+    const sourceBadge = document.createElement("span");
+    sourceBadge.className = "badge badge--filled";
+    sourceBadge.textContent = source;
+
+    const categoryBadge = document.createElement("span");
+    categoryBadge.className = "badge badge--outlined";
+    categoryBadge.textContent = category;
+
+    badgesDiv.appendChild(sourceBadge);
+    badgesDiv.appendChild(categoryBadge);
+
+    // Assemble content
+    contentDiv.appendChild(headerDiv);
+    contentDiv.appendChild(badgesDiv);
+
+    // Assemble article
+    articleEl.appendChild(photoLink);
+    articleEl.appendChild(contentDiv);
+
+    return articleEl;
+  }
+
+  /**
+   * Fetch next page of articles
+   */
+  async function loadMoreArticles() {
+    if (isLoading || !hasMore || !cursor) return;
+
+    isLoading = true;
+    loadingSkeletons.style.display = "grid";
+
+    try {
+      const limit = getLimitForBreakpoint();
+      const response = await fetch(`/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch articles");
+      }
+
+      const data = await response.json();
+
+      // Hide loading skeletons
+      loadingSkeletons.style.display = "none";
+
+      if (data.articles.length === 0) {
+        hasMore = false;
+        if (observer) observer.disconnect();
+        return;
+      }
+
+      // Render new articles using safe DOM methods
+      const fragment = document.createDocumentFragment();
+
+      data.articles.forEach((article) => {
+        const cardEl = renderArticleCard(article);
+        fragment.appendChild(cardEl);
+      });
+
+      articlesGrid.appendChild(fragment);
+
+      // Update cursor for next load
+      cursor = data.nextCursor;
+
+      // If no more articles, disconnect observer
+      if (!data.nextCursor) {
+        hasMore = false;
+        if (observer) observer.disconnect();
+      } else {
+        // Re-observe the new second-to-last card
+        setupObserver();
+      }
+    } catch (error) {
+      console.error("Error loading articles:", error);
+      loadingSkeletons.style.display = "none";
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  /**
+   * Setup IntersectionObserver on second-to-last card
+   */
+  function setupObserver() {
+    if (observer) observer.disconnect();
+
+    const cards = articlesGrid.querySelectorAll(".article-card");
+    if (cards.length < 2) return;
+
+    // Observe the second-to-last card
+    const targetCard = cards[cards.length - 2];
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadMoreArticles();
+          }
+        });
+      },
+      {
+        rootMargin: "200px", // Trigger 200px before card enters viewport
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(targetCard);
+  }
+
+  // Initialize observer on page load
+  if (articlesGrid && cursor && hasMore) {
+    setupObserver();
+  }
+
+  // Re-setup observer on window resize (breakpoint change)
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (hasMore && !isLoading) {
+        setupObserver();
+      }
+    }, 250);
+  });
+</script>
 
 <style>
   .page {
@@ -162,7 +418,7 @@ function mapArticleToProps(article: ArticleData) {
     gap: 36px;
   }
 
-  .news__row {
+  .news__grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
@@ -181,7 +437,7 @@ function mapArticleToProps(article: ArticleData) {
       gap: 24px;
     }
 
-    .news__row {
+    .news__grid {
       grid-template-columns: 1fr 1fr;
     }
   }
@@ -216,7 +472,7 @@ function mapArticleToProps(article: ArticleData) {
       margin-top: 24px;
     }
 
-    .news__row {
+    .news__grid {
       grid-template-columns: 1fr;
       gap: 48px;
     }
