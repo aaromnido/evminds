@@ -92,6 +92,22 @@ export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawA
         image = mediaThumbnailMatch?.[1] || mediaContentMatch?.[1] || null;
       }
 
+      // 4. Fallback to enclosure tag (InsideEVs, many RSS 2.0 feeds)
+      if (!image) {
+        // First find enclosure tag with type="image/*"
+        const enclosureTag = itemXml.match(/<enclosure[^>]*type=["']image[^>]*>/i);
+        if (enclosureTag) {
+          // Then extract url attribute from that tag
+          const urlMatch = enclosureTag[0].match(/url=["']([^"']+)["']/i);
+          image = urlMatch?.[1] || null;
+        }
+      }
+
+      // Decode HTML entities in image URL (&#038; -> &, etc.)
+      if (image) {
+        image = decodeHTMLEntities(image);
+      }
+
       // Clean description (remove HTML tags and CDATA)
       const cleanExcerpt = decodeHTMLEntities(
         (description || '')

@@ -1,7 +1,7 @@
 /**
  * Edge Function: Article Scraper
  *
- * Orchestrates the scraping, translation, categorization, and storage of articles
+ * Orchestrates the scraping, categorization, and storage of articles
  * from active RSS feeds. Runs on a cron schedule (4x daily).
  *
  * Flow:
@@ -10,11 +10,12 @@
  * 3. For each source:
  *    - Parse feed (RSS or HTML)
  *    - Filter for EV content (motor.es only)
- *    - Translate if English (OpenAI GPT-4o mini)
  *    - Auto-categorize by keywords
  *    - Cache OG images to Supabase Storage
  *    - Insert into database (skip duplicates)
  * 4. Return scraping results
+ *
+ * Note: Translation feature temporarily disabled (removed OpenAI dependency)
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
@@ -22,7 +23,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { parseRSS } from './parsers/rss-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
 import { categorize } from './services/categorizer.ts';
-import { translateToSpanish } from './services/translator.ts';
+// import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
 import type { Source, RawArticle, ScraperResult } from './types.ts';
 
@@ -42,7 +43,7 @@ serve(async (req) => {
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    // const openaiKey = Deno.env.get('OPENAI_API_KEY'); // Disabled: translation feature removed
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase credentials');
@@ -104,16 +105,17 @@ serve(async (req) => {
               continue; // Skip duplicate
             }
 
-            // Translate if English source
+            // Use original title and excerpt (translation disabled)
             let title = article.title;
             let excerpt = article.excerpt;
 
-            if (source.lang === 'en' && openaiKey) {
-              console.log(`Translating: ${title.substring(0, 50)}...`);
-              const translated = await translateToSpanish(title, excerpt, openaiKey);
-              title = translated.title;
-              excerpt = translated.excerpt;
-            }
+            // Translation disabled - will be re-enabled later
+            // if (source.lang === 'en' && openaiKey) {
+            //   console.log(`Translating: ${title.substring(0, 50)}...`);
+            //   const translated = await translateToSpanish(title, excerpt, openaiKey);
+            //   title = translated.title;
+            //   excerpt = translated.excerpt;
+            // }
 
             // Categorize by keywords
             const category = categorize(title, excerpt);
