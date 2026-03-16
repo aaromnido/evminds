@@ -8,10 +8,9 @@ import ArticleCard from "@/components/ArticleCard.astro";
 import SkeletonCard from "@/components/SkeletonCard.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
-import { getLiveCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
-import { getSourceBySlug, getSourceSlugByName } from "@/lib/sources";
+import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
@@ -21,55 +20,48 @@ const sourceParam = urlParams.get("source");
 const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
 
-// Fetch initial articles
-let articles: ArticleData[] = [];
+// Fetch initial articles directly from Supabase
+let query = supabase
+  .from("articles")
+  .select("*, source:sources!inner(name, url)")
+  .order("scraped_at", { ascending: false })
+  .limit(23);
 
 if (activeSource && sourceObj) {
-  // When filtering by source, query Supabase directly to get filtered results
-  const { data } = await supabase
-    .from("articles")
-    .select("*, source:sources!inner(name, url)")
-    .eq("source.name", sourceObj.name)
-    .order("scraped_at", { ascending: false })
-    .limit(23);
-
-  articles = (data || []).map((a) => {
-    const source = Array.isArray(a.source) ? a.source[0] : a.source;
-    return {
-      id: a.id,
-      title: a.title,
-      excerpt: a.excerpt,
-      image_url: a.image_url,
-      article_url: a.article_url,
-      category: a.category,
-      published_at: new Date(a.published_at),
-      scraped_at: new Date(a.scraped_at),
-      source_name: source.name,
-      source_url: source.url,
-    };
-  });
-} else {
-  // No source filter: use Live Collection
-  const { entries, error } = await getLiveCollection("articles");
-  if (error) console.error("Failed to fetch articles:", error);
-  articles = entries?.slice(0, 23).map((entry) => entry.data) || [];
+  query = query.eq("source.name", sourceObj.name);
 }
 
-// For category filter, we need all entries (unfiltered)
-const { entries: allEntries } = await getLiveCollection("articles");
+const { data: articleData } = await query;
+
+const articles: ArticleData[] = (articleData || []).map((a: any) => {
+  const source = Array.isArray(a.source) ? a.source[0] : a.source;
+  return {
+    id: a.id,
+    title: a.title,
+    excerpt: a.excerpt,
+    image_url: a.image_url,
+    article_url: a.article_url,
+    category: a.category,
+    published_at: new Date(a.published_at),
+    scraped_at: new Date(a.scraped_at),
+    source_name: source.name,
+    source_url: source.url,
+  };
+});
 
 // Get unique categories that have articles (for CategoryFilter)
-const availableCategorySlugs: string[] = allEntries
-  ? Array.from(
-      new Set(
-        allEntries
-          .map((entry) => entry.data.category)
-          .filter(Boolean)
-          .map((categoryName) => getCategorySlugByName(categoryName))
-          .filter((slug) => slug !== undefined) as string[]
-      )
-    )
-  : [];
+const { data: categoryRows } = await supabase
+  .from("articles")
+  .select("category");
+const availableCategorySlugs: string[] = Array.from(
+  new Set(
+    (categoryRows || [])
+      .map((r: any) => r.category)
+      .filter(Boolean)
+      .map((name: string) => getCategorySlugByName(name))
+      .filter((slug: string | undefined) => slug !== undefined) as string[]
+  )
+);
 
 // Featured articles (top 3)
 const featuredPrimary = articles[0];
