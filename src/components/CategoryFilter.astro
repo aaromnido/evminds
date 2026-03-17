@@ -31,12 +31,14 @@ const currentPath = currentUrl.pathname;
 const categoryOptions = [
   {
     label: "Todas las categorías",
-    href: "/",
+    href: activeSource ? `/?source=${activeSource}` : "/",
     isActive: !activeCategory,
   },
   ...visibleCategories.map((category) => ({
     label: category.name,
-    href: `/categoria/${category.slug}`,
+    href: activeSource
+      ? `/categoria/${category.slug}?source=${activeSource}`
+      : `/categoria/${category.slug}`,
     slug: category.slug,
     isActive: activeCategory === category.slug,
   })),
