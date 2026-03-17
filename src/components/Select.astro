@@ -140,7 +140,7 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    min-width: 240px;
+    width: 100%;
     background-color: var(--sepia-light);
     border: 1.5px solid var(--navy-2);
     border-radius: 16px;
@@ -197,7 +197,8 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
     }
 
     .select__dropdown {
-      min-width: 200px;
+      left: auto;
+      right: 0;
     }
 
     .select__option {

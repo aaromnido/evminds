@@ -33,7 +33,6 @@ const {
     <div class="article-card__header">
       <a href={href} class="article-card__title-link">
         <h3 class="article-card__title">{title}</h3>
-        <p class="article-card__date">{date}</p>
       </a>
       <svg
         class="article-card__arrow"
@@ -52,9 +51,12 @@ const {
       </svg>
     </div>
 
-    <div class="article-card__badges">
-      <Badge label={source} variant="filled" />
-      <Badge label={category} variant="outlined" />
+    <div class="article-card__meta">
+      <p class="article-card__date">{date}</p>
+      <div class="article-card__badges">
+        <Badge label={source} variant="filled" />
+        <Badge label={category} variant="outlined" />
+      </div>
     </div>
   </div>
 </article>
@@ -131,21 +133,19 @@ const {
     margin-top: 4px;
   }
 
+  .article-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .article-card__date {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
-    color: var(--navy-light);
-    margin-top: 10px;
-  }
-
-  .article-card__excerpt {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.4;
-    color: var(--navy-light);
+    color: var(--navy-2);
   }
 
   .article-card__badges {
