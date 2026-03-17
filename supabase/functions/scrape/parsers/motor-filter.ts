@@ -10,7 +10,6 @@ const EV_CATEGORIES = [
   'baterías',
   'baterías de estado sólido',
   'phev',
-  'hev',
   'bev',
 ];
 
