@@ -29,7 +29,9 @@ if (error || !data) {
 }
 
 const article = data as any;
-const source = Array.isArray(article.source) ? article.source[0] : article.source;
+const source = Array.isArray(article.source)
+  ? article.source[0]
+  : article.source;
 
 // Fetch 3 related articles (same category, excluding current)
 const { data: relatedData } = await supabase
@@ -38,7 +40,7 @@ const { data: relatedData } = await supabase
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
-  .limit(3);
+  .limit(2);
 
 const relatedArticles = (relatedData || []).map((a: any) => {
   const s = Array.isArray(a.source) ? a.source[0] : a.source;
@@ -57,7 +59,10 @@ const relatedArticles = (relatedData || []).map((a: any) => {
 const heroImage = article.image_url || "/placeholder-image.jpg";
 const formattedDate = formatDate(article.published_at);
 const categorySlug = getCategorySlugByName(article.category);
-const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString();
+const canonicalUrl = new URL(
+  getArticleUrl(article.slug),
+  Astro.site,
+).toString();
 ---
 
 <BaseLayout
@@ -71,16 +76,8 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
     <Header />
 
     <article class="article-detail__content">
-      <!-- Badges -->
-      <div class="article-detail__badges">
-        <Badge label={source.name} variant="filled" />
-        {categorySlug && (
-          <a href={`/categoria/${categorySlug}`} class="article-detail__category-link">
-            <Badge label={article.category} variant="outlined" />
-          </a>
-        )}
-        {!categorySlug && <Badge label={article.category} variant="outlined" />}
-      </div>
+      <!-- Title -->
+      <h1 class="article-detail__title">{article.title}</h1>
 
       <!-- Hero image -->
       <div class="article-detail__hero">
@@ -95,17 +92,32 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
         />
       </div>
 
-      <!-- Title -->
-      <h1 class="article-detail__title">{article.title}</h1>
+      <div class="article-detail__header">
+        <div class="article-detail__meta">
+          <time datetime={article.published_at}>{formattedDate}</time>
+        </div>
 
-      <!-- Meta: date + source -->
-      <div class="article-detail__meta">
-        <time datetime={article.published_at}>{formattedDate}</time>
-        <span class="article-detail__meta-separator">·</span>
-        <a href={source.url} target="_blank" rel="noopener noreferrer" class="article-detail__source-link">
-          {source.name}
-        </a>
+        <!-- Badges -->
+        <div class="article-detail__badges">
+          <Badge label={source.name} variant="filled" />
+          {
+            categorySlug && (
+              <a
+                href={`/categoria/${categorySlug}`}
+                class="article-detail__category-link"
+              >
+                <Badge label={article.category} variant="outlined" />
+              </a>
+            )
+          }
+          {
+            !categorySlug && (
+              <Badge label={article.category} variant="outlined" />
+            )
+          }
+        </div>
       </div>
+      <!-- Meta: date + source -->
 
       <!-- Excerpt -->
       <p class="article-detail__excerpt">{article.excerpt}</p>
@@ -118,10 +130,21 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
         class="article-detail__cta"
       >
         Leer artículo completo en {source.name}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          <polyline points="15 3 21 3 21 9" />
-          <line x1="10" y1="14" x2="21" y2="3" />
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+          ></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
       </a>
 
@@ -129,16 +152,23 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
       <ShareButtons url={canonicalUrl} title={article.title} />
 
       <!-- Related articles -->
-      {relatedArticles.length > 0 && (
-        <section class="article-detail__related" aria-label="Artículos relacionados">
-          <h2 class="article-detail__related-title">Artículos relacionados</h2>
-          <div class="article-detail__related-grid">
-            {relatedArticles.map((props) => (
-              <ArticleCard {...props} />
-            ))}
-          </div>
-        </section>
-      )}
+      {
+        relatedArticles.length > 0 && (
+          <section
+            class="article-detail__related"
+            aria-label="Artículos relacionados"
+          >
+            <h2 class="article-detail__related-title">
+              Artículos relacionados
+            </h2>
+            <div class="article-detail__related-grid">
+              {relatedArticles.map((props) => (
+                <ArticleCard {...props} />
+              ))}
+            </div>
+          </section>
+        )
+      }
 
       <!-- Disqus comments -->
       <DisqusComments
@@ -171,6 +201,14 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
     display: flex;
     flex-direction: column;
     gap: 28px;
+  }
+
+  /* Header (meta + badges) */
+  .article-detail__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   /* Badges */
@@ -261,7 +299,9 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
     font-size: 17px;
     font-weight: 600;
     text-decoration: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
     align-self: flex-start;
   }
 
@@ -274,7 +314,7 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
   .article-detail__related {
     margin-top: 48px;
     padding-top: 36px;
-    border-top: 1px solid rgba(25, 27, 65, 0.1);
+    border-top: 2px solid var(--navy-2);
   }
 
   .article-detail__related-title {
@@ -287,7 +327,7 @@ const canonicalUrl = new URL(getArticleUrl(article.slug), Astro.site).toString()
 
   .article-detail__related-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 24px;
   }
 

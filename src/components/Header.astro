@@ -5,13 +5,10 @@ import { MobileMenu } from "./MobileMenu";
 const currentPath = Astro.url.pathname;
 
 const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Quienes somos", href: "/quienes-somos" },
-  { label: "Contacto", href: "/contacto" },
-].map((item) => ({
-  ...item,
-  active: currentPath === item.href,
-}));
+  { label: "Artículos", href: "/", active: currentPath === "/" || currentPath.startsWith("/articulo/") },
+  { label: "Quienes somos", href: "/quienes-somos", active: currentPath === "/quienes-somos" },
+  { label: "Contacto", href: "/contacto", active: currentPath === "/contacto" },
+];
 ---
 
 <header class="site-header">
