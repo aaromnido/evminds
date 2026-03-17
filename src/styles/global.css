@@ -7,7 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    --background: #faf7f0;
+    --background: #F6F2E6;
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -80,7 +80,7 @@
     --navy-1: #1f1633;
     --navy-2: #191b41;
     --navy-light: #23254a;
-    --sepia-light: #F6F2E6;
+    --sepia-light: var(--background);
     --ev-primary-blue: #0076f4;
     --ev-primary-green: #01c98a;
     --ev-teal: #00bcbc;
