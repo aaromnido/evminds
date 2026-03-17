@@ -89,17 +89,20 @@ serve(async (req) => {
         let articles: RawArticle[] = [];
 
         // Parse based on feed type
+        // motor.es: fetch more items since most will be filtered out (general automotive site)
+        const fetchLimit = source.name === 'motor.es' ? 30 : 5;
         if (source.feed_type === 'rss') {
-          articles = await parseRSS(source.feed_url);
+          articles = await parseRSS(source.feed_url, fetchLimit);
         }
         // TODO: Implement HTML parser for hibridosyelectricos.com
 
         console.log(`Fetched ${articles.length} articles from ${source.name}`);
 
-        // Filter for motor.es (only EV-related content)
+        // Filter for motor.es (only EV-related content based on RSS categories)
         if (source.name === 'motor.es') {
           const originalCount = articles.length;
-          articles = articles.filter(a => isEVRelated(a.title, a.excerpt));
+          articles = articles.filter(a => isEVRelated(a.categories));
+          articles = articles.slice(0, 5);
           console.log(`Filtered motor.es: ${originalCount} -> ${articles.length} (EV only)`);
         }
 

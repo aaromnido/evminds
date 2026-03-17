@@ -17,8 +17,8 @@ SELECT cron.schedule(
   '0 7 * * *',
   $$
   SELECT net.http_post(
-    'https://pjpfsclekrvsvwftpkyv.supabase.co/functions/v1/scrape',
-    headers := '{"Authorization": "Bearer evminds_scraper_2026_secure_token_f8a3b9c2"}'::jsonb,
+    'https://YOUR_PROJECT_REF.supabase.co/functions/v1/scrape',
+    headers := '{"Authorization": "Bearer YOUR_SCRAPE_SECRET"}'::jsonb,
     body := '{}'::jsonb
   );
   $$
@@ -30,8 +30,8 @@ SELECT cron.schedule(
   '0 11 * * *',
   $$
   SELECT net.http_post(
-    'https://pjpfsclekrvsvwftpkyv.supabase.co/functions/v1/scrape',
-    headers := '{"Authorization": "Bearer evminds_scraper_2026_secure_token_f8a3b9c2"}'::jsonb,
+    'https://YOUR_PROJECT_REF.supabase.co/functions/v1/scrape',
+    headers := '{"Authorization": "Bearer YOUR_SCRAPE_SECRET"}'::jsonb,
     body := '{}'::jsonb
   );
   $$
@@ -43,8 +43,8 @@ SELECT cron.schedule(
   '0 15 * * *',
   $$
   SELECT net.http_post(
-    'https://pjpfsclekrvsvwftpkyv.supabase.co/functions/v1/scrape',
-    headers := '{"Authorization": "Bearer evminds_scraper_2026_secure_token_f8a3b9c2"}'::jsonb,
+    'https://YOUR_PROJECT_REF.supabase.co/functions/v1/scrape',
+    headers := '{"Authorization": "Bearer YOUR_SCRAPE_SECRET"}'::jsonb,
     body := '{}'::jsonb
   );
   $$
@@ -56,8 +56,8 @@ SELECT cron.schedule(
   '0 17 * * *',
   $$
   SELECT net.http_post(
-    'https://pjpfsclekrvsvwftpkyv.supabase.co/functions/v1/scrape',
-    headers := '{"Authorization": "Bearer evminds_scraper_2026_secure_token_f8a3b9c2"}'::jsonb,
+    'https://YOUR_PROJECT_REF.supabase.co/functions/v1/scrape',
+    headers := '{"Authorization": "Bearer YOUR_SCRAPE_SECRET"}'::jsonb,
     body := '{}'::jsonb
   );
   $$

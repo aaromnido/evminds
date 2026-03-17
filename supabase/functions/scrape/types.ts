@@ -18,6 +18,7 @@ export interface RawArticle {
   article_url: string;
   image_url: string | null;
   published_at: Date;
+  categories: string[];
 }
 
 export interface ArticleData extends RawArticle {

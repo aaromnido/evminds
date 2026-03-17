@@ -1,32 +1,26 @@
 /**
  * Filter: EV-related content detector for motor.es
- * Motor.es is a general automotive site, so we filter for electric vehicle content only
+ * Uses RSS <category> tags for reliable filtering instead of keyword matching.
+ * motor.es tags EV articles with specific categories like "Coches eléctricos",
+ * "Baterías", "PHEV", "HEV", etc.
  */
 
-const EV_KEYWORDS = [
-  // Spanish keywords
-  'eléctrico', 'eléctricos', 'eléctrica', 'eléctricas',
-  'batería', 'baterías', 'carga', 'recarga', 'autonomía',
-  'híbrido', 'híbridos', 'enchufable', 'enchufables',
-  'kwh', 'kw', 'ev', 'phev', 'bev',
-  // English keywords (sometimes used in Spanish articles)
-  'electric', 'battery', 'charging', 'range', 'hybrid',
-  // Brand names associated with EVs
-  'tesla', 'byd', 'nissan leaf', 'polestar', 'rivian',
-  'lucid', 'fisker', 'nio', 'xpeng', 'zeekr',
-  // Specific EV terms
-  'supercharger', 'wallbox', 'punto de recarga',
-  'movilidad eléctrica', 'vehículo eléctrico'
+const EV_CATEGORIES = [
+  'coches eléctricos',
+  'baterías',
+  'baterías de estado sólido',
+  'phev',
+  'hev',
+  'bev',
 ];
 
 /**
  * Checks if an article is related to electric vehicles
- * @param title - Article title
- * @param excerpt - Article excerpt/description
- * @returns true if article contains EV-related keywords
+ * by matching its RSS categories against known EV categories.
+ * @param categories - RSS category tags for the article
+ * @returns true if any category matches an EV category
  */
-export function isEVRelated(title: string, excerpt: string): boolean {
-  const text = `${title} ${excerpt}`.toLowerCase();
-
-  return EV_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
+export function isEVRelated(categories: string[]): boolean {
+  const normalised = categories.map(c => c.toLowerCase());
+  return normalised.some(cat => EV_CATEGORIES.includes(cat));
 }

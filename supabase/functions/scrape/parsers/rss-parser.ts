@@ -108,6 +108,14 @@ export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawA
         image = decodeHTMLEntities(image);
       }
 
+      // Extract RSS categories
+      const categoryRegex = /<category[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/category>/gi;
+      const categories: string[] = [];
+      let catMatch;
+      while ((catMatch = categoryRegex.exec(itemXml)) !== null) {
+        categories.push(decodeHTMLEntities(catMatch[1].trim()));
+      }
+
       // Clean description (remove HTML tags and CDATA)
       const cleanExcerpt = decodeHTMLEntities(
         (description || '')
@@ -124,7 +132,8 @@ export async function parseRSS(feedUrl: string, limit: number = 5): Promise<RawA
         article_url: link.trim(),
         excerpt: cleanExcerpt,
         image_url: image,
-        published_at: pubDate ? new Date(pubDate) : new Date()
+        published_at: pubDate ? new Date(pubDate) : new Date(),
+        categories
       });
 
       count++;
