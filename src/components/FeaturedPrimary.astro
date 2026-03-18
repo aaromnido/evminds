@@ -29,12 +29,9 @@ const { image, title, date, source, category, href = "#", identifier } = Astro.p
     height="600"
   />
 
-  <!-- Comment count badge -->
+  <!-- Comment count (hidden until JS populates) -->
   {identifier && (
-    <span class="featured-primary__comment-count">
-      <span class="disqus-comment-count" data-disqus-identifier={identifier}></span>
-      <img src="/icon-comment-white.svg" alt="" width="16" height="16" />
-    </span>
+    <span class="disqus-comment-count" data-disqus-identifier={identifier} hidden></span>
   )}
 
   <!-- Logo mark (white dots) top-left -->
@@ -100,28 +97,6 @@ const { image, title, date, source, category, href = "#", identifier } = Astro.p
     top: 0;
     left: 0;
     z-index: 1;
-  }
-
-  .featured-primary__comment-count {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7.4px 8.9px;
-    border-radius: 75px;
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  .featured-primary__comment-count img {
-    display: block;
   }
 
   .featured-primary__footer {

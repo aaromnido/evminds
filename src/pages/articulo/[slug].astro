@@ -116,12 +116,7 @@ const canonicalUrl = new URL(
               <Badge label={article.category} variant="outlined" />
             )
           }
-          <span class="article-detail__comment-count">
-            <span
-              class="disqus-comment-count"
-              data-disqus-identifier={article.id}></span>
-            <img src="/icon-comment-white.svg" alt="" width="16" height="16" />
-          </span>
+          <span class="disqus-comment-count" data-disqus-identifier={article.id} hidden></span>
         </div>
       </div>
       <!-- Meta: date + source -->
@@ -230,24 +225,6 @@ const canonicalUrl = new URL(
 
   .article-detail__category-link:hover {
     opacity: 0.8;
-  }
-
-  .article-detail__comment-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 7.4px 8.9px;
-    border-radius: 75px;
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  .article-detail__comment-count img {
-    display: block;
   }
 
   /* Hero image */

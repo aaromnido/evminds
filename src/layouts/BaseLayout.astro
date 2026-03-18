@@ -107,21 +107,34 @@ const jsonLd = type === 'article' ? JSON.stringify({
     <!-- Disqus Comment Count Script -->
     <script is:inline src="https://evminds-es.disqus.com/count.js" async id="dsq-count-scr"></script>
     <script is:inline>
-      // Extract only the number from Disqus count text (e.g., "6 Comments" -> "6")
-      // Hide badge if no comments (0 or no data)
+      // Create visible badge dynamically only when comment count >= 1
       window.cleanDisqusCounts = function() {
         document.querySelectorAll('.disqus-comment-count').forEach(function(el) {
-          const text = el.textContent || '';
-          const match = text.match(/\d+/);
-          const count = match ? parseInt(match[0], 10) : 0;
-          const badge = el.parentElement;
+          var text = el.textContent || '';
+          var match = text.match(/\d+/);
+          var count = match ? parseInt(match[0], 10) : 0;
+          var parent = el.parentElement;
+          if (!parent) return;
+
+          // Remove any previously injected badge (handles View Transitions re-runs)
+          var existing = parent.querySelector('.comment-count-badge');
+          if (existing) existing.remove();
 
           if (count > 0) {
-            el.textContent = count.toString();
-            if (badge) badge.style.display = '';
-          } else {
-            el.textContent = '';
-            if (badge) badge.style.display = 'none';
+            var badge = document.createElement('span');
+            badge.className = 'comment-count-badge';
+
+            var countText = document.createTextNode(count.toString() + ' ');
+            badge.appendChild(countText);
+
+            var icon = document.createElement('img');
+            icon.src = '/icon-comment-white.svg';
+            icon.alt = '';
+            icon.width = 16;
+            icon.height = 16;
+            badge.appendChild(icon);
+
+            parent.insertBefore(badge, el);
           }
         });
       }
@@ -129,12 +142,10 @@ const jsonLd = type === 'article' ? JSON.stringify({
       function refreshDisqusCount() {
         if (window.DISQUSWIDGETS) {
           window.DISQUSWIDGETS.getCount({ reset: true });
-          // Clean up after Disqus updates (slight delay for DOM update)
           setTimeout(cleanDisqusCounts, 500);
         }
       }
 
-      // Wait for Disqus script to load, then refresh counts
       function waitForDisqus() {
         if (window.DISQUSWIDGETS) {
           refreshDisqusCount();
@@ -143,14 +154,12 @@ const jsonLd = type === 'article' ? JSON.stringify({
         }
       }
 
-      // On initial page load
       if (document.readyState === 'complete') {
         waitForDisqus();
       } else {
         window.addEventListener('load', waitForDisqus);
       }
 
-      // On View Transitions navigation
       document.addEventListener('astro:page-load', refreshDisqusCount);
     </script>
   </body>

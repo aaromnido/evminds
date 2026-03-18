@@ -243,24 +243,13 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
 
     photoDiv.appendChild(img);
 
-    // Comment count badge
+    // Hidden Disqus counter (visible badge created dynamically by cleanDisqusCounts)
     if (identifier) {
-      const commentBadge = document.createElement("span");
-      commentBadge.className = "article-card__comment-count";
-
       const countSpan = document.createElement("span");
       countSpan.className = "disqus-comment-count";
       countSpan.setAttribute("data-disqus-identifier", identifier);
-
-      const commentIcon = document.createElement("img");
-      commentIcon.src = "/icon-comment-white.svg";
-      commentIcon.alt = "";
-      commentIcon.width = 16;
-      commentIcon.height = 16;
-
-      commentBadge.appendChild(countSpan);
-      commentBadge.appendChild(commentIcon);
-      photoDiv.appendChild(commentBadge);
+      countSpan.hidden = true;
+      photoDiv.appendChild(countSpan);
     }
 
     photoLink.appendChild(photoDiv);
