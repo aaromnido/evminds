@@ -94,6 +94,7 @@ function mapArticleToProps(article: ArticleData) {
     source: article.source_name,
     category: article.category,
     href: getArticleUrl(article.slug),
+    identifier: article.id,
   };
 }
 
@@ -219,6 +220,7 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     const source = article.source.name;
     const category = article.category;
     const href = '/articulo/' + article.slug;
+    const identifier = article.id;
 
     // Create article element
     const articleEl = document.createElement("article");
@@ -240,6 +242,27 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     img.height = 300;
 
     photoDiv.appendChild(img);
+
+    // Comment count badge
+    if (identifier) {
+      const commentBadge = document.createElement("span");
+      commentBadge.className = "article-card__comment-count";
+
+      const countSpan = document.createElement("span");
+      countSpan.className = "disqus-comment-count";
+      countSpan.setAttribute("data-disqus-identifier", identifier);
+
+      const commentIcon = document.createElement("img");
+      commentIcon.src = "/icon-comment-white.svg";
+      commentIcon.alt = "";
+      commentIcon.width = 16;
+      commentIcon.height = 16;
+
+      commentBadge.appendChild(countSpan);
+      commentBadge.appendChild(commentIcon);
+      photoDiv.appendChild(commentBadge);
+    }
+
     photoLink.appendChild(photoDiv);
 
     // Content div
@@ -360,6 +383,15 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
       });
 
       articlesGrid.appendChild(fragment);
+
+      // Refresh Disqus comment counts for new articles
+      if (window.DISQUSWIDGETS) {
+        window.DISQUSWIDGETS.getCount({ reset: true });
+        // Clean up count text after Disqus updates
+        setTimeout(function() {
+          if (window.cleanDisqusCounts) window.cleanDisqusCounts();
+        }, 500);
+      }
 
       // Update cursor
       cursor = data.nextCursor;
