@@ -98,11 +98,50 @@ const jsonLd = type === 'article' ? JSON.stringify({
       <script is:inline type="application/ld+json" set:html={jsonLd} />
     )}
 
+    <!-- Theme: apply dark class before first paint (FOUC prevention) -->
+    <script is:inline>
+      (function() {
+        var stored = localStorage.getItem('evminds-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
     <!-- Client Router for smooth page transitions -->
     <ClientRouter />
   </head>
   <body>
     <slot />
+
+    <!-- Theme toggle system -->
+    <script>
+      function getTheme(): 'light' | 'dark' {
+        const stored = localStorage.getItem('evminds-theme');
+        if (stored === 'dark' || stored === 'light') return stored;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function setTheme(theme: 'light' | 'dark') {
+        localStorage.setItem('evminds-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      }
+
+      function toggleTheme(): 'light' | 'dark' {
+        const next = getTheme() === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        document.dispatchEvent(new CustomEvent('evminds:theme-change', { detail: { theme: next } }));
+        return next;
+      }
+
+      (window as any).__evminds_theme = { get: getTheme, set: setTheme, toggle: toggleTheme };
+
+      // Re-sync on View Transitions (html class may be reset during swap)
+      function syncTheme() { setTheme(getTheme()); }
+      syncTheme();
+      document.addEventListener('astro:page-load', syncTheme);
+    </script>
 
     <!-- Bookmark system (global event delegation + state sync) -->
     <script>

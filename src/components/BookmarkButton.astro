@@ -12,7 +12,7 @@ const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/i
 ---
 
 <button
-  class="bookmark-btn"
+  class:list={["bookmark-btn", { "bookmark-btn--white": variant === "white" }]}
   data-article-id={articleId}
   data-article={articleData}
   aria-label="Guardar artículo"
@@ -55,5 +55,10 @@ const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/i
 
   .bookmark-btn:active {
     transform: scale(0.95);
+  }
+
+  /* In dark mode, invert dark variant icons to white */
+  .dark .bookmark-btn:not(.bookmark-btn--white) .bookmark-btn__icon {
+    filter: brightness(0) invert(1);
   }
 </style>

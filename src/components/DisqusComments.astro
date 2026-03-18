@@ -12,7 +12,7 @@ const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
 {shortname && (
   <section class="disqus-comments" aria-label="Comentarios">
     <h2 class="disqus-comments__title">Comentarios</h2>
-    <div id="disqus_thread" style="color-scheme: light; color: #191b41; background-color: #F6F2E6;"></div>
+    <div id="disqus_thread" class="disqus-comments__thread"></div>
 
     <script
       is:inline
@@ -52,7 +52,7 @@ const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
   .disqus-comments {
     margin-top: 48px;
     padding-top: 36px;
-    border-top: 2px solid var(--navy-2);
+    border-top: 2px solid var(--ev-border-subtle);
   }
 
   .disqus-comments__title {
@@ -61,5 +61,19 @@ const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
     font-weight: 700;
     color: var(--navy-light);
     margin-bottom: 24px;
+  }
+
+  .disqus-comments__thread {
+    color-scheme: light;
+    color: var(--navy-2);
+    background-color: var(--sepia-light);
+  }
+
+  :global(.dark) .disqus-comments__thread {
+    color-scheme: light;
+    background-color: #faf7f0;
+    color: #191b41;
+    border-radius: 8px;
+    padding: 16px;
   }
 </style>

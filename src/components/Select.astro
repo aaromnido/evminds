@@ -112,14 +112,14 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
 
   .select__trigger--active,
   .select__trigger[aria-expanded="true"] {
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
-    border-color: var(--navy-2);
+    background-color: var(--ev-bg-accent);
+    color: var(--ev-text-on-image);
+    border-color: var(--ev-bg-accent);
   }
 
   .select__trigger--active:hover,
   .select__trigger[aria-expanded="true"]:hover {
-    background-color: color-mix(in srgb, var(--navy-2) 90%, black);
+    background-color: color-mix(in srgb, var(--ev-bg-accent) 90%, black);
   }
 
   .select__trigger[aria-expanded="true"] .select__icon {

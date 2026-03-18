@@ -1,5 +1,6 @@
 ---
 import Logo from "./Logo.astro";
+import ThemeToggle from "./ThemeToggle.astro";
 import { MobileMenu } from "./MobileMenu";
 
 const currentPath = Astro.url.pathname;
@@ -20,6 +21,7 @@ const navItems = [
 
   {/* Desktop Navigation */}
   <nav class="nav" aria-label="Navegación principal">
+    <div class="nav__indicator" aria-hidden="true"></div>
     {
       navItems.map((item) => (
         <a
@@ -30,6 +32,7 @@ const navItems = [
         </a>
       ))
     }
+    <ThemeToggle />
   </nav>
 
   {/* Mobile Menu */}
@@ -68,6 +71,17 @@ const navItems = [
     display: flex;
     gap: 24px;
     align-items: center;
+    position: relative;
+  }
+
+  .nav__indicator {
+    position: absolute;
+    top: 0;
+    height: 2px;
+    background-color: var(--navy-2);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s, background-color 0.15s;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .nav__item {
@@ -79,16 +93,6 @@ const navItems = [
     padding: 12px 0;
     letter-spacing: -0.01em;
     white-space: nowrap;
-    border-top: 2px solid transparent;
-    transition: border-color 0.15s;
-  }
-
-  .nav__item--active {
-    border-top-color: var(--navy-2);
-  }
-
-  .nav__item:hover:not(.nav__item--active) {
-    border-top-color: color-mix(in srgb, var(--navy-2) 30%, transparent);
   }
 
   /* Mobile - Hide desktop navigation */
@@ -98,3 +102,52 @@ const navItems = [
     }
   }
 </style>
+
+<script is:inline>
+  function initNavIndicator() {
+    var nav = document.querySelector('.nav');
+    var indicator = nav && nav.querySelector('.nav__indicator');
+    var items = nav ? nav.querySelectorAll('.nav__item') : [];
+    if (!nav || !indicator || !items.length) return;
+
+    // Already initialized — skip
+    if (nav.hasAttribute('data-nav-init')) return;
+    nav.setAttribute('data-nav-init', '');
+
+    var activeItem = nav.querySelector('.nav__item--active');
+    var navColor = getComputedStyle(document.documentElement).getPropertyValue('--navy-2').trim();
+    var blueColor = getComputedStyle(document.documentElement).getPropertyValue('--ev-primary-blue').trim();
+
+    function positionAt(el, color) {
+      var navRect = nav.getBoundingClientRect();
+      var elRect = el.getBoundingClientRect();
+      indicator.style.left = (elRect.left - navRect.left) + 'px';
+      indicator.style.width = elRect.width + 'px';
+      indicator.style.backgroundColor = color;
+      indicator.style.opacity = '1';
+    }
+
+    // Show on active item initially
+    if (activeItem) {
+      positionAt(activeItem, navColor);
+    }
+
+    items.forEach(function(item) {
+      item.addEventListener('mouseenter', function() {
+        var isActive = item.classList.contains('nav__item--active');
+        positionAt(item, isActive ? navColor : blueColor);
+      });
+    });
+
+    nav.addEventListener('mouseleave', function() {
+      if (activeItem) {
+        positionAt(activeItem, navColor);
+      } else {
+        indicator.style.opacity = '0';
+      }
+    });
+  }
+
+  initNavIndicator();
+  document.addEventListener('astro:page-load', initNavIndicator);
+</script>

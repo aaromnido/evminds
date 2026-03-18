@@ -84,6 +84,22 @@
     --ev-primary-blue: #0076f4;
     --ev-primary-green: #01c98a;
     --ev-teal: #00bcbc;
+    --ev-bg-accent: var(--navy-2);
+    --ev-text-on-image: #faf7f0;
+    --ev-border-subtle: #e2ded6;
+    --ev-skeleton: #E2DED6;
+}
+
+.dark {
+    --navy-1: #c8cad8;
+    --navy-2: #d4d6e4;
+    --navy-light: #e0e1ec;
+    --ev-bg-accent: #191b41;
+    --ev-border-subtle: oklch(1 0 0 / 12%);
+    --ev-skeleton: oklch(0.25 0 0);
+    --ev-primary-blue: #5ba3ff;
+    --ev-primary-green: #3eeaaa;
+    --ev-teal: #40d6d6;
 }
 
 @theme inline {
@@ -204,8 +220,8 @@
   gap: 4px;
   padding: 7.4px 8.9px;
   border-radius: 75px;
-  background-color: var(--navy-2);
-  color: var(--sepia-light);
+  background-color: var(--ev-bg-accent);
+  color: var(--ev-text-on-image);
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 500;
   font-size: 16px;

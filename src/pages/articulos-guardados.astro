@@ -21,7 +21,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 
     <!-- Empty state (hidden by JS when bookmarks exist) -->
     <div id="guardados-empty">
-      <EmptyState icon="/icon-empty.svg" ctaLabel="Explorar artículos" ctaHref="/">
+      <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
         Aún <strong>no has guardado</strong> ningún artículo.<br />Pulsa el icono de marcador en cualquier artículo para guardarlo aquí.
       </EmptyState>
     </div>
@@ -121,7 +121,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 
     var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", "M1 10L10 1M10 1H3M10 1V8");
-    path.setAttribute("stroke", "#191b41");
+    path.setAttribute("stroke", "currentColor");
     path.setAttribute("stroke-width", "1.5");
     path.setAttribute("stroke-linecap", "round");
     path.setAttribute("stroke-linejoin", "round");

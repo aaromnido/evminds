@@ -69,7 +69,7 @@ const articleDataJson = articleId
       >
         <path
           d="M1 10L10 1M10 1H3M10 1V8"
-          stroke="#191b41"
+          stroke="currentColor"
           stroke-width="1.5"
           stroke-linecap="round"
           stroke-linejoin="round"></path>
@@ -111,10 +111,10 @@ const articleDataJson = articleId
   .article-card__photo {
     position: relative;
     height: 300px;
-    background-color: rgba(25, 27, 65, 0.08);
+    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid #e2ded6;
+    border: 1px solid var(--ev-border-subtle);
   }
 
   .article-card__photo img {
@@ -163,6 +163,7 @@ const articleDataJson = articleId
   .article-card__arrow {
     flex-shrink: 0;
     margin-top: 4px;
+    color: var(--navy-2);
   }
 
   .article-card__excerpt {

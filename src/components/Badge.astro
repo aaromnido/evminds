@@ -25,14 +25,21 @@ const { label, variant = 'outlined' } = Astro.props;
   }
 
   .badge--filled {
-    background-color: var(--navy-2);
-    border: 0.5px solid var(--sepia-light);
-    color: var(--sepia-light);
+    background-color: var(--ev-bg-accent);
+    border: 0.5px solid var(--ev-text-on-image);
+    color: var(--ev-text-on-image);
   }
 
   .badge--outlined {
     border: 1.5px solid var(--navy-2);
     color: var(--navy-2);
+    background-color: transparent;
+  }
+
+  .dark .badge--outlined {
+    background-color: #faf7f0;
+    color: #191b41;
+    border-color: #faf7f0;
   }
 
   .badge--light {

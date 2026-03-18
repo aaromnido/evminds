@@ -114,7 +114,7 @@ const visibleCategories = availableCategorySlugs
   .site-footer {
     width: 100%;
     padding: 48px 0 24px;
-    border-top: 2px solid var(--navy-2);
+    border-top: 2px solid var(--ev-border-subtle);
     background-color: var(--sepia-light);
   }
 
@@ -154,9 +154,14 @@ const visibleCategories = availableCategorySlugs
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: var(--navy-2);
-    color: var(--sepia-light);
+    background-color: var(--ev-bg-accent);
+    color: var(--ev-text-on-image);
     transition: opacity 0.15s;
+  }
+
+  :global(.dark) .footer__social-link {
+    background-color: #faf7f0;
+    color: #191b41;
   }
 
   .footer__social-link:hover {
