@@ -1,0 +1,9 @@
+---
+interface Props {
+  identifier: string;
+}
+
+const { identifier } = Astro.props;
+---
+
+<span class="disqus-comment-count" data-disqus-identifier={identifier} hidden></span>

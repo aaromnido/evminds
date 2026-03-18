@@ -1,5 +1,6 @@
 ---
 import Badge from "./Badge.astro";
+import DisqusCommentCount from "./DisqusCommentCount.astro";
 
 interface Props {
   image: string;
@@ -30,9 +31,7 @@ const { image, title, date, source, category, href = "#", identifier } = Astro.p
   />
 
   <!-- Comment count (hidden until JS populates) -->
-  {identifier && (
-    <span class="disqus-comment-count" data-disqus-identifier={identifier} hidden></span>
-  )}
+  {identifier && <DisqusCommentCount identifier={identifier} />}
 
   <!-- Logo mark (white dots) top-left -->
   <div class="featured-primary__logomark" aria-hidden="true">

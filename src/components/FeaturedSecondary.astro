@@ -1,5 +1,6 @@
 ---
 import Badge from "./Badge.astro";
+import DisqusCommentCount from "./DisqusCommentCount.astro";
 
 interface Props {
   image: string;
@@ -38,9 +39,7 @@ const {
   />
 
   <!-- Comment count (hidden until JS populates) -->
-  {identifier && (
-    <span class="disqus-comment-count" data-disqus-identifier={identifier} hidden></span>
-  )}
+  {identifier && <DisqusCommentCount identifier={identifier} />}
 
   <div class="featured-secondary__footer">
     <div class="featured-secondary__badges">

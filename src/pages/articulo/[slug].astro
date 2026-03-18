@@ -6,6 +6,7 @@ import Badge from "@/components/Badge.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
+import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
 import { supabase } from "@/lib/supabase";
 import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
@@ -116,7 +117,7 @@ const canonicalUrl = new URL(
               <Badge label={article.category} variant="outlined" />
             )
           }
-          <span class="disqus-comment-count" data-disqus-identifier={article.id} hidden></span>
+          <DisqusCommentCount identifier={article.id} />
         </div>
       </div>
       <!-- Meta: date + source -->
