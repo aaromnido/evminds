@@ -1,5 +1,6 @@
 ---
 import Badge from "./Badge.astro";
+import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
 
 interface Props {
@@ -10,9 +11,27 @@ interface Props {
   category: string;
   href?: string;
   identifier?: string;
+  articleId?: string;
+  articleSlug?: string;
+  excerpt?: string;
+  scraped_at?: string;
 }
 
-const { image, title, date, source, category, href = "#", identifier } = Astro.props;
+const { image, title, date, source, category, href = "#", identifier, articleId, articleSlug, excerpt = "", scraped_at } = Astro.props;
+
+const articleDataJson = articleId
+  ? JSON.stringify({
+      id: articleId,
+      slug: articleSlug || "",
+      title,
+      excerpt,
+      image_url: image,
+      scraped_at: scraped_at || "",
+      source_name: source,
+      category,
+      savedAt: "",
+    })
+  : "";
 ---
 
 <a
@@ -55,6 +74,9 @@ const { image, title, date, source, category, href = "#", identifier } = Astro.p
   <!-- Footer overlay -->
   <div class="featured-primary__footer">
     <div class="featured-primary__badges">
+      {articleId && (
+        <BookmarkButton articleId={articleId} articleData={articleDataJson} variant="white" />
+      )}
       <Badge label={source} variant="light" />
       <Badge label={category} variant="filled" />
     </div>
@@ -115,6 +137,7 @@ const { image, title, date, source, category, href = "#", identifier } = Astro.p
 
   .featured-primary__badges {
     display: flex;
+    align-items: center;
     gap: 10px;
   }
 

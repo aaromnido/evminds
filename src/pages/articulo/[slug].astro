@@ -4,6 +4,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Badge from "@/components/Badge.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
+import BookmarkButton from "@/components/BookmarkButton.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
 import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
@@ -54,6 +55,9 @@ const relatedArticles = (relatedData || []).map((a: any) => {
     category: a.category,
     href: getArticleUrl(a.slug),
     identifier: a.id,
+    articleId: a.id,
+    articleSlug: a.slug,
+    scraped_at: a.scraped_at,
   };
 });
 
@@ -65,6 +69,18 @@ const canonicalUrl = new URL(
   getArticleUrl(article.slug),
   Astro.site,
 ).toString();
+
+const articleDataJson = JSON.stringify({
+  id: article.id,
+  slug: article.slug,
+  title: article.title,
+  excerpt: article.excerpt,
+  image_url: article.image_url || "",
+  scraped_at: article.scraped_at || "",
+  source_name: source.name,
+  category: article.category,
+  savedAt: "",
+});
 ---
 
 <BaseLayout
@@ -99,7 +115,7 @@ const canonicalUrl = new URL(
           <time datetime={article.published_at}>{formattedDate}</time>
         </div>
 
-        <!-- Badges -->
+        <!-- Badges + Bookmark -->
         <div class="article-detail__badges">
           <Badge label={source.name} variant="filled" />
           {
@@ -118,6 +134,7 @@ const canonicalUrl = new URL(
             )
           }
           <DisqusCommentCount identifier={article.id} />
+          <BookmarkButton articleId={article.id} articleData={articleDataJson} />
         </div>
       </div>
       <!-- Meta: date + source -->
@@ -216,6 +233,7 @@ const canonicalUrl = new URL(
   /* Badges */
   .article-detail__badges {
     display: flex;
+    align-items: center;
     gap: 10px;
     flex-wrap: wrap;
   }

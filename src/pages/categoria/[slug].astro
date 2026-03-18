@@ -95,6 +95,9 @@ function mapArticleToProps(article: ArticleData) {
     category: article.category,
     href: getArticleUrl(article.slug),
     identifier: article.id,
+    articleId: article.id,
+    articleSlug: article.slug,
+    scraped_at: article.scraped_at.toISOString(),
   };
 }
 
@@ -271,12 +274,7 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     titleEl.className = "article-card__title";
     titleEl.textContent = title;
 
-    const dateEl = document.createElement("p");
-    dateEl.className = "article-card__date";
-    dateEl.textContent = date;
-
     titleLink.appendChild(titleEl);
-    titleLink.appendChild(dateEl);
 
     // Arrow SVG
     const arrowSvg = document.createElementNS(
@@ -302,7 +300,20 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     headerDiv.appendChild(titleLink);
     headerDiv.appendChild(arrowSvg);
 
-    // Badges div
+    contentDiv.appendChild(headerDiv);
+
+    var excerptText = article.excerpt || "";
+
+    // Date
+    const dateEl = document.createElement("p");
+    dateEl.className = "article-card__date";
+    dateEl.textContent = date;
+    contentDiv.appendChild(dateEl);
+
+    // Footer: badges + bookmark
+    const footerDiv = document.createElement("div");
+    footerDiv.className = "article-card__footer";
+
     const badgesDiv = document.createElement("div");
     badgesDiv.className = "article-card__badges";
 
@@ -316,10 +327,55 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
 
     badgesDiv.appendChild(sourceBadge);
     badgesDiv.appendChild(categoryBadge);
+    footerDiv.appendChild(badgesDiv);
 
-    // Assemble content
-    contentDiv.appendChild(headerDiv);
-    contentDiv.appendChild(badgesDiv);
+    // Bookmark button
+    var bookmarkBtn = document.createElement("button");
+    bookmarkBtn.className = "bookmark-btn";
+    bookmarkBtn.setAttribute("data-article-id", identifier);
+    bookmarkBtn.setAttribute("aria-label", "Guardar artículo");
+    bookmarkBtn.setAttribute("aria-pressed", "false");
+
+    var bookmarkData = JSON.stringify({
+      id: identifier,
+      slug: article.slug,
+      title: title,
+      excerpt: excerptText,
+      image_url: image,
+      scraped_at: article.scraped_at || "",
+      source_name: source,
+      category: category,
+      savedAt: ""
+    });
+    bookmarkBtn.setAttribute("data-article", bookmarkData);
+
+    var defaultIcon = document.createElement("img");
+    defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
+    defaultIcon.src = "/icon-bookmark-default.svg";
+    defaultIcon.width = 24;
+    defaultIcon.height = 24;
+    defaultIcon.alt = "";
+
+    var activeIcon = document.createElement("img");
+    activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
+    activeIcon.src = "/icon-bookmark-active.svg";
+    activeIcon.width = 24;
+    activeIcon.height = 24;
+    activeIcon.alt = "";
+    activeIcon.style.display = "none";
+
+    // Check initial bookmark state
+    if (window.__evminds_bookmarks && window.__evminds_bookmarks.isBookmarked(identifier)) {
+      defaultIcon.style.display = "none";
+      activeIcon.style.display = "";
+      bookmarkBtn.setAttribute("aria-pressed", "true");
+    }
+
+    bookmarkBtn.appendChild(defaultIcon);
+    bookmarkBtn.appendChild(activeIcon);
+    footerDiv.appendChild(bookmarkBtn);
+
+    contentDiv.appendChild(footerDiv);
 
     // Assemble article
     articleEl.appendChild(photoLink);

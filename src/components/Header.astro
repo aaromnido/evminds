@@ -6,6 +6,7 @@ const currentPath = Astro.url.pathname;
 
 const navItems = [
   { label: "Artículos", href: "/", active: currentPath === "/" || currentPath.startsWith("/articulo/") },
+  { label: "Guardados", href: "/articulos-guardados", active: currentPath === "/articulos-guardados" },
   { label: "Quienes somos", href: "/quienes-somos", active: currentPath === "/quienes-somos" },
   { label: "Contacto", href: "/contacto", active: currentPath === "/contacto" },
 ];

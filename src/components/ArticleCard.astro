@@ -1,5 +1,6 @@
 ---
 import Badge from "./Badge.astro";
+import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
   category: string;
   href?: string;
   identifier?: string;
+  articleId?: string;
+  articleSlug?: string;
+  scraped_at?: string;
 }
 
 const {
@@ -22,7 +26,24 @@ const {
   category,
   href = "#",
   identifier,
+  articleId,
+  articleSlug,
+  scraped_at,
 } = Astro.props;
+
+const articleDataJson = articleId
+  ? JSON.stringify({
+      id: articleId,
+      slug: articleSlug || "",
+      title,
+      excerpt,
+      image_url: image,
+      scraped_at: scraped_at || "",
+      source_name: source,
+      category,
+      savedAt: "",
+    })
+  : "";
 ---
 
 <article class="article-card">
@@ -55,12 +76,18 @@ const {
       </svg>
     </div>
 
-    <div class="article-card__meta">
-      <p class="article-card__date">{date}</p>
+    <p class="article-card__date">{date}</p>
+
+    <div class="article-card__footer">
       <div class="article-card__badges">
         <Badge label={source} variant="filled" />
         <Badge label={category} variant="outlined" />
       </div>
+      {
+        articleId && (
+          <BookmarkButton articleId={articleId} articleData={articleDataJson} />
+        )
+      }
     </div>
   </div>
 </article>
@@ -138,11 +165,16 @@ const {
     margin-top: 4px;
   }
 
-  .article-card__meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+  .article-card__excerpt {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--navy-2);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .article-card__date {
@@ -153,6 +185,13 @@ const {
     color: var(--navy-2);
   }
 
+  .article-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .article-card__badges {
     display: flex;
     gap: 8px;
@@ -160,10 +199,9 @@ const {
   }
 
   @media (max-width: 768px) {
-    .article-card__meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
+    .article-card__footer {
+      flex-direction: row;
+      align-items: center;
     }
   }
 </style>

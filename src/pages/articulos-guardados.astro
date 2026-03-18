@@ -1,0 +1,338 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import Badge from "@/components/Badge.astro";
+import { STORAGE_KEY } from "@/lib/bookmarks";
+---
+
+<BaseLayout title="Mis artículos guardados - EVMinds" description="Tu lista de lectura personal con artículos guardados sobre movilidad eléctrica.">
+  <main class="page">
+    <Header />
+
+    <Subheader>
+      <Fragment slot="title">
+        Mis artículos <strong>guardados</strong>
+      </Fragment>
+    </Subheader>
+
+    <!-- Empty state (hidden by JS when bookmarks exist) -->
+    <div id="guardados-empty" class="guardados-empty">
+      <img src="/icon-bookmark-default.svg" width="48" height="48" alt="" class="guardados-empty__icon" />
+      <h2 class="guardados-empty__title">No tienes artículos guardados</h2>
+      <p class="guardados-empty__text">
+        Pulsa el icono <img src="/icon-bookmark-default.svg" width="18" height="18" alt="guardar" style="vertical-align: middle;" /> en cualquier artículo para guardarlo aquí.
+      </p>
+      <a href="/" class="guardados-empty__cta">Explorar artículos</a>
+    </div>
+
+    <!-- Grid (hidden by default, shown by JS) -->
+    <section id="guardados-grid-section" class="news" style="display: none;" aria-label="Artículos guardados">
+      <div id="guardados-grid" class="news__grid"></div>
+    </section>
+
+    <!-- Hidden: forces Astro to include ArticleCard + Badge global styles -->
+    <div style="display:none;" aria-hidden="true">
+      <ArticleCard image="" title="" date="" excerpt="" source="" category="" />
+    </div>
+
+    <Footer />
+  </main>
+</BaseLayout>
+
+<script is:inline define:vars={{ STORAGE_KEY }}>
+  function formatDate(dateString) {
+    if (!dateString) return "";
+    var date = new Date(dateString);
+    var now = new Date();
+    var diffTime = Math.abs(now - date);
+    var diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Ayer";
+    if (diffDays < 7) return "Hace " + diffDays + " días";
+
+    return date.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function renderBookmarkCard(bookmark) {
+    var image = bookmark.image_url || "/placeholder-image.jpg";
+    var title = bookmark.title;
+    var date = formatDate(bookmark.scraped_at);
+    var source = bookmark.source_name;
+    var category = bookmark.category;
+    var href = "/articulo/" + bookmark.slug;
+    var identifier = bookmark.id;
+    var excerptText = bookmark.excerpt || "";
+
+    // Create article element
+    var articleEl = document.createElement("article");
+    articleEl.className = "article-card";
+
+    // Photo link
+    var photoLink = document.createElement("a");
+    photoLink.href = href;
+    photoLink.className = "article-card__photo-link";
+
+    var photoDiv = document.createElement("div");
+    photoDiv.className = "article-card__photo";
+
+    var img = document.createElement("img");
+    img.src = image;
+    img.alt = title;
+    img.loading = "lazy";
+    img.width = 600;
+    img.height = 300;
+
+    photoDiv.appendChild(img);
+    photoLink.appendChild(photoDiv);
+
+    // Content div
+    var contentDiv = document.createElement("div");
+    contentDiv.className = "article-card__content";
+
+    // Header div
+    var headerDiv = document.createElement("div");
+    headerDiv.className = "article-card__header";
+
+    // Title link
+    var titleLink = document.createElement("a");
+    titleLink.href = href;
+    titleLink.className = "article-card__title-link";
+
+    var titleEl = document.createElement("h3");
+    titleEl.className = "article-card__title";
+    titleEl.textContent = title;
+
+    titleLink.appendChild(titleEl);
+
+    // Arrow SVG
+    var arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    arrowSvg.setAttribute("class", "article-card__arrow");
+    arrowSvg.setAttribute("width", "11");
+    arrowSvg.setAttribute("height", "11");
+    arrowSvg.setAttribute("viewBox", "0 0 11 11");
+    arrowSvg.setAttribute("fill", "none");
+    arrowSvg.setAttribute("aria-hidden", "true");
+
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M1 10L10 1M10 1H3M10 1V8");
+    path.setAttribute("stroke", "#191b41");
+    path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+
+    arrowSvg.appendChild(path);
+
+    headerDiv.appendChild(titleLink);
+    headerDiv.appendChild(arrowSvg);
+    contentDiv.appendChild(headerDiv);
+
+    // Date
+    var dateEl = document.createElement("p");
+    dateEl.className = "article-card__date";
+    dateEl.textContent = date;
+    contentDiv.appendChild(dateEl);
+
+    // Footer: badges + bookmark
+    var footerDiv = document.createElement("div");
+    footerDiv.className = "article-card__footer";
+
+    var badgesDiv = document.createElement("div");
+    badgesDiv.className = "article-card__badges";
+
+    var sourceBadge = document.createElement("span");
+    sourceBadge.className = "badge badge--filled";
+    sourceBadge.textContent = source;
+
+    var categoryBadge = document.createElement("span");
+    categoryBadge.className = "badge badge--outlined";
+    categoryBadge.textContent = category;
+
+    badgesDiv.appendChild(sourceBadge);
+    badgesDiv.appendChild(categoryBadge);
+    footerDiv.appendChild(badgesDiv);
+
+    // Bookmark button (always active on this page)
+    var bookmarkBtn = document.createElement("button");
+    bookmarkBtn.className = "bookmark-btn";
+    bookmarkBtn.setAttribute("data-article-id", identifier);
+    bookmarkBtn.setAttribute("aria-label", "Quitar de guardados");
+    bookmarkBtn.setAttribute("aria-pressed", "true");
+
+    var bookmarkData = JSON.stringify(bookmark);
+    bookmarkBtn.setAttribute("data-article", bookmarkData);
+
+    var defaultIcon = document.createElement("img");
+    defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
+    defaultIcon.src = "/icon-bookmark-default.svg";
+    defaultIcon.width = 24;
+    defaultIcon.height = 24;
+    defaultIcon.alt = "";
+    defaultIcon.style.display = "none";
+
+    var activeIcon = document.createElement("img");
+    activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
+    activeIcon.src = "/icon-bookmark-active.svg";
+    activeIcon.width = 24;
+    activeIcon.height = 24;
+    activeIcon.alt = "";
+
+    bookmarkBtn.appendChild(defaultIcon);
+    bookmarkBtn.appendChild(activeIcon);
+    footerDiv.appendChild(bookmarkBtn);
+
+    contentDiv.appendChild(footerDiv);
+
+    // Assemble article
+    articleEl.appendChild(photoLink);
+    articleEl.appendChild(contentDiv);
+
+    return articleEl;
+  }
+
+  function clearGrid(grid) {
+    while (grid.firstChild) {
+      grid.removeChild(grid.firstChild);
+    }
+  }
+
+  function renderGuardados() {
+    var emptyState = document.getElementById("guardados-empty");
+    var gridSection = document.getElementById("guardados-grid-section");
+    var grid = document.getElementById("guardados-grid");
+
+    if (!emptyState || !gridSection || !grid) return;
+
+    var bookmarks = [];
+    try {
+      bookmarks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (e) {
+      bookmarks = [];
+    }
+
+    // Clear grid safely
+    clearGrid(grid);
+
+    if (bookmarks.length === 0) {
+      emptyState.style.display = "";
+      gridSection.style.display = "none";
+      return;
+    }
+
+    emptyState.style.display = "none";
+    gridSection.style.display = "";
+
+    var fragment = document.createDocumentFragment();
+    bookmarks.forEach(function (bookmark) {
+      fragment.appendChild(renderBookmarkCard(bookmark));
+    });
+    grid.appendChild(fragment);
+  }
+
+  // Re-render only when a bookmark is removed on this page
+  document.addEventListener("evminds:bookmark-change", function (e) {
+    if (e.detail && e.detail.bookmarked === false) {
+      renderGuardados();
+    }
+  });
+
+  renderGuardados();
+  document.addEventListener("astro:page-load", renderGuardados);
+</script>
+
+<style>
+  .page {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background-color: var(--sepia-light);
+    min-height: 100vh;
+  }
+
+  /* News grid (same as index) */
+  .news {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .news__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 36px;
+    align-items: flex-start;
+  }
+
+  .guardados-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 96px 24px;
+    text-align: center;
+  }
+
+  .guardados-empty__icon {
+    opacity: 0.4;
+  }
+
+  .guardados-empty__title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy-light);
+  }
+
+  .guardados-empty__text {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 16px;
+    color: var(--navy-2);
+    max-width: 400px;
+    line-height: 1.5;
+  }
+
+  .guardados-empty__cta {
+    display: inline-flex;
+    padding: 12px 28px;
+    background-color: var(--navy-light);
+    color: var(--sepia-light);
+    border-radius: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-top: 8px;
+    transition: opacity 0.15s ease;
+  }
+
+  .guardados-empty__cta:hover {
+    opacity: 0.85;
+  }
+
+  @media (max-width: 1024px) {
+    .news__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 0 12px 48px;
+    }
+
+    .news__grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+</style>

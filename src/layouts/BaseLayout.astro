@@ -104,6 +104,71 @@ const jsonLd = type === 'article' ? JSON.stringify({
   <body>
     <slot />
 
+    <!-- Bookmark system (global event delegation + state sync) -->
+    <script>
+      import { isBookmarked, toggleBookmark } from "@/lib/bookmarks";
+      import type { BookmarkEntry } from "@/lib/bookmarks";
+
+      // Expose for inline scripts (infinite scroll dynamic cards)
+      (window as any).__evminds_bookmarks = { isBookmarked, toggleBookmark };
+
+      function updateBookmarkIcon(btn: Element, active: boolean) {
+        const defaultIcon = btn.querySelector(".bookmark-btn__icon--default") as HTMLElement;
+        const activeIcon = btn.querySelector(".bookmark-btn__icon--active") as HTMLElement;
+        if (defaultIcon) defaultIcon.style.display = active ? "none" : "";
+        if (activeIcon) activeIcon.style.display = active ? "" : "none";
+        btn.setAttribute("aria-pressed", String(active));
+        btn.setAttribute("aria-label", active ? "Quitar de guardados" : "Guardar artículo");
+      }
+
+      function syncAllBookmarkIcons() {
+        document.querySelectorAll(".bookmark-btn").forEach((btn) => {
+          const id = btn.getAttribute("data-article-id");
+          if (id) updateBookmarkIcon(btn, isBookmarked(id));
+        });
+      }
+
+      // Event delegation in capture phase — intercepts click before <a> navigates
+      document.addEventListener("click", (e) => {
+        const btn = (e.target as Element).closest(".bookmark-btn");
+        if (!btn) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const id = btn.getAttribute("data-article-id");
+        const dataStr = btn.getAttribute("data-article");
+        if (!id || !dataStr) return;
+
+        try {
+          const entry: BookmarkEntry = JSON.parse(dataStr);
+          const nowBookmarked = toggleBookmark(entry);
+          updateBookmarkIcon(btn, nowBookmarked);
+
+          // Sync other buttons for the same article on this page
+          document.dispatchEvent(
+            new CustomEvent("evminds:bookmark-change", {
+              detail: { id, bookmarked: nowBookmarked },
+            })
+          );
+        } catch {
+          // Silently fail if data-article is malformed
+        }
+      }, true); // capture: true — intercepts before <a> bubbling phase
+
+      // Sync duplicate buttons when bookmark changes
+      document.addEventListener("evminds:bookmark-change", ((e: CustomEvent) => {
+        const { id, bookmarked } = e.detail;
+        document.querySelectorAll(`.bookmark-btn[data-article-id="${id}"]`).forEach((btn) => {
+          updateBookmarkIcon(btn, bookmarked);
+        });
+      }) as EventListener);
+
+      // Re-sync icons after View Transitions navigation
+      syncAllBookmarkIcons();
+      document.addEventListener("astro:page-load", syncAllBookmarkIcons);
+    </script>
+
     <!-- Disqus Comment Count Script -->
     <script is:inline src="https://evminds-es.disqus.com/count.js" async id="dsq-count-scr"></script>
     <script is:inline>

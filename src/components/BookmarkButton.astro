@@ -1,0 +1,59 @@
+---
+interface Props {
+  articleId: string;
+  articleData: string;
+  variant?: "dark" | "white";
+}
+
+const { articleId, articleData, variant = "dark" } = Astro.props;
+
+const defaultIcon = variant === "white" ? "/icon-bookmark-white-default.svg" : "/icon-bookmark-default.svg";
+const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/icon-bookmark-active.svg";
+---
+
+<button
+  class="bookmark-btn"
+  data-article-id={articleId}
+  data-article={articleData}
+  aria-label="Guardar artículo"
+  aria-pressed="false"
+>
+  <img
+    class="bookmark-btn__icon bookmark-btn__icon--default"
+    src={defaultIcon}
+    width="24"
+    height="24"
+    alt=""
+  />
+  <img
+    class="bookmark-btn__icon bookmark-btn__icon--active"
+    src={activeIcon}
+    width="24"
+    height="24"
+    alt=""
+    style="display:none;"
+  />
+</button>
+
+<style is:global>
+  .bookmark-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .bookmark-btn:hover {
+    transform: scale(1.15);
+  }
+
+  .bookmark-btn:active {
+    transform: scale(0.95);
+  }
+</style>
