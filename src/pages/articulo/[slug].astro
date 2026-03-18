@@ -151,6 +151,13 @@ const canonicalUrl = new URL(
       <!-- Share buttons -->
       <ShareButtons url={canonicalUrl} title={article.title} />
 
+      <!-- Disqus comments -->
+      <DisqusComments
+        identifier={article.id}
+        url={canonicalUrl}
+        title={article.title}
+      />
+
       <!-- Related articles -->
       {
         relatedArticles.length > 0 && (
@@ -169,13 +176,6 @@ const canonicalUrl = new URL(
           </section>
         )
       }
-
-      <!-- Disqus comments -->
-      <DisqusComments
-        identifier={article.id}
-        url={canonicalUrl}
-        title={article.title}
-      />
     </article>
 
     <Footer />
