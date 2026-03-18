@@ -5,6 +5,7 @@ import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
+import EmptyState from "@/components/EmptyState.astro";
 import SkeletonCard from "@/components/SkeletonCard.astro";
 import { formatDate } from "@/lib/date-utils";
 import {
@@ -144,19 +145,9 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
           </div>
         </section>
       ) : (
-        <div class="empty-state">
-          <img
-            src="/icon-empty.svg"
-            alt=""
-            class="empty-state__icon"
-            width="105"
-            height="131"
-            aria-hidden="true"
-          />
-          <p class="empty-state__text">
-            Aún <strong>no hay artículos</strong> en esta categoría.
-          </p>
-        </div>
+        <EmptyState icon="/icon-empty.svg" ctaLabel="Explorar artículos" ctaHref="/">
+          Aún <strong>no hay artículos</strong> en esta categoría.
+        </EmptyState>
       )
     }
 
@@ -528,35 +519,6 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
     align-items: flex-start;
   }
 
-  /* Empty state */
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    padding: 120px 24px;
-    min-height: 400px;
-  }
-
-  .empty-state__icon {
-    width: 105px;
-    height: 131px;
-  }
-
-  .empty-state__text {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--navy-2);
-    text-align: center;
-    line-height: 1.5;
-  }
-
-  .empty-state__text strong {
-    font-weight: 600;
-  }
-
   /* Tablet */
   @media (max-width: 1024px) {
     .news__grid {
@@ -579,18 +541,5 @@ const pageDescription = `${category.description}. Últimas noticias sobre ${cate
       gap: 48px;
     }
 
-    .empty-state {
-      padding: 80px 24px;
-      min-height: 300px;
-    }
-
-    .empty-state__text {
-      font-size: 16px;
-    }
-
-    .empty-state__icon {
-      width: 84px;
-      height: 105px;
-    }
   }
 </style>

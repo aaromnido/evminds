@@ -1,0 +1,92 @@
+---
+interface Props {
+  icon: string;
+  iconWidth?: number;
+  iconHeight?: number;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
+const { icon, iconWidth = 105, iconHeight = 131, ctaLabel, ctaHref = "/" } = Astro.props;
+---
+
+<div class="empty-state">
+  <img
+    src={icon}
+    alt=""
+    class="empty-state__icon"
+    width={iconWidth}
+    height={iconHeight}
+    aria-hidden="true"
+  />
+  <p class="empty-state__text">
+    <slot />
+  </p>
+  {ctaLabel && (
+    <a href={ctaHref} class="empty-state__cta">{ctaLabel}</a>
+  )}
+</div>
+
+<style is:global>
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 120px 24px;
+    min-height: 400px;
+  }
+
+  .empty-state__icon {
+    width: 105px;
+    height: 131px;
+  }
+
+  .empty-state__text {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--navy-2);
+    text-align: center;
+    line-height: 1.5;
+    max-width: 400px;
+  }
+
+  .empty-state__text strong {
+    font-weight: 600;
+  }
+
+  .empty-state__cta {
+    display: inline-flex;
+    padding: 12px 28px;
+    background-color: var(--navy-light);
+    color: var(--sepia-light);
+    border-radius: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .empty-state__cta:hover {
+    opacity: 0.85;
+  }
+
+  @media (max-width: 768px) {
+    .empty-state {
+      padding: 80px 24px;
+      min-height: 300px;
+    }
+
+    .empty-state__text {
+      font-size: 16px;
+    }
+
+    .empty-state__icon {
+      width: 84px;
+      height: 105px;
+    }
+  }
+</style>
