@@ -8,5 +8,5 @@ export function optimizedImageUrl(
   quality = 75,
 ): string {
   if (!url || import.meta.env.DEV) return url;
-  return `/.netlify/images?url=${encodeURIComponent(url)}&w=${width}&fm=webp&q=${quality}`;
+  return `/.netlify/images?url=${encodeURI(url)}&w=${width}&fm=webp&q=${quality}`;
 }
