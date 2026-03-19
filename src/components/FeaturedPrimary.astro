@@ -2,7 +2,6 @@
 import Badge from "./Badge.astro";
 import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
-import { optimizedImageUrl } from "@/lib/image-utils";
 
 interface Props {
   image: string;
@@ -41,7 +40,7 @@ const articleDataJson = articleId
 >
   <!-- Background image -->
   <img
-    src={optimizedImageUrl(image, 1200)}
+    src={image}
     alt={title}
     class="featured-primary__image"
     loading="eager"
