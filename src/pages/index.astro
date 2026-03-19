@@ -183,18 +183,10 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
    * Format date to Spanish locale
    */
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Hoy";
-    if (diffDays === 1) return "Ayer";
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-
+    var date = new Date(dateString);
     return date.toLocaleDateString("es-ES", {
       day: "numeric",
-      month: "short",
+      month: "long",
       year: "numeric",
     });
   }
