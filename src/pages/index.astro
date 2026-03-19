@@ -97,7 +97,10 @@ function mapArticleToProps(article: ArticleData) {
 const initialCursor = articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="EVMinds — Noticias de Movilidad Eléctrica y Coches Eléctricos"
+  description="Agregador de noticias sobre movilidad eléctrica en español. Coches eléctricos, baterías, energías renovables e infraestructura de carga, todo en un solo lugar."
+>
   <main class="page">
     <Header />
 

@@ -1,6 +1,10 @@
 ---
 import '@/styles/global.css';
-import { ClientRouter } from 'astro:transitions';
+
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
 
 interface Props {
   title?: string;
@@ -8,6 +12,8 @@ interface Props {
   image?: string;
   type?: 'website' | 'article';
   publishedAt?: string;
+  noIndex?: boolean;
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 const {
@@ -16,26 +22,75 @@ const {
   image = '/logo.svg',
   type = 'website',
   publishedAt,
+  noIndex = false,
+  breadcrumbs,
 } = Astro.props;
 
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
+const siteUrl = Astro.site?.toString() || 'https://evminds.es';
+const isHomePage = Astro.url.pathname === '/';
+const isArticlePage = type === 'article';
 
-const jsonLd = type === 'article' ? JSON.stringify({
+// Build JSON-LD schemas array
+const schemas: object[] = [];
+
+// Organization schema (all pages)
+schemas.push({
   "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": title,
-  "description": description,
-  "image": ogImageURL.toString(),
-  "datePublished": publishedAt,
-  "url": canonicalURL.toString(),
-  "publisher": {
-    "@type": "Organization",
+  "@type": "Organization",
+  "name": "EVMinds.es",
+  "url": siteUrl,
+  "logo": new URL('/logo.svg', Astro.site).toString(),
+  "description": "Agregador de noticias sobre movilidad eléctrica en español",
+  "sameAs": ["https://t.me/evminders"],
+});
+
+// WebSite schema (homepage only)
+if (isHomePage) {
+  schemas.push({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
     "name": "EVMinds.es",
-    "url": Astro.site?.toString(),
-  },
-}) : null;
+    "url": siteUrl,
+    "description": description,
+    "inLanguage": "es",
+  });
+}
+
+// Article schema (article pages)
+if (isArticlePage) {
+  schemas.push({
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": title,
+    "description": description,
+    "image": ogImageURL.toString(),
+    "datePublished": publishedAt,
+    "url": canonicalURL.toString(),
+    "inLanguage": "es",
+    "publisher": {
+      "@type": "Organization",
+      "name": "EVMinds.es",
+      "url": siteUrl,
+    },
+  });
+}
+
+// BreadcrumbList schema
+if (breadcrumbs && breadcrumbs.length > 0) {
+  schemas.push({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": new URL(item.url, Astro.site).toString(),
+    })),
+  });
+}
 ---
 
 <!doctype html>
@@ -44,12 +99,18 @@ const jsonLd = type === 'article' ? JSON.stringify({
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#191B41" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Google Fonts -->
+    <!-- Preconnect hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cloud.umami.is" />
+    <link rel="dns-prefetch" href="https://evminds-es.disqus.com" />
+
+    <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
 
     <!-- Primary Meta Tags -->
@@ -57,6 +118,7 @@ const jsonLd = type === 'article' ? JSON.stringify({
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
+    <link rel="alternate" type="application/rss+xml" title="EVMinds RSS" href="/rss.xml" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content={type} />
@@ -64,6 +126,8 @@ const jsonLd = type === 'article' ? JSON.stringify({
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="es_ES" />
     <meta property="og:site_name" content="EVMinds.es" />
 
@@ -77,7 +141,7 @@ const jsonLd = type === 'article' ? JSON.stringify({
     <!-- Additional SEO -->
     <meta name="keywords" content="movilidad eléctrica, coches eléctricos, baterías, energías renovables, infraestructura de carga, vehículos eléctricos, EV, noticias EV" />
     <meta name="author" content="EVMinds.es" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
 
     <!-- Umami Analytics -->
     {umamiWebsiteId && (
@@ -90,14 +154,14 @@ const jsonLd = type === 'article' ? JSON.stringify({
     )}
 
     <!-- Article-specific meta tags -->
-    {type === 'article' && publishedAt && (
+    {isArticlePage && publishedAt && (
       <meta property="article:published_time" content={publishedAt} />
     )}
 
-    <!-- JSON-LD structured data for articles -->
-    {jsonLd && (
-      <script is:inline type="application/ld+json" set:html={jsonLd} />
-    )}
+    <!-- JSON-LD structured data -->
+    {schemas.map((schema) => (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
 
     <!-- Theme: apply dark class before first paint (FOUC prevention) -->
     <script is:inline>
@@ -110,8 +174,6 @@ const jsonLd = type === 'article' ? JSON.stringify({
       })();
     </script>
 
-    <!-- Client Router for smooth page transitions -->
-    <ClientRouter />
   </head>
   <body>
     <slot />
@@ -141,7 +203,6 @@ const jsonLd = type === 'article' ? JSON.stringify({
       // Re-sync on View Transitions (html class may be reset during swap)
       function syncTheme() { setTheme(getTheme()); }
       syncTheme();
-      document.addEventListener('astro:page-load', syncTheme);
     </script>
 
     <!-- Bookmark system (global event delegation + state sync) -->
@@ -206,11 +267,12 @@ const jsonLd = type === 'article' ? JSON.stringify({
 
       // Re-sync icons after View Transitions navigation
       syncAllBookmarkIcons();
-      document.addEventListener("astro:page-load", syncAllBookmarkIcons);
     </script>
 
-    <!-- Disqus Comment Count Script -->
-    <script is:inline src="https://evminds-es.disqus.com/count.js" async id="dsq-count-scr"></script>
+    <!-- Disqus Comment Count Script (only on pages with article cards) -->
+    {!noIndex && (
+      <script is:inline src="https://evminds-es.disqus.com/count.js" async id="dsq-count-scr"></script>
+    )}
     <script is:inline>
       // Create visible badge dynamically only when comment count >= 1
       window.cleanDisqusCounts = function() {
@@ -265,7 +327,6 @@ const jsonLd = type === 'article' ? JSON.stringify({
         window.addEventListener('load', waitForDisqus);
       }
 
-      document.addEventListener('astro:page-load', refreshDisqusCount);
     </script>
   </body>
 </html>

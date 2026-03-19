@@ -1,0 +1,138 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<BaseLayout
+  title="Aviso Legal — EVMinds"
+  description="Aviso legal y condiciones de uso del sitio web EVMinds.es, agregador de noticias sobre movilidad eléctrica."
+>
+  <main class="page">
+    <Header />
+
+    <section class="legal">
+      <h1 class="legal__title">Aviso Legal</h1>
+      <div class="legal__content">
+        <h2>Titular del sitio web</h2>
+        <p>
+          EVMinds.es es un proyecto personal sin ánimo de lucro dedicado a la
+          agregación de noticias sobre movilidad eléctrica y energías renovables.
+        </p>
+
+        <h2>Objeto del sitio</h2>
+        <p>
+          Este sitio web recopila y enlaza artículos publicados por medios
+          especializados en movilidad eléctrica. EVMinds no genera contenido
+          propio, sino que facilita el acceso a noticias publicadas por terceros,
+          redirigiendo siempre al medio original.
+        </p>
+
+        <h2>Propiedad intelectual</h2>
+        <p>
+          Los artículos enlazados pertenecen a sus respectivos autores y medios.
+          Los extractos mostrados se utilizan con fines informativos, enlazando
+          siempre a la fuente original. Si eres propietario de algún contenido y
+          deseas que sea retirado, contacta con nosotros.
+        </p>
+
+        <h2>Limitación de responsabilidad</h2>
+        <p>
+          EVMinds no se hace responsable del contenido publicado por los medios
+          enlazados ni de la disponibilidad de los mismos. El uso de este sitio
+          web se realiza bajo la propia responsabilidad del usuario.
+        </p>
+
+        <h2>Contacto</h2>
+        <p>
+          Para cualquier consulta legal, puedes contactarnos a través de nuestra
+          <a href="/contacto">página de contacto</a>.
+        </p>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    background-color: var(--sepia-light);
+    min-height: 100vh;
+  }
+
+  .legal {
+    max-width: 740px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 48px 0;
+  }
+
+  .legal__title {
+    font-family: "Playfair Display", serif;
+    font-size: 48px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--navy-2);
+    margin-bottom: 48px;
+  }
+
+  .legal__content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .legal__content h2 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy-2);
+    margin-top: 16px;
+  }
+
+  .legal__content p {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--navy-2);
+    opacity: 0.8;
+  }
+
+  .legal__content a {
+    color: var(--navy-2);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 0 12px 72px;
+      gap: 36px;
+    }
+
+    .legal {
+      padding: 24px 0;
+    }
+
+    .legal__title {
+      font-size: 28px;
+      margin-bottom: 32px;
+    }
+
+    .legal__content h2 {
+      font-size: 18px;
+    }
+
+    .legal__content p {
+      font-size: 16px;
+    }
+  }
+</style>

@@ -209,7 +209,7 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
 </style>
 
 <script is:inline>
-  document.addEventListener("astro:page-load", function () {
+  (function () {
     function initSelects() {
       var selects = document.querySelectorAll("[data-select]");
 
@@ -279,5 +279,5 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
     }
 
     initSelects();
-  });
+  })();
 </script>

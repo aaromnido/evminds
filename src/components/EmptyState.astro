@@ -10,20 +10,24 @@ const { iconWidth = 105, iconHeight = 131, ctaLabel, ctaHref = "/" } = Astro.pro
 ---
 
 <div class="empty-state">
-  <svg class="empty-state__icon" width={iconWidth} height={iconHeight} viewBox="0 0 105 131" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <g opacity="0.1">
-      <rect x="26.098" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect x="52.202" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect x="78.3" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect y="26.1" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect y="78.3" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect x="26.098" y="104.4" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect x="78.3" y="104.4" width="26.1" height="26.1" fill="#00BCBC"/>
-      <rect x="26.098" y="52.2" width="26.1" height="26.1" fill="#0076F4"/>
-      <rect x="52.202" y="52.2" width="26.1" height="26.1" fill="#0076F4"/>
-    </g>
-    <path d="M13 71H28.44C30.1112 71.0004 31.7493 71.4662 33.1707 72.345C34.5921 73.2239 35.7408 74.4812 36.488 75.976L37.512 78.024C38.2595 79.5195 39.4088 80.7771 40.831 81.656C42.2532 82.5349 43.8921 83.0003 45.564 83H58.436C60.1079 83.0003 61.7468 82.5349 63.169 81.656C64.5912 80.7771 65.7405 79.5195 66.488 78.024L67.512 75.976C68.2595 74.4805 69.4088 73.2229 70.831 72.344C72.2532 71.4651 73.8921 70.9997 75.564 71H91M13 72.352V89C13 91.3869 13.9482 93.6761 15.636 95.364C17.3239 97.0518 19.6131 98 22 98H82C84.3869 98 86.6761 97.0518 88.364 95.364C90.0518 93.6761 91 91.3869 91 89V72.352C91 71.456 90.864 70.564 90.6 69.708L80.96 38.352C80.3939 36.513 79.2532 34.9038 77.7054 33.7606C76.1576 32.6174 74.2842 32.0003 72.36 32H31.644C29.7198 32.0003 27.8464 32.6174 26.2986 33.7606C24.7508 34.9038 23.6101 36.513 23.044 38.352L13.4 69.708C13.1357 70.5645 13.0009 71.4557 13 72.352Z" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
+  <div class="empty-state__icon">
+    <slot name="icon">
+      <svg width={iconWidth} height={iconHeight} viewBox="0 0 105 131" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g opacity="0.1">
+          <rect x="26.098" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect x="52.202" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect x="78.3" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect y="26.1" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect y="78.3" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect x="26.098" y="104.4" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect x="78.3" y="104.4" width="26.1" height="26.1" fill="#00BCBC"/>
+          <rect x="26.098" y="52.2" width="26.1" height="26.1" fill="#0076F4"/>
+          <rect x="52.202" y="52.2" width="26.1" height="26.1" fill="#0076F4"/>
+        </g>
+        <path d="M13 71H28.44C30.1112 71.0004 31.7493 71.4662 33.1707 72.345C34.5921 73.2239 35.7408 74.4812 36.488 75.976L37.512 78.024C38.2595 79.5195 39.4088 80.7771 40.831 81.656C42.2532 82.5349 43.8921 83.0003 45.564 83H58.436C60.1079 83.0003 61.7468 82.5349 63.169 81.656C64.5912 80.7771 65.7405 79.5195 66.488 78.024L67.512 75.976C68.2595 74.4805 69.4088 73.2229 70.831 72.344C72.2532 71.4651 73.8921 70.9997 75.564 71H91M13 72.352V89C13 91.3869 13.9482 93.6761 15.636 95.364C17.3239 97.0518 19.6131 98 22 98H82C84.3869 98 86.6761 97.0518 88.364 95.364C90.0518 93.6761 91 91.3869 91 89V72.352C91 71.456 90.864 70.564 90.6 69.708L80.96 38.352C80.3939 36.513 79.2532 34.9038 77.7054 33.7606C76.1576 32.6174 74.2842 32.0003 72.36 32H31.644C29.7198 32.0003 27.8464 32.6174 26.2986 33.7606C24.7508 34.9038 23.6101 36.513 23.044 38.352L13.4 69.708C13.1357 70.5645 13.0009 71.4557 13 72.352Z" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </slot>
+  </div>
   <p class="empty-state__text">
     <slot />
   </p>
@@ -44,9 +48,15 @@ const { iconWidth = 105, iconHeight = 131, ctaLabel, ctaHref = "/" } = Astro.pro
   }
 
   .empty-state__icon {
+    color: var(--navy-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-state__icon > svg {
     width: 105px;
     height: 131px;
-    color: var(--navy-2);
   }
 
 
@@ -97,7 +107,7 @@ const { iconWidth = 105, iconHeight = 131, ctaLabel, ctaHref = "/" } = Astro.pro
       font-size: 16px;
     }
 
-    .empty-state__icon {
+    .empty-state__icon > svg {
       width: 84px;
       height: 105px;
     }

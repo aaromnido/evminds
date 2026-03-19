@@ -1,0 +1,55 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import EmptyState from "@/components/EmptyState.astro";
+---
+
+<BaseLayout
+  title="Página no encontrada — EVMinds"
+  description="La página que buscas no existe o ha sido movida."
+  noIndex={true}
+>
+  <main class="page">
+    <Header />
+
+    <EmptyState ctaLabel="Volver al inicio" ctaHref="/">
+      <img
+        slot="icon"
+        src="/404-illustration.svg"
+        alt=""
+        class="error-icon"
+        aria-hidden="true"
+      />
+      La página que buscas no existe o ha sido movida.
+    </EmptyState>
+
+    <Footer />
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    background-color: var(--sepia-light);
+    min-height: 100vh;
+  }
+
+  .error-icon {
+    width: 320px;
+    height: auto;
+    max-width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 0 12px 72px;
+      gap: 36px;
+    }
+  }
+</style>

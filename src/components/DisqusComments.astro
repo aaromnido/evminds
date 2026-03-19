@@ -41,9 +41,7 @@ const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
         }
       }
 
-      // Load immediately + handle View Transitions for subsequent navigations
       loadDisqus();
-      document.addEventListener('astro:page-load', loadDisqus);
     </script>
   </section>
 )}

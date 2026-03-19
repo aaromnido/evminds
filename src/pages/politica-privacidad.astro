@@ -1,0 +1,140 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<BaseLayout
+  title="Política de Privacidad — EVMinds"
+  description="Política de privacidad de EVMinds.es. Información sobre el tratamiento de datos personales y tus derechos."
+>
+  <main class="page">
+    <Header />
+
+    <section class="legal">
+      <h1 class="legal__title">Política de Privacidad</h1>
+      <div class="legal__content">
+        <h2>Responsable del tratamiento</h2>
+        <p>
+          EVMinds.es es un proyecto personal. Puedes contactar con el
+          responsable a través de la <a href="/contacto">página de contacto</a>.
+        </p>
+
+        <h2>Datos que recopilamos</h2>
+        <p>
+          Este sitio web utiliza <strong>Umami Analytics</strong>, una
+          herramienta de analítica respetuosa con la privacidad que no utiliza
+          cookies ni recopila datos personales identificables. Los datos
+          recogidos son anónimos y agregados (páginas visitadas, país de origen,
+          tipo de dispositivo).
+        </p>
+
+        <h2>Almacenamiento local</h2>
+        <p>
+          La funcionalidad de "artículos guardados" utiliza el almacenamiento
+          local del navegador (localStorage). Estos datos no se envían a ningún
+          servidor y permanecen exclusivamente en tu dispositivo.
+        </p>
+
+        <h2>Servicios de terceros</h2>
+        <p>
+          Este sitio utiliza <strong>Disqus</strong> para los comentarios. Al
+          interactuar con la sección de comentarios, se aplica la
+          política de privacidad de Disqus. Los comentarios son opcionales y
+          no es necesario interactuar con ellos para usar el sitio.
+        </p>
+
+        <h2>Tus derechos</h2>
+        <p>
+          Al no recopilar datos personales identificables, no disponemos de
+          información que gestionar. Si tienes alguna duda sobre privacidad,
+          contacta con nosotros.
+        </p>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    background-color: var(--sepia-light);
+    min-height: 100vh;
+  }
+
+  .legal {
+    max-width: 740px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 48px 0;
+  }
+
+  .legal__title {
+    font-family: "Playfair Display", serif;
+    font-size: 48px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--navy-2);
+    margin-bottom: 48px;
+  }
+
+  .legal__content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .legal__content h2 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--navy-2);
+    margin-top: 16px;
+  }
+
+  .legal__content p {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--navy-2);
+    opacity: 0.8;
+  }
+
+  .legal__content a {
+    color: var(--navy-2);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 0 12px 72px;
+      gap: 36px;
+    }
+
+    .legal {
+      padding: 24px 0;
+    }
+
+    .legal__title {
+      font-size: 28px;
+      margin-bottom: 32px;
+    }
+
+    .legal__content h2 {
+      font-size: 18px;
+    }
+
+    .legal__content p {
+      font-size: 16px;
+    }
+  }
+</style>

@@ -56,20 +56,20 @@ const telegramUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitl
 </div>
 
 <script is:inline>
-  document.addEventListener('astro:page-load', () => {
-    document.querySelectorAll('.share-buttons__item--copy').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const url = btn.getAttribute('data-url');
+  (function () {
+    document.querySelectorAll('.share-buttons__item--copy').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var url = btn.getAttribute('data-url');
         if (!url) return;
 
         try {
           await navigator.clipboard.writeText(url);
-          const iconCopy = btn.querySelector('.share-buttons__icon-copy');
-          const iconCheck = btn.querySelector('.share-buttons__icon-check');
+          var iconCopy = btn.querySelector('.share-buttons__icon-copy');
+          var iconCheck = btn.querySelector('.share-buttons__icon-check');
           if (iconCopy) iconCopy.style.display = 'none';
           if (iconCheck) iconCheck.style.display = 'block';
 
-          setTimeout(() => {
+          setTimeout(function () {
             if (iconCopy) iconCopy.style.display = 'block';
             if (iconCheck) iconCheck.style.display = 'none';
           }, 2000);
@@ -78,7 +78,7 @@ const telegramUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitl
         }
       });
     });
-  });
+  })();
 </script>
 
 <style>

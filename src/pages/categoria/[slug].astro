@@ -111,9 +111,15 @@ const initialCursor =
 // Page metadata
 const pageTitle = `${category.name} - EVMinds`;
 const pageDescription = `${category.description}. Últimas noticias sobre ${category.name.toLowerCase()} en EVMinds.`;
+
+// Breadcrumbs for structured data
+const breadcrumbs = [
+  { name: "Inicio", url: "/" },
+  { name: category.name, url: `/categoria/${slug}` },
+];
 ---
 
-<BaseLayout title={pageTitle} description={pageDescription}>
+<BaseLayout title={pageTitle} description={pageDescription} breadcrumbs={breadcrumbs}>
   <main class="page">
     <Header />
 

@@ -89,6 +89,11 @@ const articleDataJson = JSON.stringify({
   image={article.image_url || undefined}
   type="article"
   publishedAt={article.published_at}
+  breadcrumbs={[
+    { name: "Inicio", url: "/" },
+    ...(categorySlug ? [{ name: article.category, url: `/categoria/${categorySlug}` }] : []),
+    { name: article.title, url: getArticleUrl(article.slug) },
+  ]}
 >
   <main class="article-detail">
     <Header />

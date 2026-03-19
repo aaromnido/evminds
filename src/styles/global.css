@@ -155,6 +155,7 @@
 
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
 }
 
@@ -175,44 +176,6 @@
   }
 }
 
-/* View Transitions - smooth and noticeable */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 175ms;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-::view-transition-old(root) {
-  animation-name: slide-out;
-}
-
-::view-transition-new(root) {
-  animation-name: slide-in;
-}
-
-@keyframes slide-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-}
-
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* Disqus comment count badge (injected dynamically by JS) */
 .comment-count-badge {
