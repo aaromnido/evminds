@@ -88,7 +88,14 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     img.width = 600;
     img.height = 300;
 
+    // Disqus comment count span (processed by cleanDisqusCounts in BaseLayout)
+    var disqusSpan = document.createElement("span");
+    disqusSpan.className = "disqus-comment-count";
+    disqusSpan.setAttribute("data-disqus-identifier", identifier);
+    disqusSpan.hidden = true;
+
     photoDiv.appendChild(img);
+    photoDiv.appendChild(disqusSpan);
     photoLink.appendChild(photoDiv);
 
     // Content div
@@ -232,6 +239,14 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
       fragment.appendChild(renderBookmarkCard(bookmark));
     });
     grid.appendChild(fragment);
+
+    // Trigger Disqus to populate comment counts for the new cards
+    if (window.DISQUSWIDGETS) {
+      window.DISQUSWIDGETS.getCount({ reset: true });
+      setTimeout(function() {
+        if (window.cleanDisqusCounts) window.cleanDisqusCounts();
+      }, 500);
+    }
   }
 
   // Re-render only when a bookmark is removed on this page
