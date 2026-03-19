@@ -233,11 +233,8 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     grid.appendChild(fragment);
 
     // Trigger Disqus to populate comment counts for the new cards
-    if (window.DISQUSWIDGETS) {
-      window.DISQUSWIDGETS.getCount({ reset: true });
-      setTimeout(function() {
-        if (window.cleanDisqusCounts) window.cleanDisqusCounts();
-      }, 500);
+    if (window.refreshDisqusCount) {
+      window.refreshDisqusCount();
     }
   }
 

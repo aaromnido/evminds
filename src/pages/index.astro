@@ -21,18 +21,23 @@ const sourceParam = urlParams.get("source");
 const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
 
-// Fetch initial articles directly from Supabase
-let query = supabase
+// Fetch initial articles + categories in parallel
+const articleSelect = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at, source:sources!inner(name, url)";
+
+let articlesQuery = supabase
   .from("articles")
-  .select("*, source:sources!inner(name, url)")
+  .select(articleSelect)
   .order("scraped_at", { ascending: false })
   .limit(23);
 
 if (activeSource && sourceObj) {
-  query = query.eq("source.name", sourceObj.name);
+  articlesQuery = articlesQuery.eq("source.name", sourceObj.name);
 }
 
-const { data: articleData } = await query;
+const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
+  articlesQuery,
+  supabase.from("articles").select("category"),
+]);
 
 const articles: ArticleData[] = (articleData || []).map((a: any) => {
   const source = Array.isArray(a.source) ? a.source[0] : a.source;
@@ -50,11 +55,6 @@ const articles: ArticleData[] = (articleData || []).map((a: any) => {
     source_url: source.url,
   };
 });
-
-// Get unique categories that have articles (for CategoryFilter)
-const { data: categoryRows } = await supabase
-  .from("articles")
-  .select("category");
 const availableCategorySlugs: string[] = Array.from(
   new Set(
     (categoryRows || [])
@@ -408,12 +408,8 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       articlesGrid.appendChild(fragment);
 
       // Refresh Disqus comment counts for new articles
-      if (window.DISQUSWIDGETS) {
-        window.DISQUSWIDGETS.getCount({ reset: true });
-        // Clean up count text after Disqus updates
-        setTimeout(function() {
-          if (window.cleanDisqusCounts) window.cleanDisqusCounts();
-        }, 500);
+      if (window.refreshDisqusCount) {
+        window.refreshDisqusCount();
       }
 
       // Update cursor for next load

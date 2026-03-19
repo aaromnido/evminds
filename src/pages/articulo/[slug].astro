@@ -10,6 +10,7 @@ import DisqusComments from "@/components/DisqusComments.astro";
 import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
 import { supabase } from "@/lib/supabase";
 import { formatDate } from "@/lib/date-utils";
+import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getArticleUrl } from "@/lib/article-url";
 
@@ -35,10 +36,10 @@ const source = Array.isArray(article.source)
   ? article.source[0]
   : article.source;
 
-// Fetch 3 related articles (same category, excluding current)
+// Fetch related articles (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
-  .select("*, source:sources!inner(name, url)")
+  .select("id, slug, title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)")
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
@@ -105,7 +106,7 @@ const articleDataJson = JSON.stringify({
       <!-- Hero image -->
       <div class="article-detail__hero">
         <img
-          src={heroImage}
+          src={optimizedImageUrl(heroImage, 900)}
           alt={article.title}
           class="article-detail__hero-image"
           loading="eager"

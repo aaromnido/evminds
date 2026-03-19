@@ -18,7 +18,9 @@ pnpm-debug.log*
 .screenshots/
 
 # lighthouse reports
+lighthouse-reports/
 lighthouse*.json
+lighthouse*.html
 
 
 # environment variables

@@ -25,11 +25,14 @@ export const GET: APIRoute = async ({ url }) => {
   const sourceSlug = url.searchParams.get("source");
 
   try {
+    // Resolve source once (avoid duplicate call)
+    const source = sourceSlug ? await getSourceBySlug(sourceSlug) : null;
+
     // Use !inner join when filtering by source so PostgREST excludes non-matching articles
-    const useInnerJoin = Boolean(sourceSlug && (await getSourceBySlug(sourceSlug)));
-    const joinClause = useInnerJoin
-      ? `*, source:sources!inner(*)`
-      : `*, source:sources(*)`;
+    const articleColumns = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at";
+    const joinClause = source
+      ? `${articleColumns}, source:sources!inner(name, url)`
+      : `${articleColumns}, source:sources(name, url)`;
 
     let query = supabase
       .from("articles")
@@ -48,11 +51,8 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     // Apply source filter
-    if (sourceSlug) {
-      const source = await getSourceBySlug(sourceSlug);
-      if (source) {
-        query = query.eq("source.name", source.name);
-      }
+    if (source) {
+      query = query.eq("source.name", source.name);
     }
 
     const { data, error } = await query;

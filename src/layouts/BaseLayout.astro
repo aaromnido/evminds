@@ -110,8 +110,12 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <link rel="dns-prefetch" href="https://cloud.umami.is" />
     <link rel="dns-prefetch" href="https://evminds-es.disqus.com" />
 
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <!-- Google Fonts (non-render-blocking) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    </noscript>
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -269,10 +273,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       syncAllBookmarkIcons();
     </script>
 
-    <!-- Disqus Comment Count Script (only on pages with article cards) -->
-    {!noIndex && (
-      <script is:inline src="https://evminds-es.disqus.com/count.js" async id="dsq-count-scr"></script>
-    )}
+    <!-- Disqus Comment Count: lazy-load only when count elements exist -->
     <script is:inline>
       // Create visible badge dynamically only when comment count >= 1
       window.cleanDisqusCounts = function() {
@@ -306,27 +307,49 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         });
       }
 
-      function refreshDisqusCount() {
+      // Watch for Disqus populating count spans and create badges reactively
+      window._disqusObserver = null;
+      function startDisqusObserver() {
+        if (window._disqusObserver) window._disqusObserver.disconnect();
+        var targets = document.querySelectorAll('.disqus-comment-count');
+        if (!targets.length) return;
+
+        window._disqusObserver = new MutationObserver(function() {
+          window.cleanDisqusCounts();
+        });
+
+        targets.forEach(function(el) {
+          window._disqusObserver.observe(el, { childList: true, characterData: true, subtree: true });
+        });
+      }
+
+      // Refresh Disqus counts (called after infinite scroll adds new cards)
+      window.refreshDisqusCount = function() {
+        startDisqusObserver();
         if (window.DISQUSWIDGETS) {
           window.DISQUSWIDGETS.getCount({ reset: true });
-          setTimeout(cleanDisqusCounts, 500);
         }
       }
 
-      function waitForDisqus() {
-        if (window.DISQUSWIDGETS) {
-          refreshDisqusCount();
-        } else {
-          setTimeout(waitForDisqus, 100);
-        }
+      // Lazy-load count.js only when .disqus-comment-count elements exist on page
+      function initDisqusCounts() {
+        if (document.getElementById('dsq-count-scr')) return;
+        if (!document.querySelector('.disqus-comment-count')) return;
+
+        startDisqusObserver();
+
+        var s = document.createElement('script');
+        s.id = 'dsq-count-scr';
+        s.src = 'https://evminds-es.disqus.com/count.js';
+        s.async = true;
+        document.body.appendChild(s);
       }
 
       if (document.readyState === 'complete') {
-        waitForDisqus();
+        initDisqusCounts();
       } else {
-        window.addEventListener('load', waitForDisqus);
+        window.addEventListener('load', initDisqusCounts);
       }
-
     </script>
   </body>
 </html>
