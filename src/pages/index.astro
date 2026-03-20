@@ -21,6 +21,8 @@ const sourceParam = urlParams.get("source");
 const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
 
+const INITIAL_ARTICLES_LIMIT = 24;
+
 // Fetch initial articles + categories in parallel
 const articleSelect = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at, source:sources!inner(name, url)";
 
@@ -28,7 +30,7 @@ let articlesQuery = supabase
   .from("articles")
   .select(articleSelect)
   .order("scraped_at", { ascending: false })
-  .limit(23);
+  .limit(INITIAL_ARTICLES_LIMIT);
 
 if (activeSource && sourceObj) {
   articlesQuery = articlesQuery.eq("source.name", sourceObj.name);
@@ -159,7 +161,15 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
 </BaseLayout>
 
 <script is:inline define:vars={{ initialCursor, sourceSlug: activeSource }}>
-  // Infinite scroll implementation with IntersectionObserver
+  // Infinite scroll configuration
+  var BREAKPOINT_MOBILE = 768;
+  var BREAKPOINT_TABLET = 1024;
+  var CARDS_MOBILE = 10;
+  var CARDS_TABLET = 16;
+  var CARDS_DESKTOP = 21;
+  var OBSERVER_ROOT_MARGIN = "200px";
+  var OBSERVER_THRESHOLD = 0.1;
+
   let cursor = initialCursor;
   let isLoading = false;
   let hasMore = true;
@@ -169,17 +179,11 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   const articlesGrid = document.getElementById("articles-grid");
   const loadingSkeletons = document.getElementById("loading-skeletons");
 
-  /**
-   * Get limit based on current breakpoint
-   * Mobile (<768px): 10 cards
-   * Tablet (768-1024px): 16 cards
-   * Desktop (>1024px): 20 cards
-   */
   function getLimitForBreakpoint() {
     const width = window.innerWidth;
-    if (width < 768) return 10;
-    if (width < 1024) return 16;
-    return 20;
+    if (width < BREAKPOINT_MOBILE) return CARDS_MOBILE;
+    if (width < BREAKPOINT_TABLET) return CARDS_TABLET;
+    return CARDS_DESKTOP;
   }
 
   /**
@@ -453,8 +457,8 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
         });
       },
       {
-        rootMargin: "200px", // Trigger 200px before card enters viewport
-        threshold: 0.1,
+        rootMargin: OBSERVER_ROOT_MARGIN,
+        threshold: OBSERVER_THRESHOLD,
       }
     );
 

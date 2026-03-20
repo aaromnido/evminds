@@ -324,11 +324,12 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       }
 
       // Request Disqus to recount and clean up badges after a delay
+      var DISQUS_RECOUNT_DELAY_MS = 800;
       function triggerDisqusRecount() {
         if (window.DISQUSWIDGETS) {
           window.DISQUSWIDGETS.getCount({ reset: true });
         }
-        setTimeout(window.cleanDisqusCounts, 800);
+        setTimeout(window.cleanDisqusCounts, DISQUS_RECOUNT_DELAY_MS);
       }
 
       // Refresh Disqus counts (called after infinite scroll adds new cards)

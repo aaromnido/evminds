@@ -36,6 +36,8 @@ const source = Array.isArray(article.source)
   ? article.source[0]
   : article.source;
 
+const RELATED_ARTICLES_LIMIT = 2;
+
 // Fetch related articles (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
@@ -43,7 +45,7 @@ const { data: relatedData } = await supabase
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
-  .limit(2);
+  .limit(RELATED_ARTICLES_LIMIT);
 
 const relatedArticles = (relatedData || []).map((a: any) => {
   const s = Array.isArray(a.source) ? a.source[0] : a.source;
