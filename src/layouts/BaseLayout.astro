@@ -224,6 +224,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         if (activeIcon) activeIcon.style.display = active ? "" : "none";
         btn.setAttribute("aria-pressed", String(active));
         btn.setAttribute("aria-label", active ? "Quitar de guardados" : "Guardar artículo");
+        btn.setAttribute("data-tooltip", active ? "Quitar de guardados" : "Guardar artículo");
       }
 
       function syncAllBookmarkIcons() {

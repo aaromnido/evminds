@@ -67,7 +67,7 @@ const articleDataJson = articleId
   <div class="featured-secondary__footer">
     <div class="featured-secondary__badges">
       {articleId && (
-        <BookmarkButton articleId={articleId} articleData={articleDataJson} variant="white" />
+        <BookmarkButton articleId={articleId} articleData={articleDataJson} variant="white" tooltipPosition="left" />
       )}
       <Badge label={source} variant="light" />
       <Badge label={category} variant={categoryVariant} />
