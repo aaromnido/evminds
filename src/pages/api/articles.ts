@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { ArticleWithSource } from "@/lib/database.types";
 import { getSourceBySlug } from "@/lib/sources";
 import { getCategoryBySlug } from "@/lib/categories";
+import { API_DEFAULT_LIMIT } from "@/lib/article-utils";
 
 /**
  * GET /api/articles
@@ -20,7 +21,7 @@ import { getCategoryBySlug } from "@/lib/categories";
  * - nextCursor: string | null (null when no more articles)
  */
 export const GET: APIRoute = async ({ url }) => {
-  const limit = parseInt(url.searchParams.get("limit") || "12", 10);
+  const limit = parseInt(url.searchParams.get("limit") || String(API_DEFAULT_LIMIT), 10);
   const cursor = url.searchParams.get("cursor");
   const category = url.searchParams.get("category");
   const sourceSlug = url.searchParams.get("source");

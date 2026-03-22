@@ -13,6 +13,7 @@ import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
 import {
   ARTICLE_SELECT,
+  INITIAL_ARTICLES_LIMIT,
   normalizeArticles,
   mapArticleToProps,
   getAvailableCategorySlugs,
@@ -23,8 +24,6 @@ const urlParams = new URL(Astro.request.url).searchParams;
 const sourceParam = urlParams.get("source");
 const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
-
-const INITIAL_ARTICLES_LIMIT = 24;
 
 // Fetch initial articles + categories in parallel
 let articlesQuery = supabase

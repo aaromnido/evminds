@@ -16,6 +16,7 @@ import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
 import {
   ARTICLE_SELECT,
+  INITIAL_ARTICLES_LIMIT,
   normalizeArticles,
   mapArticleToProps,
   getAvailableCategorySlugs,
@@ -44,8 +45,6 @@ const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
 
 // Fetch articles + categories in parallel
-const INITIAL_ARTICLES_LIMIT = 24;
-
 let articlesQuery = supabase
   .from("articles")
   .select(ARTICLE_SELECT)

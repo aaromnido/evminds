@@ -3,6 +3,12 @@ import { getArticleUrl } from "@/lib/article-url";
 import { getCategorySlugByName } from "@/lib/categories";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
+/** Number of articles loaded on initial page render (index + category pages) */
+export const INITIAL_ARTICLES_LIMIT = 24;
+
+/** Default number of articles per API pagination request */
+export const API_DEFAULT_LIMIT = 12;
+
 /** Shared Supabase select fields for article listings with source join */
 export const ARTICLE_SELECT =
   "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at, source:sources!inner(name, url)";
