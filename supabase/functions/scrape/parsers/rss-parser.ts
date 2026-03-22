@@ -28,7 +28,7 @@ function decodeHTMLEntities(text: string): string {
  * Extracts text content between XML tags
  */
 function extractTag(xml: string, tag: string): string | null {
-  const regex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([^\\]]+)\\]\\]><\/${tag}>|<${tag}[^>]*>([^<]+)<\/${tag}>`, 'i');
+  const regex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\/${tag}>|<${tag}[^>]*>([^<]+)<\/${tag}>`, 'i');
   const match = xml.match(regex);
   return match ? (match[1] || match[2] || '').trim() : null;
 }
