@@ -79,7 +79,7 @@ export const GET: APIRoute = async ({ url }) => {
     // Calculate next cursor (scraped_at of last article)
     const nextCursor =
       data && data.length === limit
-        ? data[data.length - 1].scraped_at
+        ? (data[data.length - 1] as any).scraped_at
         : null;
 
     return new Response(
