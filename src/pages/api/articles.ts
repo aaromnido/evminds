@@ -49,9 +49,13 @@ export const GET: APIRoute = async ({ url }) => {
     // Apply category filter (resolve slug to name for DB query)
     if (category) {
       const cat = getCategoryBySlug(category);
-      if (cat) {
-        query = query.eq("category", cat.name);
+      if (!cat) {
+        return new Response(
+          JSON.stringify({ articles: [], nextCursor: null }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
       }
+      query = query.eq("category", cat.name);
     }
 
     // Apply source filter
