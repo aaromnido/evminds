@@ -56,6 +56,7 @@ function renderArticleCard(article: any): HTMLElement {
   const category = article.category;
   const href = "/articulo/" + article.slug;
   const identifier = article.id;
+  const excerptText = article.excerpt || "";
 
   const articleEl = document.createElement("article");
   articleEl.className = "article-card";
@@ -176,8 +177,6 @@ function renderArticleCard(article: any): HTMLElement {
   headerDiv.appendChild(titleLink);
   headerDiv.appendChild(arrowSvg);
   contentDiv.appendChild(headerDiv);
-
-  const excerptText = article.excerpt || "";
 
   // Date
   const dateEl = document.createElement("p");
