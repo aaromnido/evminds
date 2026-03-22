@@ -49,7 +49,7 @@ function formatDate(dateString: string): string {
  * Render an article card using safe DOM methods (XSS-safe).
  */
 function renderArticleCard(article: any): HTMLElement {
-  const image = article.image_url || "/placeholder-image.jpg";
+  const image = article.image_url || "/placeholder-image.webp";
   const title = article.title;
   const date = formatDate(article.published_at);
   const source = article.source.name;

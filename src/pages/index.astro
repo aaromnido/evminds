@@ -81,7 +81,7 @@ const gridArticles = remaining.slice(2);
 // Helper to map article to component props
 function mapArticleToProps(article: ArticleData) {
   return {
-    image: article.image_url || "/placeholder-image.jpg",
+    image: article.image_url || "/placeholder-image.webp",
     title: article.title,
     date: formatDate(article.published_at.toISOString()),
     excerpt: article.excerpt,

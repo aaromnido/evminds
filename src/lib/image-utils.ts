@@ -10,6 +10,6 @@ export function optimizedImageUrl(
   quality = 75,
 ): string {
   const cloud = import.meta.env.PUBLIC_CLOUDINARY_CLOUD;
-  if (!url || !cloud) return url;
+  if (!url || !cloud || !url.startsWith('http')) return url;
   return `https://res.cloudinary.com/${cloud}/image/fetch/w_${width},f_auto,q_auto/${url}`;
 }

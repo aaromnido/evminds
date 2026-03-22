@@ -50,7 +50,7 @@ const { data: relatedData } = await supabase
 const relatedArticles = (relatedData || []).map((a: any) => {
   const s = Array.isArray(a.source) ? a.source[0] : a.source;
   return {
-    image: a.image_url || "/placeholder-image.jpg",
+    image: a.image_url || "/placeholder-image.webp",
     title: a.title,
     date: formatDate(a.published_at),
     excerpt: a.excerpt,
@@ -65,7 +65,7 @@ const relatedArticles = (relatedData || []).map((a: any) => {
 });
 
 // Page data
-const heroImage = article.image_url || "/placeholder-image.jpg";
+const heroImage = article.image_url || "/placeholder-image.webp";
 const formattedDate = formatDate(article.published_at);
 const categorySlug = getCategorySlugByName(article.category);
 const canonicalUrl = new URL(

@@ -52,7 +52,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
   }
 
   function renderBookmarkCard(bookmark) {
-    var image = bookmark.image_url || "/placeholder-image.jpg";
+    var image = bookmark.image_url || "/placeholder-image.webp";
     var title = bookmark.title;
     var date = formatDate(bookmark.scraped_at);
     var source = bookmark.source_name;
