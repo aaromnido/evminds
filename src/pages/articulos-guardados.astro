@@ -80,14 +80,48 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     img.width = 600;
     img.height = 300;
 
-    // Disqus comment count span (processed by cleanDisqusCounts in BaseLayout)
+    photoDiv.appendChild(img);
+
+    // Actions: comment count + bookmark (top-right of photo)
+    var actionsDiv = document.createElement("div");
+    actionsDiv.className = "card-actions";
+
     var disqusSpan = document.createElement("span");
     disqusSpan.className = "disqus-comment-count";
     disqusSpan.setAttribute("data-disqus-identifier", identifier);
     disqusSpan.hidden = true;
+    actionsDiv.appendChild(disqusSpan);
 
-    photoDiv.appendChild(img);
-    photoDiv.appendChild(disqusSpan);
+    // Bookmark button (always active on this page)
+    var bookmarkBtn = document.createElement("button");
+    bookmarkBtn.className = "bookmark-btn";
+    bookmarkBtn.setAttribute("data-article-id", identifier);
+    bookmarkBtn.setAttribute("aria-label", "Quitar de guardados");
+    bookmarkBtn.setAttribute("aria-pressed", "true");
+
+    var bookmarkData = JSON.stringify(bookmark);
+    bookmarkBtn.setAttribute("data-article", bookmarkData);
+
+    var defaultIcon = document.createElement("img");
+    defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
+    defaultIcon.src = "/icon-bookmark-default.svg";
+    defaultIcon.width = 24;
+    defaultIcon.height = 24;
+    defaultIcon.alt = "";
+    defaultIcon.style.display = "none";
+
+    var activeIcon = document.createElement("img");
+    activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
+    activeIcon.src = "/icon-bookmark-active.svg";
+    activeIcon.width = 24;
+    activeIcon.height = 24;
+    activeIcon.alt = "";
+
+    bookmarkBtn.appendChild(defaultIcon);
+    bookmarkBtn.appendChild(activeIcon);
+    actionsDiv.appendChild(bookmarkBtn);
+
+    photoDiv.appendChild(actionsDiv);
     photoLink.appendChild(photoDiv);
 
     // Content div
@@ -155,35 +189,6 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     badgesDiv.appendChild(sourceBadge);
     badgesDiv.appendChild(categoryBadge);
     footerDiv.appendChild(badgesDiv);
-
-    // Bookmark button (always active on this page)
-    var bookmarkBtn = document.createElement("button");
-    bookmarkBtn.className = "bookmark-btn";
-    bookmarkBtn.setAttribute("data-article-id", identifier);
-    bookmarkBtn.setAttribute("aria-label", "Quitar de guardados");
-    bookmarkBtn.setAttribute("aria-pressed", "true");
-
-    var bookmarkData = JSON.stringify(bookmark);
-    bookmarkBtn.setAttribute("data-article", bookmarkData);
-
-    var defaultIcon = document.createElement("img");
-    defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
-    defaultIcon.src = "/icon-bookmark-default.svg";
-    defaultIcon.width = 24;
-    defaultIcon.height = 24;
-    defaultIcon.alt = "";
-    defaultIcon.style.display = "none";
-
-    var activeIcon = document.createElement("img");
-    activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
-    activeIcon.src = "/icon-bookmark-active.svg";
-    activeIcon.width = 24;
-    activeIcon.height = 24;
-    activeIcon.alt = "";
-
-    bookmarkBtn.appendChild(defaultIcon);
-    bookmarkBtn.appendChild(activeIcon);
-    footerDiv.appendChild(bookmarkBtn);
 
     contentDiv.appendChild(footerDiv);
 

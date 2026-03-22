@@ -77,15 +77,64 @@ function renderArticleCard(article: any): HTMLElement {
 
   photoDiv.appendChild(img);
 
-  // Disqus comment count
+  // Actions: comment count + bookmark (top-right of photo)
+  const actionsDiv = document.createElement("div");
+  actionsDiv.className = "card-actions";
+
   if (identifier) {
     const countSpan = document.createElement("span");
     countSpan.className = "disqus-comment-count";
     countSpan.setAttribute("data-disqus-identifier", identifier);
     countSpan.hidden = true;
-    photoDiv.appendChild(countSpan);
+    actionsDiv.appendChild(countSpan);
   }
 
+  // Bookmark button
+  const bookmarkBtn = document.createElement("button");
+  bookmarkBtn.className = "bookmark-btn";
+  bookmarkBtn.setAttribute("data-article-id", identifier);
+  bookmarkBtn.setAttribute("aria-label", "Guardar artículo");
+  bookmarkBtn.setAttribute("aria-pressed", "false");
+
+  const bookmarkData = JSON.stringify({
+    id: identifier,
+    slug: article.slug,
+    title: title,
+    excerpt: excerptText,
+    image_url: image,
+    scraped_at: article.scraped_at || "",
+    source_name: source,
+    category: category,
+    savedAt: "",
+  });
+  bookmarkBtn.setAttribute("data-article", bookmarkData);
+
+  const defaultIcon = document.createElement("img");
+  defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
+  defaultIcon.src = "/icon-bookmark-default.svg";
+  defaultIcon.width = 24;
+  defaultIcon.height = 24;
+  defaultIcon.alt = "";
+
+  const activeIcon = document.createElement("img");
+  activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
+  activeIcon.src = "/icon-bookmark-active.svg";
+  activeIcon.width = 24;
+  activeIcon.height = 24;
+  activeIcon.alt = "";
+  activeIcon.style.display = "none";
+
+  if ((window as any).__evminds_bookmarks?.isBookmarked(identifier)) {
+    defaultIcon.style.display = "none";
+    activeIcon.style.display = "";
+    bookmarkBtn.setAttribute("aria-pressed", "true");
+  }
+
+  bookmarkBtn.appendChild(defaultIcon);
+  bookmarkBtn.appendChild(activeIcon);
+  actionsDiv.appendChild(bookmarkBtn);
+
+  photoDiv.appendChild(actionsDiv);
   photoLink.appendChild(photoDiv);
 
   // Content
@@ -154,51 +203,6 @@ function renderArticleCard(article: any): HTMLElement {
   badgesDiv.appendChild(sourceBadge);
   badgesDiv.appendChild(categoryBadge);
   footerDiv.appendChild(badgesDiv);
-
-  // Bookmark button
-  const bookmarkBtn = document.createElement("button");
-  bookmarkBtn.className = "bookmark-btn";
-  bookmarkBtn.setAttribute("data-article-id", identifier);
-  bookmarkBtn.setAttribute("aria-label", "Guardar artículo");
-  bookmarkBtn.setAttribute("aria-pressed", "false");
-
-  const bookmarkData = JSON.stringify({
-    id: identifier,
-    slug: article.slug,
-    title: title,
-    excerpt: excerptText,
-    image_url: image,
-    scraped_at: article.scraped_at || "",
-    source_name: source,
-    category: category,
-    savedAt: "",
-  });
-  bookmarkBtn.setAttribute("data-article", bookmarkData);
-
-  const defaultIcon = document.createElement("img");
-  defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
-  defaultIcon.src = "/icon-bookmark-default.svg";
-  defaultIcon.width = 24;
-  defaultIcon.height = 24;
-  defaultIcon.alt = "";
-
-  const activeIcon = document.createElement("img");
-  activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
-  activeIcon.src = "/icon-bookmark-active.svg";
-  activeIcon.width = 24;
-  activeIcon.height = 24;
-  activeIcon.alt = "";
-  activeIcon.style.display = "none";
-
-  if ((window as any).__evminds_bookmarks?.isBookmarked(identifier)) {
-    defaultIcon.style.display = "none";
-    activeIcon.style.display = "";
-    bookmarkBtn.setAttribute("aria-pressed", "true");
-  }
-
-  bookmarkBtn.appendChild(defaultIcon);
-  bookmarkBtn.appendChild(activeIcon);
-  footerDiv.appendChild(bookmarkBtn);
 
   contentDiv.appendChild(footerDiv);
 
