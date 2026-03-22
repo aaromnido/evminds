@@ -1,0 +1,58 @@
+---
+import SkeletonCard from "./SkeletonCard.astro";
+
+interface Props {
+  ariaLabel: string;
+  showSkeletons?: boolean;
+}
+
+const { ariaLabel, showSkeletons = false } = Astro.props;
+---
+
+<section class="news" aria-label={ariaLabel}>
+  <div id="articles-grid" class="news__grid">
+    <slot />
+  </div>
+
+  {showSkeletons && (
+    <div id="loading-skeletons" class="news__grid" style="display: none;">
+      <SkeletonCard />
+      <SkeletonCard />
+      <SkeletonCard />
+    </div>
+  )}
+</section>
+
+<style>
+  .news {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .news__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 36px;
+    align-items: flex-start;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .news__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .news {
+      gap: 48px;
+    }
+
+    .news__grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+</style>

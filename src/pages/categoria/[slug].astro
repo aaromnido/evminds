@@ -6,7 +6,8 @@ import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import EmptyState from "@/components/EmptyState.astro";
-import SkeletonCard from "@/components/SkeletonCard.astro";
+import NewsGrid from "@/components/NewsGrid.astro";
+import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import { formatDate } from "@/lib/date-utils";
 import {
   getCategoryBySlug,
@@ -137,20 +138,11 @@ const breadcrumbs = [
     <!-- News grid -->
     {
       articles.length > 0 ? (
-        <section class="news" aria-label={`Noticias sobre ${category.name}`}>
-          <div id="articles-grid" class="news__grid">
-            {articles.map((article) => (
-              <ArticleCard {...mapArticleToProps(article)} />
-            ))}
-          </div>
-
-          <!-- Loading skeletons -->
-          <div id="loading-skeletons" class="news__grid" style="display: none;">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        </section>
+        <NewsGrid ariaLabel={`Noticias sobre ${category.name}`} showSkeletons>
+          {articles.map((article) => (
+            <ArticleCard {...mapArticleToProps(article)} />
+          ))}
+        </NewsGrid>
       ) : (
         <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
           Aún <strong>no hay artículos</strong> en esta categoría.
@@ -163,16 +155,11 @@ const breadcrumbs = [
   </main>
 </BaseLayout>
 
-<div
-  id="infinite-scroll-config"
-  data-cursor={initialCursor || ""}
-  data-category={category.slug}
-  data-source={activeSource || ""}
-  hidden
-></div>
-<script>
-  import "@/scripts/infinite-scroll";
-</script>
+<InfiniteScrollConfig
+  cursor={initialCursor || ""}
+  category={category.slug}
+  source={activeSource || ""}
+/>
 
 <style>
   .page {
@@ -186,41 +173,10 @@ const breadcrumbs = [
     min-height: 100vh;
   }
 
-  /* News grid */
-  .news {
-    display: flex;
-    flex-direction: column;
-    gap: 36px;
-  }
-
-  .news__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-    align-items: flex-start;
-  }
-
-  /* Tablet */
-  @media (max-width: 1024px) {
-    .news__grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
   /* Mobile */
   @media (max-width: 768px) {
     .page {
       padding: 0 12px 48px;
     }
-
-    .news {
-      gap: 48px;
-    }
-
-    .news__grid {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
-
   }
 </style>

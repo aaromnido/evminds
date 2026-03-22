@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { supabase } from "@/lib/supabase";
 import type { ArticleWithSource } from "@/lib/database.types";
 import { getSourceBySlug } from "@/lib/sources";
+import { getCategoryBySlug } from "@/lib/categories";
 
 /**
  * GET /api/articles
@@ -45,9 +46,12 @@ export const GET: APIRoute = async ({ url }) => {
       query = query.lt("scraped_at", cursor);
     }
 
-    // Apply category filter
+    // Apply category filter (resolve slug to name for DB query)
     if (category) {
-      query = query.eq("category", category);
+      const cat = getCategoryBySlug(category);
+      if (cat) {
+        query = query.eq("category", cat.name);
+      }
     }
 
     // Apply source filter

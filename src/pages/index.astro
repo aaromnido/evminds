@@ -5,7 +5,8 @@ import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
-import SkeletonCard from "@/components/SkeletonCard.astro";
+import NewsGrid from "@/components/NewsGrid.astro";
+import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
 import { formatDate } from "@/lib/date-utils";
@@ -138,20 +139,11 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     <!-- News grid -->
     {
       gridArticles.length > 0 && (
-        <section class="news" aria-label="Últimas noticias">
-          <div id="articles-grid" class="news__grid">
-            {gridArticles.map((article) => (
-              <ArticleCard {...mapArticleToProps(article)} />
-            ))}
-          </div>
-
-          <!-- Loading skeletons -->
-          <div id="loading-skeletons" class="news__grid" style="display: none;">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        </section>
+        <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
+          {gridArticles.map((article) => (
+            <ArticleCard {...mapArticleToProps(article)} />
+          ))}
+        </NewsGrid>
       )
     }
 
@@ -160,15 +152,10 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
   </main>
 </BaseLayout>
 
-<div
-  id="infinite-scroll-config"
-  data-cursor={initialCursor || ""}
-  data-source={activeSource || ""}
-  hidden
-></div>
-<script>
-  import "@/scripts/infinite-scroll";
-</script>
+<InfiniteScrollConfig
+  cursor={initialCursor || ""}
+  source={activeSource || ""}
+/>
 
 <style>
   .page {
@@ -195,19 +182,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     gap: 24px;
   }
 
-  /* News grid */
-  .news {
-    display: flex;
-    flex-direction: column;
-    gap: 36px;
-  }
-
-  .news__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 36px;
-    align-items: flex-start;
-  }
 
   /* Tablet */
   @media (max-width: 1024px) {
@@ -221,9 +195,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       gap: 24px;
     }
 
-    .news__grid {
-      grid-template-columns: 1fr 1fr;
-    }
   }
 
   /* Mobile */
@@ -243,14 +214,5 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       gap: 48px;
     }
 
-    .news {
-      gap: 72px;
-      margin-top: 24px;
-    }
-
-    .news__grid {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
   }
 </style>

@@ -1,0 +1,20 @@
+---
+interface Props {
+  cursor: string;
+  category?: string;
+  source?: string;
+}
+
+const { cursor, category, source } = Astro.props;
+---
+
+<div
+  id="infinite-scroll-config"
+  data-cursor={cursor}
+  data-category={category || ""}
+  data-source={source || ""}
+  hidden
+></div>
+<script>
+  import "@/scripts/infinite-scroll";
+</script>

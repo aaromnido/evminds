@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import HeroSection from "@/components/HeroSection.astro";
 import TelegramCTA from "@/components/TelegramCTA.astro";
 ---
 
@@ -13,14 +14,9 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
     <Header />
 
     <!-- Hero Section -->
-    <section class="hero">
-      <h1 class="hero__title">
-        De <strong>aficionado</strong> a <strong>aficionado</strong>
-      </h1>
-      <p class="hero__subtitle">
-        Una historia sobre coches eléctricos, comunidad y devolver lo recibido
-      </p>
-    </section>
+    <HeroSection subtitle="Una historia sobre coches eléctricos, comunidad y devolver lo recibido">
+      De <strong>aficionado</strong> a <strong>aficionado</strong>
+    </HeroSection>
 
     <!-- Hero Image -->
     <div class="hero-image">
@@ -109,42 +105,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
     min-height: 100vh;
   }
 
-  /* Hero Section */
-  .hero {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 48px 0;
-  }
-
-  .hero__title {
-    font-family: "Playfair Display", serif;
-    font-size: 56px;
-    font-style: italic;
-    font-weight: 300;
-    line-height: 1.1;
-    color: var(--navy-2);
-    letter-spacing: -0.01em;
-    width: 100%;
-  }
-
-  .hero__title strong {
-    font-weight: 600;
-  }
-
-  .hero__subtitle {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--navy-2);
-    opacity: 0.6;
-    letter-spacing: -0.01em;
-    line-height: 1.4;
-  }
 
   /* Hero Image */
   .hero-image {
@@ -207,14 +167,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 
   /* Tablet */
   @media (max-width: 1024px) {
-    .hero__title {
-      font-size: 42px;
-    }
-
-    .hero__subtitle {
-      font-size: 18px;
-    }
-
     .content__paragraph {
       font-size: 18px;
     }
@@ -230,19 +182,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
     .page {
       padding: 0 12px 72px;
       gap: 36px;
-    }
-
-    .hero {
-      padding: 24px 0;
-      gap: 16px;
-    }
-
-    .hero__title {
-      font-size: 28px;
-    }
-
-    .hero__subtitle {
-      font-size: 15px;
     }
 
     .hero-image {
