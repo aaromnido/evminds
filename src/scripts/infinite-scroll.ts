@@ -49,7 +49,7 @@ function formatDate(dateString: string): string {
  * Render an article card using safe DOM methods (XSS-safe).
  */
 function renderArticleCard(article: any): HTMLElement {
-  const image = article.image_url || "/placeholder-image.webp";
+  const image = article.image_url || "/images/placeholder-image.webp";
   const title = article.title;
   const date = formatDate(article.published_at);
   const source = article.source.name;
@@ -112,14 +112,14 @@ function renderArticleCard(article: any): HTMLElement {
 
   const defaultIcon = document.createElement("img");
   defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
-  defaultIcon.src = "/icon-bookmark-default.svg";
+  defaultIcon.src = "/icons/icon-bookmark-default.svg";
   defaultIcon.width = 24;
   defaultIcon.height = 24;
   defaultIcon.alt = "";
 
   const activeIcon = document.createElement("img");
   activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
-  activeIcon.src = "/icon-bookmark-active.svg";
+  activeIcon.src = "/icons/icon-bookmark-active.svg";
   activeIcon.width = 24;
   activeIcon.height = 24;
   activeIcon.alt = "";

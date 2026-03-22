@@ -52,7 +52,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
   }
 
   function renderBookmarkCard(bookmark) {
-    var image = bookmark.image_url || "/placeholder-image.webp";
+    var image = bookmark.image_url || "/images/placeholder-image.webp";
     var title = bookmark.title;
     var date = formatDate(bookmark.scraped_at);
     var source = bookmark.source_name;
@@ -104,7 +104,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 
     var defaultIcon = document.createElement("img");
     defaultIcon.className = "bookmark-btn__icon bookmark-btn__icon--default";
-    defaultIcon.src = "/icon-bookmark-default.svg";
+    defaultIcon.src = "/icons/icon-bookmark-default.svg";
     defaultIcon.width = 24;
     defaultIcon.height = 24;
     defaultIcon.alt = "";
@@ -112,7 +112,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 
     var activeIcon = document.createElement("img");
     activeIcon.className = "bookmark-btn__icon bookmark-btn__icon--active";
-    activeIcon.src = "/icon-bookmark-active.svg";
+    activeIcon.src = "/icons/icon-bookmark-active.svg";
     activeIcon.width = 24;
     activeIcon.height = 24;
     activeIcon.alt = "";

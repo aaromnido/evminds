@@ -42,7 +42,7 @@ export function normalizeArticles(rawData: any[] | null): ArticleData[] {
 /** Map ArticleData to the props expected by ArticleCard / Featured components */
 export function mapArticleToProps(article: ArticleData) {
   return {
-    image: article.image_url || "/placeholder-image.webp",
+    image: article.image_url || "/images/placeholder-image.webp",
     title: article.title,
     date: formatDate(article.published_at.toISOString()),
     excerpt: article.excerpt,

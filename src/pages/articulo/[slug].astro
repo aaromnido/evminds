@@ -53,7 +53,7 @@ const relatedArticles = (relatedData || []).map((a: any) =>
 );
 
 // Page data
-const heroImage = article.image_url || "/placeholder-image.webp";
+const heroImage = article.image_url || "/images/placeholder-image.webp";
 const formattedDate = formatDate(article.published_at);
 const categorySlug = getCategorySlugByName(article.category);
 const canonicalUrl = new URL(
