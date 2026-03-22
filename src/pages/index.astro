@@ -9,12 +9,14 @@ import NewsGrid from "@/components/NewsGrid.astro";
 import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
-import { formatDate } from "@/lib/date-utils";
-import { getCategorySlugByName } from "@/lib/categories";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
-import { getArticleUrl } from "@/lib/article-url";
-import type { ArticleData } from "@/loaders/supabase-loader";
+import {
+  ARTICLE_SELECT,
+  normalizeArticles,
+  mapArticleToProps,
+  getAvailableCategorySlugs,
+} from "@/lib/article-utils";
 
 // Get source filter from URL
 const urlParams = new URL(Astro.request.url).searchParams;
@@ -25,11 +27,9 @@ const activeSource = sourceObj ? sourceParam : null;
 const INITIAL_ARTICLES_LIMIT = 24;
 
 // Fetch initial articles + categories in parallel
-const articleSelect = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at, source:sources!inner(name, url)";
-
 let articlesQuery = supabase
   .from("articles")
-  .select(articleSelect)
+  .select(ARTICLE_SELECT)
   .order("scraped_at", { ascending: false })
   .limit(INITIAL_ARTICLES_LIMIT);
 
@@ -42,31 +42,8 @@ const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
   supabase.from("articles").select("category"),
 ]);
 
-const articles: ArticleData[] = (articleData || []).map((a: any) => {
-  const source = Array.isArray(a.source) ? a.source[0] : a.source;
-  return {
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt,
-    image_url: a.image_url,
-    article_url: a.article_url,
-    category: a.category,
-    published_at: new Date(a.published_at),
-    scraped_at: new Date(a.scraped_at),
-    source_name: source.name,
-    source_url: source.url,
-  };
-});
-const availableCategorySlugs: string[] = Array.from(
-  new Set(
-    (categoryRows || [])
-      .map((r: any) => r.category)
-      .filter(Boolean)
-      .map((name: string) => getCategorySlugByName(name))
-      .filter((slug: string | undefined) => slug !== undefined) as string[]
-  )
-);
+const articles = normalizeArticles(articleData);
+const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
 
 // Featured primary — exclude hibridosyelectricos (small images)
 const EXCLUDED_FROM_PRIMARY = "hibridosyelectricos.com";
@@ -78,23 +55,6 @@ const remaining = articles.filter((_, i) => i !== primaryIndex);
 const featuredSecondary1 = remaining[0];
 const featuredSecondary2 = remaining[1];
 const gridArticles = remaining.slice(2);
-
-// Helper to map article to component props
-function mapArticleToProps(article: ArticleData) {
-  return {
-    image: article.image_url || "/placeholder-image.webp",
-    title: article.title,
-    date: formatDate(article.published_at.toISOString()),
-    excerpt: article.excerpt,
-    source: article.source_name,
-    category: article.category,
-    href: getArticleUrl(article.slug),
-    identifier: article.id,
-    articleId: article.id,
-    articleSlug: article.slug,
-    scraped_at: article.scraped_at.toISOString(),
-  };
-}
 
 // Calculate initial cursor for pagination (scraped_at of last article)
 const initialCursor = articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;

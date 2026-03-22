@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/date-utils";
 import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getArticleUrl } from "@/lib/article-url";
+import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 
 const { slug } = Astro.params;
 
@@ -47,22 +48,9 @@ const { data: relatedData } = await supabase
   .order("scraped_at", { ascending: false })
   .limit(RELATED_ARTICLES_LIMIT);
 
-const relatedArticles = (relatedData || []).map((a: any) => {
-  const s = Array.isArray(a.source) ? a.source[0] : a.source;
-  return {
-    image: a.image_url || "/placeholder-image.webp",
-    title: a.title,
-    date: formatDate(a.published_at),
-    excerpt: a.excerpt,
-    source: s.name,
-    category: a.category,
-    href: getArticleUrl(a.slug),
-    identifier: a.id,
-    articleId: a.id,
-    articleSlug: a.slug,
-    scraped_at: a.scraped_at,
-  };
-});
+const relatedArticles = (relatedData || []).map((a: any) =>
+  mapArticleToProps(normalizeArticle(a))
+);
 
 // Page data
 const heroImage = article.image_url || "/placeholder-image.webp";
@@ -73,16 +61,15 @@ const canonicalUrl = new URL(
   Astro.site,
 ).toString();
 
-const articleDataJson = JSON.stringify({
+const articleDataJson = serializeBookmarkData({
   id: article.id,
   slug: article.slug,
   title: article.title,
   excerpt: article.excerpt,
-  image_url: article.image_url || "",
+  image: article.image_url || "",
   scraped_at: article.scraped_at || "",
-  source_name: source.name,
+  source: source.name,
   category: article.category,
-  savedAt: "",
 });
 ---
 

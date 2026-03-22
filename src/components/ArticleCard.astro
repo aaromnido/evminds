@@ -3,6 +3,7 @@ import Badge from "./Badge.astro";
 import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
 import { optimizedImageUrl } from "@/lib/image-utils";
+import { serializeBookmarkData } from "@/lib/article-utils";
 
 interface Props {
   image: string;
@@ -32,19 +33,16 @@ const {
   scraped_at,
 } = Astro.props;
 
-const articleDataJson = articleId
-  ? JSON.stringify({
-      id: articleId,
-      slug: articleSlug || "",
-      title,
-      excerpt,
-      image_url: image,
-      scraped_at: scraped_at || "",
-      source_name: source,
-      category,
-      savedAt: "",
-    })
-  : "";
+const articleDataJson = serializeBookmarkData({
+  id: articleId,
+  slug: articleSlug,
+  title,
+  excerpt,
+  image,
+  scraped_at,
+  source,
+  category,
+});
 ---
 
 <article class="article-card">
