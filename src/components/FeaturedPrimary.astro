@@ -47,8 +47,13 @@ const articleDataJson = serializeBookmarkData({
     height="600"
   />
 
-  <!-- Comment count (hidden until JS populates) -->
-  {identifier && <DisqusCommentCount identifier={identifier} />}
+  <!-- Actions: comment count + bookmark -->
+  <div class="card-actions">
+    {identifier && <DisqusCommentCount identifier={identifier} />}
+    {articleId && (
+      <BookmarkButton articleId={articleId} articleData={articleDataJson} />
+    )}
+  </div>
 
   <!-- Logo mark (pixelated E) top-left -->
   <div class="featured-primary__logomark" aria-hidden="true">
@@ -68,9 +73,6 @@ const articleDataJson = serializeBookmarkData({
   <!-- Footer overlay -->
   <div class="featured-primary__footer">
     <div class="featured-primary__badges">
-      {articleId && (
-        <BookmarkButton articleId={articleId} articleData={articleDataJson} variant="white" tooltipPosition="left" />
-      )}
       <Badge label={source} variant="light" />
       <Badge label={category} variant="filled" />
     </div>

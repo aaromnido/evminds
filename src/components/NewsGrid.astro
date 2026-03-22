@@ -19,33 +19,35 @@ const { ariaLabel, showSkeletons = false } = Astro.props;
     <slot />
   </div>
 
-  {showSkeletons && (
-    <div id="loading-skeletons" class="news__grid" style="display: none;">
-      <SkeletonCard />
-      <SkeletonCard />
-      <SkeletonCard />
-    </div>
-  )}
+  {
+    showSkeletons && (
+      <div id="loading-skeletons" class="news__grid" style="display: none;">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    )
+  }
 </section>
 
 <style>
   .news {
     display: flex;
     flex-direction: column;
-    gap: 36px;
+    gap: 24px;
   }
 
   .news__grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 36px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
     align-items: flex-start;
   }
 
   /* Tablet */
   @media (max-width: 1024px) {
     .news__grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -56,7 +58,7 @@ const { ariaLabel, showSkeletons = false } = Astro.props;
     }
 
     .news__grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 48px;
     }
   }

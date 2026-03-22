@@ -6,14 +6,31 @@ interface Props {
   tooltipPosition?: "center" | "left";
 }
 
-const { articleId, articleData, variant = "dark", tooltipPosition = "center" } = Astro.props;
+const {
+  articleId,
+  articleData,
+  variant = "dark",
+  tooltipPosition = "center",
+} = Astro.props;
 
-const defaultIcon = variant === "white" ? "/icon-bookmark-white-default.svg" : "/icon-bookmark-default.svg";
-const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/icon-bookmark-active.svg";
+const defaultIcon =
+  variant === "white"
+    ? "/icon-bookmark-white-default.svg"
+    : "/icon-bookmark-default.svg";
+const activeIcon =
+  variant === "white"
+    ? "/icon-bookmark-white-active.svg"
+    : "/icon-bookmark-active.svg";
 ---
 
 <button
-  class:list={["bookmark-btn", { "bookmark-btn--white": variant === "white", "bookmark-btn--tooltip-left": tooltipPosition === "left" }]}
+  class:list={[
+    "bookmark-btn",
+    {
+      "bookmark-btn--white": variant === "white",
+      "bookmark-btn--tooltip-left": tooltipPosition === "left",
+    },
+  ]}
   data-article-id={articleId}
   data-article={articleData}
   data-tooltip="Guardar artículo"
@@ -52,16 +69,15 @@ const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/i
     position: relative;
   }
 
-  /* Tooltip text bubble */
+  /* Tooltip text bubble — below button, aligned to right edge */
   .bookmark-btn::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
+    top: calc(100% + 10px);
+    right: 0;
     background: var(--navy, #1a1a2e);
     color: var(--cream, #f6f2e6);
-    font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+    font-family: var(--font-body, "Plus Jakarta Sans", sans-serif);
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1;
@@ -70,38 +86,40 @@ const activeIcon = variant === "white" ? "/icon-bookmark-white-active.svg" : "/i
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   }
 
-  /* Triangle arrow — flush with bottom edge of tooltip bubble */
+  /* Triangle arrow — pointing up, aligned to right side */
   .bookmark-btn::before {
     content: "";
     position: absolute;
-    bottom: calc(100% - 2px);
-    left: 50%;
-    transform: translateX(-50%);
+    top: calc(100% - 2px);
+    right: 6px;
     border: 6px solid transparent;
-    border-top-color: var(--navy, #1a1a2e);
+    border-bottom-color: var(--navy, #1a1a2e);
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
     z-index: 1;
-  }
-
-  /* Featured tooltip: above button, starts slightly before button left, triangle centered on button */
-  .bookmark-btn--tooltip-left::after {
-    left: -6px;
-    transform: none;
   }
 
   .bookmark-btn:hover {
     transform: scale(1.15);
   }
 
-  .bookmark-btn:hover::after,
-  .bookmark-btn:hover::before {
-    opacity: 1;
+  @media (hover: hover) {
+    .bookmark-btn:hover::after,
+    .bookmark-btn:hover::before {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 
   .bookmark-btn:active {

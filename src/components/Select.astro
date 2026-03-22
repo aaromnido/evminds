@@ -190,20 +190,27 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
   }
 
   @media (max-width: 768px) {
+    .select {
+      width: 100%;
+    }
+
     .select__trigger {
-      padding: 8px 14px;
-      font-size: 13px;
-      gap: 8px;
+      width: 100%;
+      padding: 10px 18px;
+      font-size: 14px;
+      gap: 10px;
+      min-width: unset;
     }
 
     .select__dropdown {
-      left: auto;
+      left: 0;
       right: 0;
+      width: 100%;
     }
 
     .select__option {
-      padding: 8px 12px;
-      font-size: 13px;
+      padding: 10px 16px;
+      font-size: 14px;
     }
   }
 </style>

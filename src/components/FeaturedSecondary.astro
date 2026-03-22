@@ -59,14 +59,16 @@ const articleDataJson = serializeBookmarkData({
     height="288"
   />
 
-  <!-- Comment count (hidden until JS populates) -->
-  {identifier && <DisqusCommentCount identifier={identifier} />}
+  <!-- Actions: comment count + bookmark -->
+  <div class="card-actions">
+    {identifier && <DisqusCommentCount identifier={identifier} />}
+    {articleId && (
+      <BookmarkButton articleId={articleId} articleData={articleDataJson} />
+    )}
+  </div>
 
   <div class="featured-secondary__footer">
     <div class="featured-secondary__badges">
-      {articleId && (
-        <BookmarkButton articleId={articleId} articleData={articleDataJson} variant="white" tooltipPosition="left" />
-      )}
       <Badge label={source} variant="light" />
       <Badge label={category} variant={categoryVariant} />
     </div>

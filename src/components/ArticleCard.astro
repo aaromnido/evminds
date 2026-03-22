@@ -48,8 +48,19 @@ const articleDataJson = serializeBookmarkData({
 <article class="article-card">
   <a href={href} class="article-card__photo-link">
     <div class="article-card__photo">
-      <img src={optimizedImageUrl(image, 600)} alt={title} loading="lazy" width="600" height="300" />
-      {identifier && <DisqusCommentCount identifier={identifier} />}
+      <img
+        src={optimizedImageUrl(image, 600)}
+        alt={title}
+        loading="lazy"
+        width="600"
+        height="300"
+      />
+      <div class="card-actions">
+        {identifier && <DisqusCommentCount identifier={identifier} />}
+        {articleId && (
+          <BookmarkButton articleId={articleId} articleData={articleDataJson} />
+        )}
+      </div>
     </div>
   </a>
 
@@ -82,11 +93,6 @@ const articleDataJson = serializeBookmarkData({
         <Badge label={source} variant="filled" />
         <Badge label={category} variant="outlined" />
       </div>
-      {
-        articleId && (
-          <BookmarkButton articleId={articleId} articleData={articleDataJson} />
-        )
-      }
     </div>
   </div>
 </article>
@@ -188,7 +194,6 @@ const articleDataJson = serializeBookmarkData({
   .article-card__footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
   }
 

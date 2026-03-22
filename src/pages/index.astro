@@ -46,8 +46,11 @@ const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
 
 // Featured primary — exclude hibridosyelectricos (small images)
 const EXCLUDED_FROM_PRIMARY = "hibridosyelectricos.com";
-const primaryIndex = articles.findIndex((a) => a.source_name !== EXCLUDED_FROM_PRIMARY);
-const featuredPrimary = primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
+const primaryIndex = articles.findIndex(
+  (a) => a.source_name !== EXCLUDED_FROM_PRIMARY,
+);
+const featuredPrimary =
+  primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
 
 // Secondary and grid: everything else in order
 const remaining = articles.filter((_, i) => i !== primaryIndex);
@@ -56,7 +59,10 @@ const featuredSecondary2 = remaining[1];
 const gridArticles = remaining.slice(2);
 
 // Calculate initial cursor for pagination (scraped_at of last article)
-const initialCursor = articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
+const initialCursor =
+  articles.length > 0
+    ? articles[articles.length - 1].scraped_at.toISOString()
+    : null;
 ---
 
 <BaseLayout
@@ -67,9 +73,13 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     <Header />
 
     <!-- Subheader -->
-    <Subheader subtitle="Aquí encontrarás noticias, análisis, recursos, y una comunidad en torno a la movilidad eléctrica y las energías renovables">
+    <Subheader
+      subtitle="Aquí encontrarás noticias, análisis, recursos, y una comunidad en torno a la movilidad eléctrica y las energías renovables"
+    >
       <Fragment slot="title">
-        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong>eléctricas</strong>
+        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong
+          >eléctricas</strong
+        >
       </Fragment>
       <CategoryFilter
         availableCategorySlugs={availableCategorySlugs}
@@ -141,7 +151,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
     gap: 24px;
   }
 
-
   /* Tablet */
   @media (max-width: 1024px) {
     .featured {
@@ -153,7 +162,6 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       grid-template-columns: 1fr 1fr;
       gap: 24px;
     }
-
   }
 
   /* Mobile */
@@ -172,6 +180,5 @@ const initialCursor = articles.length > 0 ? articles[articles.length - 1].scrape
       flex-direction: column;
       gap: 48px;
     }
-
   }
 </style>
