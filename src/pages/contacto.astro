@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import HeroSection from "@/components/HeroSection.astro";
@@ -10,7 +11,7 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
   title="Contacto — EVMinds | Hablemos de Movilidad Eléctrica"
   description="¿Quieres colaborar, sugerir una fuente o simplemente charlar sobre movilidad eléctrica? Contacta con EVMinds."
 >
-  <main class="page">
+  <PageLayout>
     <Header />
 
     <!-- Hero Section -->
@@ -76,7 +77,7 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 
     <!-- Footer -->
     <Footer />
-  </main>
+  </PageLayout>
 </BaseLayout>
 
 <script>
@@ -95,18 +96,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 </script>
 
 <style>
-  .page {
-    max-width: 1488px;
-    margin: 0 auto;
-    padding: 0 48px 96px;
-    display: flex;
-    flex-direction: column;
-    gap: 48px;
-    background-color: var(--sepia-light);
-    min-height: 100vh;
-  }
-
-
   /* Contact Section */
   .contact {
     max-width: 740px;
@@ -175,11 +164,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 
   /* Mobile */
   @media (max-width: 768px) {
-    .page {
-      padding: 0 12px 72px;
-      gap: 36px;
-    }
-
     .contact__main {
       gap: 48px;
     }

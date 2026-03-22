@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
@@ -10,10 +11,10 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 ---
 
 <BaseLayout title="Mis artículos guardados - EVMinds" description="Tu lista de lectura personal con artículos guardados sobre movilidad eléctrica.">
-  <main class="page">
+  <PageLayout>
     <Header />
 
-    <Subheader>
+    <Subheader subtitle="Tu colección personal de noticias para leer cuando quieras">
       <Fragment slot="title">
         Mis artículos <strong>guardados</strong>
       </Fragment>
@@ -37,7 +38,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     </div>
 
     <Footer />
-  </main>
+  </PageLayout>
 </BaseLayout>
 
 <script is:inline define:vars={{ STORAGE_KEY }}>
@@ -254,17 +255,6 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 </script>
 
 <style>
-  .page {
-    max-width: 1488px;
-    margin: 0 auto;
-    padding: 0 48px 48px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    background-color: var(--sepia-light);
-    min-height: 100vh;
-  }
-
   /* News grid (same as index) */
   .news {
     display: flex;
@@ -286,10 +276,6 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
   }
 
   @media (max-width: 768px) {
-    .page {
-      padding: 0 12px 48px;
-    }
-
     .news__grid {
       grid-template-columns: 1fr;
       gap: 48px;

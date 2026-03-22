@@ -1,0 +1,72 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
+import ResourceCard from "@/components/ResourceCard.astro";
+import { getCollection } from "astro:content";
+
+export const prerender = true;
+
+const recursos = await getCollection("recursos");
+---
+
+<BaseLayout
+  title="Recursos — EVMinds | Herramientas para la Movilidad Eléctrica"
+  description="Recursos, herramientas y guías útiles para propietarios y entusiastas de vehículos eléctricos."
+>
+  <PageLayout>
+    <Header />
+
+    <Subheader
+      subtitle="Herramientas, guías y enlaces útiles para el día a día eléctrico"
+    >
+      <span slot="title">
+        <strong>Recursos útiles</strong> para mentes eléctricas
+      </span>
+    </Subheader>
+
+    <!-- Resource Grid -->
+    <section aria-label="Recursos disponibles">
+      <div class="resources__grid">
+        {
+          recursos.map((recurso) => (
+            <ResourceCard
+              image={recurso.data.image}
+              title={recurso.data.title}
+              description={recurso.data.description}
+              href={recurso.data.href}
+              category={recurso.data.category}
+            />
+          ))
+        }
+      </div>
+    </section>
+
+    <Footer />
+  </PageLayout>
+</BaseLayout>
+
+<style>
+  .resources__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .resources__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .resources__grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 48px;
+    }
+  }
+</style>

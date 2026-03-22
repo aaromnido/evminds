@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 ---
@@ -8,7 +9,7 @@ import Footer from "@/components/Footer.astro";
   title="Política de Cookies — EVMinds"
   description="Información sobre el uso de cookies en EVMinds.es. Este sitio no utiliza cookies de seguimiento."
 >
-  <main class="page">
+  <PageLayout>
     <Header />
 
     <section class="legal">
@@ -53,20 +54,10 @@ import Footer from "@/components/Footer.astro";
     </section>
 
     <Footer />
-  </main>
+  </PageLayout>
 </BaseLayout>
 
 <style>
-  .page {
-    max-width: 1488px;
-    margin: 0 auto;
-    padding: 0 48px 96px;
-    display: flex;
-    flex-direction: column;
-    gap: 48px;
-    background-color: var(--sepia-light);
-    min-height: 100vh;
-  }
 
   .legal {
     max-width: 740px;
@@ -114,11 +105,6 @@ import Footer from "@/components/Footer.astro";
   }
 
   @media (max-width: 768px) {
-    .page {
-      padding: 0 12px 72px;
-      gap: 36px;
-    }
-
     .legal {
       padding: 24px 0;
     }

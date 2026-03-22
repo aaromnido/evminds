@@ -1,0 +1,172 @@
+---
+import Badge from "./Badge.astro";
+
+interface Props {
+  image?: string;
+  title: string;
+  description: string;
+  href?: string;
+  category?: string;
+}
+
+const {
+  image = "/images/placeholder-image.webp",
+  title,
+  description,
+  href = "#",
+  category,
+} = Astro.props;
+---
+
+<article class="resource-card">
+  <a href={href} class="resource-card__photo-link" target="_blank" rel="noopener noreferrer">
+    <div class="resource-card__photo">
+      <img
+        src={image}
+        alt={title}
+        loading="lazy"
+        width="600"
+        height="300"
+      />
+    </div>
+  </a>
+
+  <div class="resource-card__content">
+    <div class="resource-card__header">
+      <a href={href} class="resource-card__title-link" target="_blank" rel="noopener noreferrer">
+        <h3 class="resource-card__title">{title}</h3>
+      </a>
+      <svg
+        class="resource-card__arrow"
+        width="11"
+        height="11"
+        viewBox="0 0 11 11"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M1 10L10 1M10 1H3M10 1V8"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+    </div>
+
+    <p class="resource-card__description">{description}</p>
+
+    {category && (
+      <div class="resource-card__footer">
+        <div class="resource-card__badges">
+          <Badge label={category} variant="outlined" />
+        </div>
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .resource-card {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    flex: 1 0 0;
+    min-width: 0;
+  }
+
+  .resource-card__photo-link {
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .resource-card__photo {
+    position: relative;
+    height: 300px;
+    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--ev-border-subtle);
+  }
+
+  .resource-card__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .resource-card:hover .resource-card__photo img {
+    transform: scale(1.05);
+  }
+
+  .resource-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .resource-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .resource-card__title-link {
+    text-decoration: none;
+    flex: 1;
+  }
+
+  .resource-card__title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--navy-light);
+    transition: text-decoration 0.2s ease;
+  }
+
+  .resource-card:hover .resource-card__title {
+    text-decoration: underline;
+  }
+
+  .resource-card__arrow {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: var(--navy-2);
+  }
+
+  .resource-card__description {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--navy-2);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .resource-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .resource-card__badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 768px) {
+    .resource-card__footer {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+</style>

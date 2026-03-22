@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
@@ -69,7 +70,7 @@ const initialCursor =
   title="EVMinds — Noticias de Movilidad Eléctrica y Coches Eléctricos"
   description="Agregador de noticias sobre movilidad eléctrica en español. Coches eléctricos, baterías, energías renovables e infraestructura de carga, todo en un solo lugar."
 >
-  <main class="page">
+  <PageLayout variant="compact">
     <Header />
 
     <!-- Subheader -->
@@ -118,7 +119,7 @@ const initialCursor =
 
     <!-- Footer -->
     <Footer availableCategorySlugs={availableCategorySlugs} />
-  </main>
+  </PageLayout>
 </BaseLayout>
 
 <InfiniteScrollConfig
@@ -127,17 +128,6 @@ const initialCursor =
 />
 
 <style>
-  .page {
-    max-width: 1488px;
-    margin: 0 auto;
-    padding: 0 48px 48px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    background-color: var(--sepia-light);
-    min-height: 100vh;
-  }
-
   /* Featured section */
   .featured {
     display: grid;
@@ -166,10 +156,6 @@ const initialCursor =
 
   /* Mobile */
   @media (max-width: 768px) {
-    .page {
-      padding: 0 12px 48px;
-    }
-
     .featured {
       grid-template-columns: 1fr;
       gap: 48px;

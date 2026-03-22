@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import HeroSection from "@/components/HeroSection.astro";
@@ -10,7 +11,7 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
   title="Quiénes Somos — EVMinds | Comunidad de Movilidad Eléctrica"
   description="Conoce la historia detrás de EVMinds: un proyecto nacido de la pasión por los coches eléctricos y la comunidad. De aficionado a aficionado."
 >
-  <main class="page">
+  <PageLayout>
     <Header />
 
     <!-- Hero Section -->
@@ -90,22 +91,10 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 
     <!-- Footer -->
     <Footer />
-  </main>
+  </PageLayout>
 </BaseLayout>
 
 <style>
-  .page {
-    max-width: 1488px;
-    margin: 0 auto;
-    padding: 0 48px 96px;
-    display: flex;
-    flex-direction: column;
-    gap: 48px;
-    background-color: var(--sepia-light);
-    min-height: 100vh;
-  }
-
-
   /* Hero Image */
   .hero-image {
     width: 100%;
@@ -179,11 +168,6 @@ import TelegramCTA from "@/components/TelegramCTA.astro";
 
   /* Mobile */
   @media (max-width: 768px) {
-    .page {
-      padding: 0 12px 72px;
-      gap: 36px;
-    }
-
     .hero-image {
       border-radius: 12px;
       margin-top: -18px;
