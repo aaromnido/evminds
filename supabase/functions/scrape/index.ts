@@ -22,6 +22,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { parseRSS } from './parsers/rss-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
+import { isNotHEV } from './parsers/hev-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
@@ -104,6 +105,15 @@ serve(async (req) => {
           articles = articles.filter(a => isEVRelated(a.categories));
           articles = articles.slice(0, 5);
           console.log(`Filtered motor.es: ${originalCount} -> ${articles.length} (EV only)`);
+        }
+
+        // Filter out conventional hybrids (HEV) from all sources
+        {
+          const beforeHEV = articles.length;
+          articles = articles.filter(a => isNotHEV(a.title, a.excerpt));
+          if (beforeHEV > articles.length) {
+            console.log(`HEV filter ${source.name}: ${beforeHEV} -> ${articles.length} (removed ${beforeHEV - articles.length} HEV)`);
+          }
         }
 
         let processedCount = 0;
