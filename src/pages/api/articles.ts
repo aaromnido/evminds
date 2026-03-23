@@ -4,6 +4,7 @@ import type { ArticleWithSource } from "@/lib/database.types";
 import { getSourceBySlug } from "@/lib/sources";
 import { getCategoryBySlug } from "@/lib/categories";
 import { API_DEFAULT_LIMIT } from "@/lib/article-utils";
+import { readPrefsFromCookie } from "@/lib/preferences";
 
 /**
  * GET /api/articles
@@ -20,7 +21,7 @@ import { API_DEFAULT_LIMIT } from "@/lib/article-utils";
  * - articles: ArticleWithSource[]
  * - nextCursor: string | null (null when no more articles)
  */
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   const MAX_LIMIT = 100;
   const limit = Math.min(
     parseInt(url.searchParams.get("limit") || String(API_DEFAULT_LIMIT), 10) || API_DEFAULT_LIMIT,
@@ -34,9 +35,13 @@ export const GET: APIRoute = async ({ url }) => {
     // Resolve source once (avoid duplicate call)
     const source = sourceSlug ? await getSourceBySlug(sourceSlug) : null;
 
+    // Read user preferences
+    const prefs = readPrefsFromCookie(request.headers.get("cookie"));
+
     // Use !inner join when filtering by source so PostgREST excludes non-matching articles
+    const needsInnerJoin = source || prefs.excludedSources.length > 0;
     const articleColumns = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at";
-    const joinClause = source
+    const joinClause = needsInnerJoin
       ? `${articleColumns}, source:sources!inner(name, url)`
       : `${articleColumns}, source:sources(name, url)`;
 
@@ -66,6 +71,16 @@ export const GET: APIRoute = async ({ url }) => {
     // Apply source filter
     if (source) {
       query = query.eq("source.name", source.name);
+    }
+
+    // Apply user preference exclusions
+    if (prefs.excludedSources.length > 0) {
+      for (const name of prefs.excludedSources) {
+        query = query.neq("source.name", name);
+      }
+    }
+    if (prefs.excludedCategories.length > 0) {
+      query = query.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
     }
 
     const { data, error } = await query;

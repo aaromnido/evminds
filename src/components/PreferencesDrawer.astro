@@ -1,0 +1,120 @@
+---
+import Drawer from "./Drawer.astro";
+import PreferencesForm from "./PreferencesForm.astro";
+---
+
+<Drawer title="Personalizar preferencias" footerLabel="Restablecer todo" footerIcon>
+  <PreferencesForm />
+</Drawer>
+
+<script is:inline>
+  (function () {
+    var STORAGE_KEY = 'evminds-prefs';
+    var COOKIE_NAME = 'evminds-prefs';
+
+    function readPrefs() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      } catch { return {}; }
+    }
+
+    function savePrefs(prefs) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+      var encoded = encodeURIComponent(JSON.stringify(prefs));
+      document.cookie = COOKIE_NAME + '=' + encoded + ';path=/;max-age=31536000;SameSite=Lax';
+      window.__evminds_prefs = prefs;
+    }
+
+    function buildPrefsFromSwitches(drawer) {
+      var excludedSources = [];
+      var excludedCategories = [];
+
+      drawer.querySelectorAll('[data-source-name]').forEach(function (input) {
+        if (!input.checked) excludedSources.push(input.getAttribute('data-source-name'));
+      });
+      drawer.querySelectorAll('[data-category-name]').forEach(function (input) {
+        if (!input.checked) excludedCategories.push(input.getAttribute('data-category-name'));
+      });
+
+      return { excludedSources: excludedSources, excludedCategories: excludedCategories };
+    }
+
+    function restoreSwitches(drawer, prefs) {
+      (prefs.excludedSources || []).forEach(function (name) {
+        var input = drawer.querySelector('[data-source-name="' + name + '"]');
+        if (input) input.checked = false;
+      });
+      (prefs.excludedCategories || []).forEach(function (name) {
+        var input = drawer.querySelector('[data-category-name="' + name + '"]');
+        if (input) input.checked = false;
+      });
+
+      var langSwitch = drawer.querySelector('[data-pref="lang-en"]');
+      var enSources = drawer.querySelectorAll('[data-lang="en"]');
+      if (langSwitch && enSources.length) {
+        var allEnOff = Array.prototype.every.call(enSources, function (s) { return !s.checked; });
+        langSwitch.checked = !allEnOff;
+      }
+    }
+
+    function initPreferences() {
+      var drawer = document.querySelector('[data-drawer]');
+      if (!drawer || drawer.hasAttribute('data-prefs-init')) return;
+      drawer.setAttribute('data-prefs-init', '');
+
+      var prefs = readPrefs();
+      var prefsSnapshot = JSON.stringify(prefs);
+      restoreSwitches(drawer, prefs);
+      window.__evminds_prefs = prefs;
+      var dirty = false;
+
+      // Track open/close for reload-on-change
+      drawer.addEventListener('drawer:open', function () {
+        prefsSnapshot = JSON.stringify(buildPrefsFromSwitches(drawer));
+        dirty = false;
+      });
+
+      drawer.addEventListener('drawer:close', function () {
+        if (dirty) window.location.reload();
+      });
+
+      function onPrefChange() {
+        var newPrefs = buildPrefsFromSwitches(drawer);
+        savePrefs(newPrefs);
+        dirty = JSON.stringify(newPrefs) !== prefsSnapshot;
+      }
+
+      // Reset button
+      var resetBtn = drawer.querySelector('[data-drawer-footer-action]');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
+            input.checked = true;
+          });
+          savePrefs({ excludedSources: [], excludedCategories: [] });
+          dirty = JSON.stringify({ excludedSources: [], excludedCategories: [] }) !== prefsSnapshot;
+        });
+      }
+
+      // Save on every switch change
+      drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
+        input.addEventListener('change', onPrefChange);
+      });
+
+      // Language toggle syncs with EN source switches
+      var langSwitch = drawer.querySelector('[data-pref="lang-en"]');
+      var enSources = drawer.querySelectorAll('[data-lang="en"]');
+
+      if (langSwitch) {
+        langSwitch.addEventListener('change', function () {
+          enSources.forEach(function (input) {
+            input.checked = langSwitch.checked;
+            input.dispatchEvent(new Event('change'));
+          });
+        });
+      }
+    }
+
+    initPreferences();
+  })();
+</script>

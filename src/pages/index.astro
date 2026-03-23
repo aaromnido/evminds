@@ -10,8 +10,10 @@ import NewsGrid from "@/components/NewsGrid.astro";
 import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
 import FeaturedSecondary from "@/components/FeaturedSecondary.astro";
+import EmptyState from "@/components/EmptyState.astro";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
+import { readPrefsFromCookie } from "@/lib/preferences";
 import {
   ARTICLE_SELECT,
   INITIAL_ARTICLES_LIMIT,
@@ -26,6 +28,9 @@ const sourceParam = urlParams.get("source");
 const sourceObj = sourceParam ? await getSourceBySlug(sourceParam) : undefined;
 const activeSource = sourceObj ? sourceParam : null;
 
+// Read user preferences from cookie
+const prefs = readPrefsFromCookie(Astro.request.headers.get("cookie"));
+
 // Fetch initial articles + categories in parallel
 let articlesQuery = supabase
   .from("articles")
@@ -35,6 +40,16 @@ let articlesQuery = supabase
 
 if (activeSource && sourceObj) {
   articlesQuery = articlesQuery.eq("source.name", sourceObj.name);
+}
+
+// Apply user preference exclusions
+if (prefs.excludedSources.length > 0) {
+  for (const name of prefs.excludedSources) {
+    articlesQuery = articlesQuery.neq("source.name", name);
+  }
+}
+if (prefs.excludedCategories.length > 0) {
+  articlesQuery = articlesQuery.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
 }
 
 const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
@@ -64,6 +79,8 @@ const initialCursor =
   articles.length > 0
     ? articles[articles.length - 1].scraped_at.toISOString()
     : null;
+
+const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategories.length > 0;
 ---
 
 <BaseLayout
@@ -88,34 +105,46 @@ const initialCursor =
       />
     </Subheader>
 
-    <!-- Featured news -->
-    {
-      featuredPrimary && (
-        <section class="featured" aria-label="Noticias destacadas">
-          <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
+    {articles.length === 0 && hasActivePrefs ? (
+      <EmptyState ctaLabel="Restablecer filtros" ctaHref="/">
+        Sin resultados para tus preferencias.<br /><strong>Ajusta tus filtros</strong> para ver contenido.
+      </EmptyState>
+      <script is:inline>
+        document.querySelector('.empty-state__cta')?.addEventListener('click', function (e) {
+          e.preventDefault();
+          localStorage.removeItem('evminds-prefs');
+          document.cookie = 'evminds-prefs=;path=/;max-age=0';
+          window.location.href = '/';
+        });
+      </script>
+    ) : (
+      <>
+        {/* Featured news */}
+        {featuredPrimary && (
+          <section class="featured" aria-label="Noticias destacadas">
+            <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
 
-          <div class="featured__right">
-            {featuredSecondary1 && (
-              <FeaturedSecondary {...mapArticleToProps(featuredSecondary1)} />
-            )}
-            {featuredSecondary2 && (
-              <FeaturedSecondary {...mapArticleToProps(featuredSecondary2)} />
-            )}
-          </div>
-        </section>
-      )
-    }
+            <div class="featured__right">
+              {featuredSecondary1 && (
+                <FeaturedSecondary {...mapArticleToProps(featuredSecondary1)} />
+              )}
+              {featuredSecondary2 && (
+                <FeaturedSecondary {...mapArticleToProps(featuredSecondary2)} />
+              )}
+            </div>
+          </section>
+        )}
 
-    <!-- News grid -->
-    {
-      gridArticles.length > 0 && (
-        <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
-          {gridArticles.map((article) => (
-            <ArticleCard {...mapArticleToProps(article)} />
-          ))}
-        </NewsGrid>
-      )
-    }
+        {/* News grid */}
+        {gridArticles.length > 0 && (
+          <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
+            {gridArticles.map((article) => (
+              <ArticleCard {...mapArticleToProps(article)} />
+            ))}
+          </NewsGrid>
+        )}
+      </>
+    )}
 
     <!-- Footer -->
     <Footer availableCategorySlugs={availableCategorySlugs} />

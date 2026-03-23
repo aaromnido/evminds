@@ -11,13 +11,24 @@ export interface Source {
   name: string; // Name as it appears in database (e.g., "electrek.co")
   displayName: string; // Clean name for display without domain (e.g., "electrek")
   url: string;
+  lang: 'es' | 'en';
 }
 
 /**
- * Strip domain extension from source name to create a clean display name
+ * Human-friendly display names for known sources.
+ * Falls back to stripping the domain extension.
  */
+const DISPLAY_NAMES: Record<string, string> = {
+  "cnevpost.com": "CNEVPost",
+  "electrek.co": "Electrek",
+  "insideevs.com": "InsideEVs",
+  "hibridosyelectricos.com": "Híbridos y Eléctricos",
+  "motor.es": "Motor.es",
+  "somoselectricos.com": "SomosEléctricos",
+};
+
 function toDisplayName(name: string): string {
-  return name.replace(/\.(com|co|org|net|io|es)$/i, "");
+  return DISPLAY_NAMES[name] || name.replace(/\.(com|co|org|net|io|es)$/i, "");
 }
 
 /**
@@ -38,7 +49,7 @@ export async function loadSources(): Promise<Source[]> {
 
   const { data, error } = await supabase
     .from("sources")
-    .select("id, name, url")
+    .select("id, name, url, lang")
     .eq("active", true)
     .order("name");
 
@@ -47,13 +58,14 @@ export async function loadSources(): Promise<Source[]> {
     return [];
   }
 
-  type SourceRow = { id: string; name: string; url: string };
+  type SourceRow = { id: string; name: string; url: string; lang: 'es' | 'en' };
   _sourcesCache = ((data ?? []) as SourceRow[]).map((s) => ({
     id: s.id,
     slug: toSlug(s.name),
     name: s.name,
     displayName: toDisplayName(s.name),
     url: s.url,
+    lang: s.lang,
   }));
 
   return _sourcesCache;

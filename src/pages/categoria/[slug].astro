@@ -12,6 +12,7 @@ import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import { getCategoryBySlug, getAllCategorySlugs } from "@/lib/categories";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
+import { readPrefsFromCookie } from "@/lib/preferences";
 import {
   ARTICLE_SELECT,
   INITIAL_ARTICLES_LIMIT,
@@ -52,6 +53,17 @@ let articlesQuery = supabase
 
 if (activeSource && sourceObj) {
   articlesQuery = articlesQuery.eq("source.name", sourceObj.name);
+}
+
+// Apply user preference exclusions
+const prefs = readPrefsFromCookie(Astro.request.headers.get("cookie"));
+if (prefs.excludedSources.length > 0) {
+  for (const name of prefs.excludedSources) {
+    articlesQuery = articlesQuery.neq("source.name", name);
+  }
+}
+if (prefs.excludedCategories.length > 0) {
+  articlesQuery = articlesQuery.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
 }
 
 const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
