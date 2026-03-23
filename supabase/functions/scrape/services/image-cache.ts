@@ -3,7 +3,7 @@
  * Downloads remote OG images and stores them in the og-images bucket
  */
 
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 /**
  * Downloads and caches an image to Supabase Storage
@@ -22,6 +22,29 @@ export async function cacheImage(
   }
 
   try {
+    // Validate URL: only allow http(s) and block private/internal IPs
+    const parsed = new URL(imageUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      console.warn(`Blocked non-HTTP image URL: ${imageUrl}`);
+      return null;
+    }
+    const host = parsed.hostname;
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host.startsWith('10.') ||
+      host.startsWith('192.168.') ||
+      host.startsWith('172.') ||
+      host.startsWith('169.254.') ||
+      host === '::1' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal')
+    ) {
+      console.warn(`Blocked private/internal image URL: ${imageUrl}`);
+      return null;
+    }
+
     // Download image from remote URL
     const response = await fetch(imageUrl);
 

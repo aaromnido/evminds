@@ -165,7 +165,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
 
     <!-- JSON-LD structured data -->
     {schemas.map((schema) => (
-      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replaceAll('</','<\\/')} />
     ))}
 
     <!-- Theme: apply dark class before first paint (FOUC prevention) -->

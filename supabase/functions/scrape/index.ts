@@ -19,7 +19,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { parseRSS } from './parsers/rss-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
 import { categorize } from './services/categorizer.ts';

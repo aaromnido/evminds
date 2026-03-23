@@ -23,7 +23,7 @@ The scraper is ready but needs to run automatically 4 times per day.
 2. Open the file `supabase/migrations/06_setup_cron_jobs.sql`
 3. **Replace placeholders** before executing:
    - Replace `<PROJECT_REF>` with: `pjpfsclekrvsvwftpkyv` (from your Supabase URL)
-   - Replace `<SCRAPE_SECRET>` with: `evminds_scraper_2026_secure_token_f8a3b9c2` (from `.env.local`)
+   - Replace `<SCRAPE_SECRET>` with the value from `.env.local`
 4. Run the entire SQL script in the SQL Editor
 5. Verify jobs are scheduled by running:
    ```sql
@@ -56,12 +56,12 @@ Ensure all environment variables from `.env.local` are set in Netlify.
 3. Verify these variables are set:
 
    ```bash
-   PUBLIC_SUPABASE_URL=https://pjpfsclekrvsvwftpkyv.supabase.co
-   PUBLIC_SUPABASE_ANON_KEY=sb_publishable_dgjBK1jqtqjGTUwtNQ87ow_Tcz5Kuu0
-   SUPABASE_SERVICE_ROLE_KEY=sb_secret_X7rjwNkJtp91Wce2h6XUbg_osIVRozm
-   SCRAPE_SECRET=evminds_scraper_2026_secure_token_f8a3b9c2
-   OPENAI_API_KEY=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
-   PUBLIC_UMAMI_WEBSITE_ID=eb582bdd-60fc-4f3f-8d7b-8922aa8f1ecc
+   PUBLIC_SUPABASE_URL=<from .env.local>
+   PUBLIC_SUPABASE_ANON_KEY=<from .env.local>
+   SUPABASE_SERVICE_ROLE_KEY=<from .env.local>
+   SCRAPE_SECRET=<from .env.local>
+   OPENAI_API_KEY=<from .env.local — or remove if no longer needed>
+   PUBLIC_UMAMI_WEBSITE_ID=<from .env.local>
    ```
 
 4. **Important:** If any variable is missing or incorrect, add/update it
@@ -100,8 +100,8 @@ After completing all steps above, test the entire flow:
 1. **Manual scraper test:**
    ```bash
    # Test the scraper Edge Function manually
-   curl -X POST https://pjpfsclekrvsvwftpkyv.supabase.co/functions/v1/scrape \
-     -H "Authorization: Bearer evminds_scraper_2026_secure_token_f8a3b9c2"
+   curl -X POST https://<PROJECT_REF>.supabase.co/functions/v1/scrape \
+     -H "Authorization: Bearer <SCRAPE_SECRET from .env.local>"
    ```
 
 2. **Check articles in database:**
