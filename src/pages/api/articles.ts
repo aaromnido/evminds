@@ -82,6 +82,9 @@ export const GET: APIRoute = async ({ url, request }) => {
     if (prefs.excludedCategories.length > 0) {
       query = query.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
     }
+    if (prefs.onlyWithComments) {
+      query = query.eq("has_comments", true);
+    }
 
     const { data, error } = await query;
 

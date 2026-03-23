@@ -36,7 +36,10 @@ import PreferencesForm from "./PreferencesForm.astro";
         if (!input.checked) excludedCategories.push(input.getAttribute('data-category-name'));
       });
 
-      return { excludedSources: excludedSources, excludedCategories: excludedCategories };
+      var commentsSwitch = drawer.querySelector('[data-pref="only-with-comments"]');
+      var onlyWithComments = commentsSwitch ? commentsSwitch.checked : false;
+
+      return { excludedSources: excludedSources, excludedCategories: excludedCategories, onlyWithComments: onlyWithComments };
     }
 
     function restoreSwitches(drawer, prefs) {
@@ -48,6 +51,10 @@ import PreferencesForm from "./PreferencesForm.astro";
         var input = drawer.querySelector('[data-category-name="' + name + '"]');
         if (input) input.checked = false;
       });
+
+      // Restore only-with-comments (off by default)
+      var commentsSwitch = drawer.querySelector('[data-pref="only-with-comments"]');
+      if (commentsSwitch && prefs.onlyWithComments) commentsSwitch.checked = true;
 
       var langSwitch = drawer.querySelector('[data-pref="lang-en"]');
       var enSources = drawer.querySelectorAll('[data-lang="en"]');
@@ -91,7 +98,7 @@ import PreferencesForm from "./PreferencesForm.astro";
           drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
             input.checked = true;
           });
-          savePrefs({ excludedSources: [], excludedCategories: [] });
+          savePrefs({ excludedSources: [], excludedCategories: [], onlyWithComments: false });
           dirty = JSON.stringify({ excludedSources: [], excludedCategories: [] }) !== prefsSnapshot;
         });
       }

@@ -51,6 +51,9 @@ if (prefs.excludedSources.length > 0) {
 if (prefs.excludedCategories.length > 0) {
   articlesQuery = articlesQuery.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
 }
+if (prefs.onlyWithComments) {
+  articlesQuery = articlesQuery.eq("has_comments", true);
+}
 
 const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
   articlesQuery,

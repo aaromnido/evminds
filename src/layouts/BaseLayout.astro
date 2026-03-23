@@ -290,6 +290,8 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <script is:inline>
       // Create visible badge dynamically only when comment count >= 1
       window.cleanDisqusCounts = function() {
+        var idsWithComments = [];
+
         document.querySelectorAll('.disqus-comment-count').forEach(function(el) {
           var text = el.textContent || '';
           var match = text.match(/\d+/);
@@ -316,8 +318,21 @@ if (breadcrumbs && breadcrumbs.length > 0) {
             badge.appendChild(icon);
 
             parent.insertBefore(badge, el);
+
+            // Collect article ID for comments sync
+            var id = el.getAttribute('data-disqus-identifier');
+            if (id) idsWithComments.push(id);
           }
         });
+
+        // Sync has_comments to database (fire and forget)
+        if (idsWithComments.length > 0) {
+          fetch('/api/comments-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: idsWithComments }),
+          }).catch(function() {});
+        }
       }
 
       // Watch for Disqus populating count spans and create badges reactively
