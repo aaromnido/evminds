@@ -177,6 +177,31 @@
 }
 
 
+/* Image fade-in on load ─────────────────────────────────────
+   Images start invisible and fade in once fully loaded.
+   Toggle --img-fade-easing between ease-out / ease-in to compare. */
+:root {
+  --img-fade-duration: 0.6s;
+  --img-fade-easing: ease-in;
+}
+
+.article-card__photo img,
+.featured-primary__image,
+.featured-secondary__image,
+.resource-card__photo img,
+.article-detail__hero img {
+  opacity: 0;
+  transition: opacity var(--img-fade-duration) var(--img-fade-easing);
+}
+
+.article-card__photo img.loaded,
+.featured-primary__image.loaded,
+.featured-secondary__image.loaded,
+.resource-card__photo img.loaded,
+.article-detail__hero img.loaded {
+  opacity: 1;
+}
+
 /* Card actions: comment count + bookmark, top-right of photo */
 .card-actions {
   position: absolute;

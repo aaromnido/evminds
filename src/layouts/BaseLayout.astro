@@ -183,6 +183,17 @@ if (breadcrumbs && breadcrumbs.length > 0) {
   <body>
     <slot />
 
+    <!-- Image fade-in on load -->
+    <script is:inline>
+      document.addEventListener('load', function(e) {
+        if (e.target && e.target.tagName === 'IMG') e.target.classList.add('loaded');
+      }, true);
+      // Images already cached/complete before listener attached
+      document.querySelectorAll('img').forEach(function(img) {
+        if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
+      });
+    </script>
+
     <!-- Theme toggle system -->
     <script>
       function getTheme(): 'light' | 'dark' {
