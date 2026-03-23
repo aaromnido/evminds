@@ -1,5 +1,8 @@
 # build output
 dist/
+
+# database backups
+backups/
 # generated types
 .astro/
 
