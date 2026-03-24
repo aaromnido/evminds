@@ -35,6 +35,7 @@ const prefs = readPrefsFromCookie(Astro.request.headers.get("cookie"));
 let articlesQuery = supabase
   .from("articles")
   .select(ARTICLE_SELECT)
+  .eq("content_type", "news")
   .order("scraped_at", { ascending: false })
   .limit(INITIAL_ARTICLES_LIMIT);
 
@@ -57,7 +58,7 @@ if (prefs.onlyWithComments) {
 
 const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
   articlesQuery,
-  supabase.from("articles").select("category"),
+  supabase.from("articles").select("category").eq("content_type", "news"),
 ]);
 
 const articles = normalizeArticles(articleData);
