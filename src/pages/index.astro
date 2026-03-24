@@ -56,13 +56,20 @@ if (prefs.onlyWithComments) {
   articlesQuery = articlesQuery.eq("has_comments", true);
 }
 
-const [{ data: articleData }, { data: categoryRows }] = await Promise.all([
+const [{ data: articleData }, { data: categoryRows }, { data: videoData }] = await Promise.all([
   articlesQuery,
   supabase.from("articles").select("category").eq("content_type", "news"),
+  supabase
+    .from("articles")
+    .select(ARTICLE_SELECT)
+    .eq("content_type", "video")
+    .order("scraped_at", { ascending: false })
+    .limit(1),
 ]);
 
 const articles = normalizeArticles(articleData);
 const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
+const featuredVideos = normalizeArticles(videoData);
 
 // Featured primary — exclude hibridosyelectricos (small images)
 const EXCLUDED_FROM_PRIMARY = "hibridosyelectricos.com";
@@ -72,11 +79,13 @@ const primaryIndex = articles.findIndex(
 const featuredPrimary =
   primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
 
-// Secondary and grid: everything else in order
+// Secondary: most recent video (top) + second most recent article (bottom)
 const remaining = articles.filter((_, i) => i !== primaryIndex);
-const featuredSecondary1 = remaining[0];
-const featuredSecondary2 = remaining[1];
-const gridArticles = remaining.slice(2);
+const featuredSecondary1 = featuredVideos[0];
+const featuredSecondary2 = remaining[0];
+
+// Grid: rest of articles
+const gridArticles = remaining.slice(1);
 
 // Calculate initial cursor for pagination (scraped_at of last article)
 const initialCursor =

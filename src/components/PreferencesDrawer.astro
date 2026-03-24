@@ -96,7 +96,8 @@ import PreferencesForm from "./PreferencesForm.astro";
       if (resetBtn) {
         resetBtn.addEventListener('click', function () {
           drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
-            input.checked = true;
+            // "only-with-comments" defaults to off, everything else defaults to on
+            input.checked = input.getAttribute('data-pref') !== 'only-with-comments';
           });
           savePrefs({ excludedSources: [], excludedCategories: [], onlyWithComments: false });
           dirty = JSON.stringify({ excludedSources: [], excludedCategories: [] }) !== prefsSnapshot;

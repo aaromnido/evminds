@@ -12,6 +12,7 @@ export interface Source {
   displayName: string; // Clean name for display without domain (e.g., "electrek")
   url: string;
   lang: 'es' | 'en';
+  feedType: 'rss' | 'html' | 'youtube';
 }
 
 /**
@@ -25,6 +26,13 @@ const DISPLAY_NAMES: Record<string, string> = {
   "hibridosyelectricos.com": "Híbridos y Eléctricos",
   "motor.es": "Motor.es",
   "somoselectricos.com": "SomosEléctricos",
+  "bjornnyland": "Bjørn Nyland",
+  "cochesnet-yt": "Coches.net YT",
+  "earcos": "Eduardo Arcos",
+  "electrifyingcom": "Electrifying.com",
+  "electromiaumiau": "Electromiaumiau",
+  "motorpuntoes": "Motor.es YT",
+  "somoselectricos-yt": "SomosEléctricos YT",
 };
 
 function toDisplayName(name: string): string {
@@ -49,7 +57,7 @@ export async function loadSources(): Promise<Source[]> {
 
   const { data, error } = await supabase
     .from("sources")
-    .select("id, name, url, lang")
+    .select("id, name, url, lang, feed_type")
     .eq("active", true)
     .order("name");
 
@@ -58,7 +66,7 @@ export async function loadSources(): Promise<Source[]> {
     return [];
   }
 
-  type SourceRow = { id: string; name: string; url: string; lang: 'es' | 'en' };
+  type SourceRow = { id: string; name: string; url: string; lang: 'es' | 'en'; feed_type: 'rss' | 'html' | 'youtube' };
   _sourcesCache = ((data ?? []) as SourceRow[]).map((s) => ({
     id: s.id,
     slug: toSlug(s.name),
@@ -66,6 +74,7 @@ export async function loadSources(): Promise<Source[]> {
     displayName: toDisplayName(s.name),
     url: s.url,
     lang: s.lang,
+    feedType: s.feed_type,
   }));
 
   return _sourcesCache;

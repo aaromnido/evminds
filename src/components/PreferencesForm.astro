@@ -4,6 +4,8 @@ import { loadSources } from "@/lib/sources";
 import Switch from "./Switch.astro";
 
 const sources = await loadSources();
+const mediaSources = sources.filter((s) => s.feedType !== 'youtube');
+const videoSources = sources.filter((s) => s.feedType === 'youtube');
 ---
 
 <!-- Content -->
@@ -24,11 +26,31 @@ const sources = await loadSources();
   </div>
 </section>
 
-<!-- Sources -->
+<!-- Media Sources -->
 <section class="prefs__section">
   <h3 class="prefs__section-title">Medios</h3>
   <div class="prefs__grid">
-    {sources.map((source) => (
+    {mediaSources.map((source) => (
+      <div class="prefs__option">
+        <span class="prefs__option-label">
+          {source.displayName}
+          {source.lang === 'en' && <span class="prefs__badge">EN</span>}
+        </span>
+        <Switch
+          dataPref={`source-${source.slug}`}
+          dataLang={source.lang}
+          dataSourceName={source.name}
+        />
+      </div>
+    ))}
+  </div>
+</section>
+
+<!-- Video Sources -->
+<section class="prefs__section">
+  <h3 class="prefs__section-title">Vídeos</h3>
+  <div class="prefs__grid">
+    {videoSources.map((source) => (
       <div class="prefs__option">
         <span class="prefs__option-label">
           {source.displayName}

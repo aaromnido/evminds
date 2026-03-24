@@ -10,8 +10,8 @@ import { decodeHTMLEntities, extractTag } from './xml-utils.ts';
 /** Maximum characters for video description excerpt */
 const EXCERPT_MAX_LENGTH = 300;
 
-/** Minimum video duration in seconds to include (filters out Shorts) */
-const MIN_DURATION_SECONDS = 180;
+/** Minimum video duration in seconds to include (filters out Shorts and clips) */
+const MIN_DURATION_SECONDS = 300;
 
 /** Maximum video IDs per YouTube Data API batch request */
 const YOUTUBE_API_BATCH_SIZE = 50;
