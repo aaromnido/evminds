@@ -73,9 +73,6 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
       <Fragment slot="title">
         Vídeos
       </Fragment>
-      <CategoryFilter
-        availableCategorySlugs={availableCategorySlugs}
-      />
     </Subheader>
 
     {videos.length === 0 && hasActivePrefs ? (

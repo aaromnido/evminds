@@ -57,7 +57,7 @@ function cleanDescription(description: string): string {
  * Returns the highest quality thumbnail URL for a YouTube video.
  */
 function getThumbnailUrl(videoId: string): string {
-  return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
 /**
