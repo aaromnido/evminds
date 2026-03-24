@@ -213,6 +213,11 @@
   gap: 8px;
 }
 
+.card-actions__video-icon {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  opacity: 0.9;
+}
+
 /* Disqus comment count badge (injected dynamically by JS) */
 .comment-count-badge {
   display: inline-flex;
