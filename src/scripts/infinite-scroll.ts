@@ -24,6 +24,7 @@ let hasMore = true;
 let observer: IntersectionObserver | null = null;
 let categorySlug: string | null = null;
 let sourceSlug: string | null = null;
+let contentType: string | null = null;
 
 // --- DOM refs ---
 let articlesGrid: HTMLElement | null = null;
@@ -54,7 +55,9 @@ function renderArticleCard(article: any): HTMLElement {
   const date = formatDate(article.published_at);
   const source = article.source.name;
   const category = article.category;
-  const href = "/articulo/" + article.slug;
+  const articleContentType = article.content_type || "news";
+  const isVideo = articleContentType === "video";
+  const href = isVideo ? "/video/" + article.slug : "/articulo/" + article.slug;
   const identifier = article.id;
   const excerptText = article.excerpt || "";
 
@@ -77,6 +80,35 @@ function renderArticleCard(article: any): HTMLElement {
   img.height = 300;
 
   photoDiv.appendChild(img);
+
+  // Play overlay for video cards
+  if (isVideo) {
+    const overlay = document.createElement("div");
+    overlay.className = "video-play-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "video-play-overlay__icon");
+    svg.setAttribute("viewBox", "0 0 48 48");
+    svg.setAttribute("fill", "none");
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", "24");
+    circle.setAttribute("cy", "24");
+    circle.setAttribute("r", "23");
+    circle.setAttribute("fill", "rgba(0,0,0,0.55)");
+    circle.setAttribute("stroke", "white");
+    circle.setAttribute("stroke-width", "2");
+
+    const playPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    playPath.setAttribute("d", "M19 15L35 24L19 33V15Z");
+    playPath.setAttribute("fill", "white");
+
+    svg.appendChild(circle);
+    svg.appendChild(playPath);
+    overlay.appendChild(svg);
+    photoDiv.appendChild(overlay);
+  }
 
   // Actions: comment count + bookmark (top-right of photo)
   const actionsDiv = document.createElement("div");
@@ -106,6 +138,7 @@ function renderArticleCard(article: any): HTMLElement {
     scraped_at: article.scraped_at || "",
     source_name: source,
     category: category,
+    content_type: articleContentType,
     savedAt: "",
   });
   bookmarkBtn.setAttribute("data-article", bookmarkData);
@@ -221,6 +254,9 @@ async function loadMoreArticles(): Promise<void> {
     const limit = getLimitForBreakpoint();
     let url = `/api/articles?limit=${limit}&cursor=${encodeURIComponent(cursor)}`;
 
+    if (contentType) {
+      url += `&content_type=${encodeURIComponent(contentType)}`;
+    }
     if (categorySlug) {
       url += `&category=${encodeURIComponent(categorySlug)}`;
     }
@@ -308,6 +344,7 @@ function init(): void {
   cursor = config.dataset.cursor || null;
   categorySlug = config.dataset.category || null;
   sourceSlug = config.dataset.source || null;
+  contentType = config.dataset.contentType || null;
 
   articlesGrid = document.getElementById("articles-grid");
   loadingSkeletons = document.getElementById("loading-skeletons");

@@ -5,33 +5,7 @@
  */
 
 import type { RawArticle } from '../types.ts';
-
-/**
- * Decodes HTML entities (&#039;, &quot;, &amp;, etc.)
- */
-function decodeHTMLEntities(text: string): string {
-  return text
-    // Decode numeric entities (decimal: &#39;)
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
-    // Decode hex entities (&#x27;)
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    // Decode named entities
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&'); // Must be last to avoid double-decoding
-}
-
-/**
- * Extracts text content between XML tags
- */
-function extractTag(xml: string, tag: string): string | null {
-  const regex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\/${tag}>|<${tag}[^>]*>([^<]+)<\/${tag}>`, 'i');
-  const match = xml.match(regex);
-  return match ? (match[1] || match[2] || '').trim() : null;
-}
+import { decodeHTMLEntities, extractTag } from './xml-utils.ts';
 
 /**
  * Parses an RSS feed and extracts article data

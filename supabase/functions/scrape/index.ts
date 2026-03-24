@@ -21,12 +21,15 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { parseRSS } from './parsers/rss-parser.ts';
+import { parseYouTube } from './parsers/youtube-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
+import { isYouTubeEVRelated } from './parsers/youtube-ev-filter.ts';
 import { isNotHEV } from './parsers/hev-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
 import type { Source, RawArticle, ScraperResult } from './types.ts';
+import { YOUTUBE_EV_FILTERED_SOURCES } from './types.ts';
 
 /**
  * Generate a URL-safe slug from a title string
@@ -88,16 +91,22 @@ serve(async (req) => {
 
       try {
         let articles: RawArticle[] = [];
+        const isYouTubeSource = source.feed_type === 'youtube';
 
         // Parse based on feed type
         // motor.es: fetch more items since most will be filtered out (general automotive site)
-        const fetchLimit = source.name === 'motor.es' ? 30 : 5;
-        if (source.feed_type === 'rss') {
+        // YouTube EV-filtered channels: fetch more for the same reason
+        const isEVFiltered = YOUTUBE_EV_FILTERED_SOURCES.includes(source.name);
+        const fetchLimit = (source.name === 'motor.es' || isEVFiltered) ? 30 : 5;
+
+        if (isYouTubeSource) {
+          articles = await parseYouTube(source.feed_url, fetchLimit);
+        } else if (source.feed_type === 'rss') {
           articles = await parseRSS(source.feed_url, fetchLimit);
         }
         // TODO: Implement HTML parser for hibridosyelectricos.com
 
-        console.log(`Fetched ${articles.length} articles from ${source.name}`);
+        console.log(`Fetched ${articles.length} ${isYouTubeSource ? 'videos' : 'articles'} from ${source.name}`);
 
         // Filter for motor.es (only EV-related content based on RSS categories)
         if (source.name === 'motor.es') {
@@ -105,6 +114,14 @@ serve(async (req) => {
           articles = articles.filter(a => isEVRelated(a.categories));
           articles = articles.slice(0, 5);
           console.log(`Filtered motor.es: ${originalCount} -> ${articles.length} (EV only)`);
+        }
+
+        // Filter YouTube EV-filtered channels (cochesnet, motorpuntoes)
+        if (isEVFiltered) {
+          const originalCount = articles.length;
+          articles = articles.filter(a => isYouTubeEVRelated(a.title, a.excerpt));
+          articles = articles.slice(0, 5);
+          console.log(`EV filter ${source.name}: ${originalCount} -> ${articles.length} (EV only)`);
         }
 
         // Filter out conventional hybrids (HEV) from all sources
@@ -120,7 +137,8 @@ serve(async (req) => {
         let skippedCount = 0;
 
         // Process each article
-        for (const article of articles) {
+        for (let i = 0; i < articles.length; i++) {
+          const article = articles[i];
           try {
             // Check for duplicates (unique constraint on article_url)
             const { data: existing } = await supabaseClient
@@ -131,30 +149,23 @@ serve(async (req) => {
 
             if (existing) {
               skippedCount++;
-              continue; // Skip duplicate
+              continue;
             }
 
-            // Use original title and excerpt (translation disabled)
             let title = article.title;
             let excerpt = article.excerpt;
-
-            // Translation disabled - will be re-enabled later
-            // if (source.lang === 'en' && openaiKey) {
-            //   console.log(`Translating: ${title.substring(0, 50)}...`);
-            //   const translated = await translateToSpanish(title, excerpt, openaiKey);
-            //   title = translated.title;
-            //   excerpt = translated.excerpt;
-            // }
 
             // Categorize by keywords
             const category = categorize(title, excerpt);
 
-            // Cache image to Supabase Storage
+            // Cache image to Supabase Storage (YouTube thumbnails included)
             let imageUrl = article.image_url;
             if (imageUrl) {
               const articleId = crypto.randomUUID();
               imageUrl = await cacheImage(imageUrl, articleId, supabaseClient);
             }
+
+            const youtubeVideoId = article.youtube_video_id || null;
 
             // Generate unique slug from title
             let baseSlug = slugify(title);
@@ -172,18 +183,29 @@ serve(async (req) => {
             }
 
             // Insert into database
+            const insertData: Record<string, unknown> = {
+              source_id: source.id,
+              title,
+              slug,
+              excerpt,
+              image_url: imageUrl,
+              article_url: article.article_url,
+              category,
+              published_at: article.published_at.toISOString(),
+              content_type: isYouTubeSource ? 'video' : 'news',
+            };
+
+            if (youtubeVideoId) {
+              insertData.youtube_video_id = youtubeVideoId;
+            }
+
+            if (article.duration) {
+              insertData.duration = article.duration;
+            }
+
             const { error: insertError } = await supabaseClient
               .from('articles')
-              .insert({
-                source_id: source.id,
-                title,
-                slug,
-                excerpt,
-                image_url: imageUrl,
-                article_url: article.article_url,
-                category,
-                published_at: article.published_at.toISOString()
-              });
+              .insert(insertData);
 
             if (insertError) {
               console.error(`Insert error for ${article.article_url}:`, insertError);

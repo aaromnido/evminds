@@ -1,0 +1,112 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
+import CategoryFilter from "@/components/CategoryFilter.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import NewsGrid from "@/components/NewsGrid.astro";
+import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
+import EmptyState from "@/components/EmptyState.astro";
+import { supabase } from "@/lib/supabase";
+import { readPrefsFromCookie } from "@/lib/preferences";
+import {
+  ARTICLE_SELECT,
+  INITIAL_ARTICLES_LIMIT,
+  normalizeArticles,
+  mapArticleToProps,
+  getAvailableCategorySlugs,
+} from "@/lib/article-utils";
+
+// Read user preferences from cookie
+const prefs = readPrefsFromCookie(Astro.request.headers.get("cookie"));
+
+// Fetch initial videos + categories in parallel
+let videosQuery = supabase
+  .from("articles")
+  .select(ARTICLE_SELECT)
+  .eq("content_type", "video")
+  .order("scraped_at", { ascending: false })
+  .limit(INITIAL_ARTICLES_LIMIT);
+
+// Apply user preference exclusions
+if (prefs.excludedSources.length > 0) {
+  for (const name of prefs.excludedSources) {
+    videosQuery = videosQuery.neq("source.name", name);
+  }
+}
+if (prefs.excludedCategories.length > 0) {
+  videosQuery = videosQuery.not("category", "in", `(${prefs.excludedCategories.join(",")})`);
+}
+if (prefs.onlyWithComments) {
+  videosQuery = videosQuery.eq("has_comments", true);
+}
+
+const [{ data: videoData }, { data: categoryRows }] = await Promise.all([
+  videosQuery,
+  supabase.from("articles").select("category").eq("content_type", "video"),
+]);
+
+const videos = normalizeArticles(videoData);
+const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
+
+// Calculate initial cursor for pagination
+const initialCursor =
+  videos.length > 0
+    ? videos[videos.length - 1].scraped_at.toISOString()
+    : null;
+
+const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategories.length > 0;
+---
+
+<BaseLayout
+  title="Vídeos — EVMinds"
+  description="Los mejores vídeos sobre movilidad eléctrica, coches eléctricos, reviews y noticias EV en español e inglés."
+>
+  <PageLayout variant="compact">
+    <Header />
+
+    <Subheader
+      subtitle="Reviews, noticias y análisis en vídeo sobre movilidad eléctrica"
+    >
+      <Fragment slot="title">
+        Vídeos
+      </Fragment>
+      <CategoryFilter
+        availableCategorySlugs={availableCategorySlugs}
+      />
+    </Subheader>
+
+    {videos.length === 0 && hasActivePrefs ? (
+      <EmptyState ctaLabel="Restablecer filtros" ctaHref="/videos">
+        Sin resultados para tus preferencias.<br /><strong>Ajusta tus filtros</strong> para ver contenido.
+      </EmptyState>
+      <script is:inline>
+        document.querySelector('.empty-state__cta')?.addEventListener('click', function (e) {
+          e.preventDefault();
+          localStorage.removeItem('evminds-prefs');
+          document.cookie = 'evminds-prefs=;path=/;max-age=0';
+          window.location.href = '/videos';
+        });
+      </script>
+    ) : videos.length === 0 ? (
+      <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
+        Aún <strong>no hay vídeos</strong> disponibles. Pronto empezaremos a publicar contenido.
+      </EmptyState>
+    ) : (
+      <NewsGrid ariaLabel="Últimos vídeos" showSkeletons>
+        {videos.map((video) => (
+          <ArticleCard {...mapArticleToProps(video)} />
+        ))}
+      </NewsGrid>
+    )}
+
+    <Footer availableCategorySlugs={availableCategorySlugs} />
+  </PageLayout>
+</BaseLayout>
+
+<InfiniteScrollConfig
+  cursor={initialCursor || ""}
+  contentType="video"
+/>

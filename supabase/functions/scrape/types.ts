@@ -7,10 +7,13 @@ export interface Source {
   name: string;
   url: string;
   feed_url: string;
-  feed_type: 'rss' | 'html';
+  feed_type: 'rss' | 'html' | 'youtube';
   lang: 'es' | 'en';
   active: boolean;
 }
+
+/** YouTube channels that require EV keyword filtering (general automotive channels) */
+export const YOUTUBE_EV_FILTERED_SOURCES = ['cochesnet-yt', 'motorpuntoes'];
 
 export interface RawArticle {
   title: string;
@@ -19,6 +22,8 @@ export interface RawArticle {
   image_url: string | null;
   published_at: Date;
   categories: string[];
+  youtube_video_id?: string;
+  duration?: string;
 }
 
 export interface ArticleData extends RawArticle {

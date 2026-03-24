@@ -40,14 +40,18 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     // Use !inner join when filtering by source so PostgREST excludes non-matching articles
     const needsInnerJoin = source || prefs.excludedSources.length > 0;
-    const articleColumns = "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at";
+    const articleColumns = "id, slug, title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at";
     const joinClause = needsInnerJoin
       ? `${articleColumns}, source:sources!inner(name, url)`
       : `${articleColumns}, source:sources(name, url)`;
 
+    // Filter by content type (default: news only, /videos page sends 'video')
+    const contentType = url.searchParams.get("content_type") || "news";
+
     let query = supabase
       .from("articles")
       .select(joinClause)
+      .eq("content_type", contentType)
       .order("scraped_at", { ascending: false })
       .limit(limit);
 

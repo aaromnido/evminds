@@ -2,6 +2,7 @@
 import Badge from "./Badge.astro";
 import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
+import VideoPlayOverlay from "./VideoPlayOverlay.astro";
 import { serializeBookmarkData } from "@/lib/article-utils";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   source: string;
   category: string;
   href?: string;
+  contentType?: string;
   identifier?: string;
   articleId?: string;
   articleSlug?: string;
@@ -18,7 +20,9 @@ interface Props {
   scraped_at?: string;
 }
 
-const { image, title, date, source, category, href = "#", identifier, articleId, articleSlug, excerpt = "", scraped_at } = Astro.props;
+const { image, title, date, source, category, href = "#", contentType = "news", identifier, articleId, articleSlug, excerpt = "", scraped_at } = Astro.props;
+
+const isVideo = contentType === "video";
 
 const articleDataJson = serializeBookmarkData({
   id: articleId,
@@ -29,6 +33,7 @@ const articleDataJson = serializeBookmarkData({
   scraped_at,
   source,
   category,
+  contentType,
 });
 ---
 
@@ -54,6 +59,8 @@ const articleDataJson = serializeBookmarkData({
       <BookmarkButton articleId={articleId} articleData={articleDataJson} />
     )}
   </div>
+
+  {isVideo && <VideoPlayOverlay size={64} />}
 
   <!-- Logo mark (pixelated E) top-left -->
   <div class="featured-primary__logomark" aria-hidden="true">

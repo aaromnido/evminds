@@ -1,0 +1,422 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Badge from "@/components/Badge.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import BookmarkButton from "@/components/BookmarkButton.astro";
+import ShareButtons from "@/components/ShareButtons.astro";
+import DisqusComments from "@/components/DisqusComments.astro";
+import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
+import { supabase } from "@/lib/supabase";
+import { formatDate } from "@/lib/date-utils";
+import { getCategorySlugByName } from "@/lib/categories";
+import { getVideoUrl } from "@/lib/article-url";
+import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+
+// Fetch video with source info
+const { data, error } = await supabase
+  .from("articles")
+  .select("*, source:sources!inner(name, url)")
+  .eq("slug", slug)
+  .eq("content_type", "video")
+  .single();
+
+if (error || !data) {
+  return new Response(null, { status: 404, statusText: "Not Found" });
+}
+
+const video = data as any;
+const source = Array.isArray(video.source)
+  ? video.source[0]
+  : video.source;
+
+const RELATED_VIDEOS_LIMIT = 2;
+
+// Fetch related videos (same category, excluding current)
+const { data: relatedData } = await supabase
+  .from("articles")
+  .select("id, slug, title, excerpt, image_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)")
+  .eq("content_type", "video")
+  .eq("category", video.category)
+  .neq("id", video.id)
+  .order("scraped_at", { ascending: false })
+  .limit(RELATED_VIDEOS_LIMIT);
+
+const relatedVideos = (relatedData || []).map((v: any) =>
+  mapArticleToProps(normalizeArticle(v))
+);
+
+// Page data
+const formattedDate = formatDate(video.published_at);
+const categorySlug = getCategorySlugByName(video.category);
+const canonicalUrl = new URL(
+  getVideoUrl(video.slug),
+  Astro.site,
+).toString();
+
+const youtubeVideoId = video.youtube_video_id;
+const thumbnailUrl = video.image_url || (youtubeVideoId
+  ? `https://i.ytimg.com/vi/${youtubeVideoId}/maxresdefault.jpg`
+  : "/images/placeholder-image.webp");
+
+const articleDataJson = serializeBookmarkData({
+  id: video.id,
+  slug: video.slug,
+  title: video.title,
+  excerpt: video.excerpt,
+  image: thumbnailUrl,
+  scraped_at: video.scraped_at || "",
+  source: source.name,
+  category: video.category,
+  contentType: "video",
+});
+---
+
+<BaseLayout
+  title={`${video.title} - EVMinds`}
+  description={video.excerpt}
+  image={thumbnailUrl}
+  type="article"
+  publishedAt={video.published_at}
+  breadcrumbs={[
+    { name: "Inicio", url: "/" },
+    { name: "Vídeos", url: "/videos" },
+    ...(categorySlug ? [{ name: video.category, url: `/categoria/${categorySlug}` }] : []),
+    { name: video.title, url: getVideoUrl(video.slug) },
+  ]}
+>
+  <main class="video-detail">
+    <Header />
+
+    <article class="video-detail__content">
+      <!-- Title -->
+      <h1 class="video-detail__title">{video.title}</h1>
+
+      <!-- YouTube embed -->
+      {youtubeVideoId ? (
+        <div class="video-detail__player">
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+            title={video.title}
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+      ) : (
+        <div class="video-detail__hero">
+          <img
+            src={thumbnailUrl}
+            alt={video.title}
+            class="video-detail__hero-image"
+            loading="eager"
+            width="900"
+            height="500"
+          />
+        </div>
+      )}
+
+      <div class="video-detail__header">
+        <div class="video-detail__meta">
+          <time datetime={video.published_at}>{formattedDate}</time>
+        </div>
+
+        <!-- Badges + Bookmark -->
+        <div class="video-detail__badges">
+          <Badge label={source.name} variant="filled" />
+          {
+            categorySlug && (
+              <a
+                href={`/categoria/${categorySlug}`}
+                class="video-detail__category-link"
+              >
+                <Badge label={video.category} variant="outlined" />
+              </a>
+            )
+          }
+          {
+            !categorySlug && (
+              <Badge label={video.category} variant="outlined" />
+            )
+          }
+          <DisqusCommentCount identifier={video.id} />
+          <BookmarkButton articleId={video.id} articleData={articleDataJson} />
+        </div>
+      </div>
+
+      <!-- Description -->
+      {video.excerpt && (
+        <p class="video-detail__excerpt">{video.excerpt}</p>
+      )}
+
+      <!-- CTA: watch on YouTube -->
+      <a
+        href={video.article_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="video-detail__cta"
+      >
+        Ver en YouTube
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+
+      <!-- Share buttons -->
+      <ShareButtons url={canonicalUrl} title={video.title} />
+
+      <!-- Disqus comments -->
+      <DisqusComments
+        identifier={video.id}
+        url={canonicalUrl}
+        title={video.title}
+      />
+
+      <!-- Related videos -->
+      {
+        relatedVideos.length > 0 && (
+          <section
+            class="video-detail__related"
+            aria-label="Vídeos relacionados"
+          >
+            <h2 class="video-detail__related-title">
+              Vídeos relacionados
+            </h2>
+            <div class="video-detail__related-grid">
+              {relatedVideos.map((props) => (
+                <ArticleCard {...props} />
+              ))}
+            </div>
+          </section>
+        )
+      }
+    </article>
+
+    <Footer />
+  </main>
+</BaseLayout>
+
+<style>
+  .video-detail {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    min-height: 100vh;
+  }
+
+  .video-detail__content {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* YouTube embed — responsive 16:9 */
+  .video-detail__player {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #000;
+  }
+
+  .video-detail__player iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Fallback hero image (when no youtube_video_id) */
+  .video-detail__hero {
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
+  }
+
+  .video-detail__hero-image {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Header (meta + badges) */
+  .video-detail__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .video-detail__badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .video-detail__category-link {
+    text-decoration: none;
+  }
+
+  .video-detail__category-link:hover {
+    opacity: 0.8;
+  }
+
+  /* Title */
+  .video-detail__title {
+    font-family: "Playfair Display", serif;
+    font-size: 48px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.1;
+    color: var(--navy-light);
+    letter-spacing: -0.01em;
+  }
+
+  /* Meta */
+  .video-detail__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    color: var(--navy-2);
+  }
+
+  /* Description */
+  .video-detail__excerpt {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--navy-2);
+    letter-spacing: -0.01em;
+  }
+
+  /* CTA button */
+  .video-detail__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background-color: var(--navy-light);
+    color: var(--sepia-light);
+    border-radius: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+    align-self: flex-start;
+  }
+
+  .video-detail__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  :global(.dark) .video-detail__cta {
+    background-color: #faf7f0;
+    color: #191b41;
+  }
+
+  /* Related videos */
+  .video-detail__related {
+    margin-top: 48px;
+    padding-top: 36px;
+    border-top: 2px solid var(--navy-2);
+  }
+
+  .video-detail__related-title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy-light);
+    margin-bottom: 24px;
+  }
+
+  .video-detail__related-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .video-detail__title {
+      font-size: 42px;
+    }
+
+    .video-detail__excerpt {
+      font-size: 18px;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .video-detail {
+      padding: 0 12px 72px;
+      gap: 36px;
+    }
+
+    .video-detail__player {
+      border-radius: 12px;
+    }
+
+    .video-detail__hero {
+      border-radius: 12px;
+    }
+
+    .video-detail__title {
+      font-size: 28px;
+    }
+
+    .video-detail__excerpt {
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .video-detail__cta {
+      font-size: 15px;
+      padding: 14px 28px;
+    }
+
+    .video-detail__related-grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+  }
+</style>

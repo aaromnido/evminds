@@ -1,5 +1,5 @@
 import { formatDate } from "@/lib/date-utils";
-import { getArticleUrl } from "@/lib/article-url";
+import { getContentUrl } from "@/lib/article-url";
 import { getCategorySlugByName } from "@/lib/categories";
 import type { ArticleData } from "@/loaders/supabase-loader";
 
@@ -11,7 +11,7 @@ export const API_DEFAULT_LIMIT = 12;
 
 /** Shared Supabase select fields for article listings with source join */
 export const ARTICLE_SELECT =
-  "id, slug, title, excerpt, image_url, article_url, category, published_at, scraped_at, source:sources!inner(name, url)";
+  "id, slug, title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)";
 
 /**
  * Normalize a raw Supabase article row (with joined source) into ArticleData.
@@ -27,6 +27,8 @@ export function normalizeArticle(raw: any): ArticleData {
     image_url: raw.image_url,
     article_url: raw.article_url,
     category: raw.category,
+    content_type: raw.content_type || 'news',
+    youtube_video_id: raw.youtube_video_id || null,
     published_at: new Date(raw.published_at),
     scraped_at: new Date(raw.scraped_at),
     source_name: source.name,
@@ -48,7 +50,8 @@ export function mapArticleToProps(article: ArticleData) {
     excerpt: article.excerpt,
     source: article.source_name,
     category: article.category,
-    href: getArticleUrl(article.slug),
+    href: getContentUrl(article.slug, article.content_type),
+    contentType: article.content_type,
     identifier: article.id,
     articleId: article.id,
     articleSlug: article.slug,
@@ -82,6 +85,7 @@ export function serializeBookmarkData(props: {
   scraped_at?: string;
   source: string;
   category: string;
+  contentType?: string;
 }): string {
   if (!props.id) return "";
   return JSON.stringify({
@@ -93,6 +97,7 @@ export function serializeBookmarkData(props: {
     scraped_at: props.scraped_at || "",
     source_name: props.source,
     category: props.category,
+    content_type: props.contentType || "news",
     savedAt: "",
   });
 }

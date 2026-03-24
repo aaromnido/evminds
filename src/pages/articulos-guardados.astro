@@ -10,7 +10,7 @@ import EmptyState from "@/components/EmptyState.astro";
 import { STORAGE_KEY } from "@/lib/bookmarks";
 ---
 
-<BaseLayout title="Mis artículos guardados - EVMinds" description="Tu lista de lectura personal con artículos guardados sobre movilidad eléctrica.">
+<BaseLayout title="Mis artículos y vídeos guardados - EVMinds" description="Tu lista personal con artículos y vídeos guardados sobre movilidad eléctrica.">
   <PageLayout>
     <Header />
 
@@ -58,7 +58,9 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     var date = formatDate(bookmark.scraped_at);
     var source = bookmark.source_name;
     var category = bookmark.category;
-    var href = "/articulo/" + bookmark.slug;
+    var contentType = bookmark.content_type || "news";
+    var isVideo = contentType === "video";
+    var href = isVideo ? "/video/" + bookmark.slug : "/articulo/" + bookmark.slug;
     var identifier = bookmark.id;
     var excerptText = bookmark.excerpt || "";
 
@@ -82,6 +84,35 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     img.height = 300;
 
     photoDiv.appendChild(img);
+
+    // Play overlay for video bookmarks
+    if (isVideo) {
+      var overlay = document.createElement("div");
+      overlay.className = "video-play-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+
+      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "video-play-overlay__icon");
+      svg.setAttribute("viewBox", "0 0 48 48");
+      svg.setAttribute("fill", "none");
+
+      var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", "24");
+      circle.setAttribute("cy", "24");
+      circle.setAttribute("r", "23");
+      circle.setAttribute("fill", "rgba(0,0,0,0.55)");
+      circle.setAttribute("stroke", "white");
+      circle.setAttribute("stroke-width", "2");
+
+      var playPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      playPath.setAttribute("d", "M19 15L35 24L19 33V15Z");
+      playPath.setAttribute("fill", "white");
+
+      svg.appendChild(circle);
+      svg.appendChild(playPath);
+      overlay.appendChild(svg);
+      photoDiv.appendChild(overlay);
+    }
 
     // Actions: comment count + bookmark (top-right of photo)
     var actionsDiv = document.createElement("div");

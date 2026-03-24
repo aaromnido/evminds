@@ -13,6 +13,8 @@ export interface ArticleData {
   image_url: string | null;
   article_url: string;
   category: string;
+  content_type: 'news' | 'video' | 'blog';
+  youtube_video_id?: string | null;
   published_at: Date;
   scraped_at: Date;
   source_name: string;
@@ -51,11 +53,14 @@ export function createSupabaseArticlesLoader(
           .select(
             `
             id,
+            slug,
             title,
             excerpt,
             image_url,
             article_url,
             category,
+            content_type,
+            youtube_video_id,
             published_at,
             scraped_at,
             source:sources!inner(name, url)
@@ -104,6 +109,8 @@ export function createSupabaseArticlesLoader(
                 image_url: article.image_url,
                 article_url: article.article_url,
                 category: article.category,
+                content_type: article.content_type || 'news',
+                youtube_video_id: article.youtube_video_id || null,
                 published_at: new Date(article.published_at),
                 scraped_at: new Date(article.scraped_at),
                 source_name: source.name,
@@ -142,11 +149,14 @@ export function createSupabaseArticlesLoader(
           .select(
             `
             id,
+            slug,
             title,
             excerpt,
             image_url,
             article_url,
             category,
+            content_type,
+            youtube_video_id,
             published_at,
             scraped_at,
             source:sources!inner(name, url)
@@ -185,6 +195,8 @@ export function createSupabaseArticlesLoader(
           image_url: data.image_url,
           article_url: data.article_url,
           category: data.category,
+          content_type: data.content_type || 'news',
+          youtube_video_id: data.youtube_video_id || null,
           published_at: new Date(data.published_at),
           scraped_at: new Date(data.scraped_at),
           source_name: source.name,

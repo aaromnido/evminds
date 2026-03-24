@@ -1,0 +1,35 @@
+---
+/**
+ * Play button overlay for video thumbnails.
+ * Renders a centered play icon over the parent container (which must be position: relative).
+ */
+interface Props {
+  size?: number;
+}
+
+const { size = 48 } = Astro.props;
+---
+
+<div class="video-play-overlay" aria-hidden="true">
+  <svg class="video-play-overlay__icon" viewBox="0 0 48 48" fill="none" style={`width:${size}px;height:${size}px`}>
+    <circle cx="24" cy="24" r="23" fill="rgba(0,0,0,0.55)" stroke="white" stroke-width="2"/>
+    <path d="M19 15L35 24L19 33V15Z" fill="white"/>
+  </svg>
+</div>
+
+<style is:global>
+  .video-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .video-play-overlay__icon {
+    opacity: 0.9;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+</style>
