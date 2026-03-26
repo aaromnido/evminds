@@ -1,5 +1,5 @@
 ---
-import '@/styles/global.css';
+import "@/styles/global.css";
 
 interface BreadcrumbItem {
   name: string;
@@ -10,17 +10,17 @@ interface Props {
   title?: string;
   description?: string;
   image?: string;
-  type?: 'website' | 'article';
+  type?: "website" | "article";
   publishedAt?: string;
   noIndex?: boolean;
   breadcrumbs?: BreadcrumbItem[];
 }
 
 const {
-  title = 'evminds.es — Movilidad Eléctrica',
-  description = 'Un único lugar donde encontrar todas las noticias relevantes sobre movilidad eléctrica en español. Coches eléctricos, baterías, renovables e infraestructura de carga.',
-  image = '/logo.svg',
-  type = 'website',
+  title = "evminds.es — Movilidad Eléctrica",
+  description = "Un único lugar donde encontrar todas las noticias relevantes sobre movilidad eléctrica en español. Coches eléctricos, baterías, renovables e infraestructura de carga.",
+  image = "/logo.svg",
+  type = "website",
   publishedAt,
   noIndex = false,
   breadcrumbs,
@@ -29,9 +29,9 @@ const {
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
-const siteUrl = Astro.site?.toString() || 'https://evminds.es';
-const isHomePage = Astro.url.pathname === '/';
-const isArticlePage = type === 'article';
+const siteUrl = Astro.site?.toString() || "https://evminds.es";
+const isHomePage = Astro.url.pathname === "/";
+const isArticlePage = type === "article";
 
 // Build JSON-LD schemas array
 const schemas: object[] = [];
@@ -40,11 +40,11 @@ const schemas: object[] = [];
 schemas.push({
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "EVMinds.es",
-  "url": siteUrl,
-  "logo": new URL('/logo.svg', Astro.site).toString(),
-  "description": "Agregador de noticias sobre movilidad eléctrica en español",
-  "sameAs": ["https://t.me/evminders"],
+  name: "EVMinds.es",
+  url: siteUrl,
+  logo: new URL("/logo.svg", Astro.site).toString(),
+  description: "Agregador de noticias sobre movilidad eléctrica en español",
+  sameAs: ["https://t.me/evminders"],
 });
 
 // WebSite schema (homepage only)
@@ -52,10 +52,10 @@ if (isHomePage) {
   schemas.push({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "EVMinds.es",
-    "url": siteUrl,
-    "description": description,
-    "inLanguage": "es",
+    name: "EVMinds.es",
+    url: siteUrl,
+    description: description,
+    inLanguage: "es",
   });
 }
 
@@ -64,16 +64,16 @@ if (isArticlePage) {
   schemas.push({
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "headline": title,
-    "description": description,
-    "image": ogImageURL.toString(),
-    "datePublished": publishedAt,
-    "url": canonicalURL.toString(),
-    "inLanguage": "es",
-    "publisher": {
+    headline: title,
+    description: description,
+    image: ogImageURL.toString(),
+    datePublished: publishedAt,
+    url: canonicalURL.toString(),
+    inLanguage: "es",
+    publisher: {
       "@type": "Organization",
-      "name": "EVMinds.es",
-      "url": siteUrl,
+      name: "EVMinds.es",
+      url: siteUrl,
     },
   });
 }
@@ -83,11 +83,11 @@ if (breadcrumbs && breadcrumbs.length > 0) {
   schemas.push({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": breadcrumbs.map((item, index) => ({
+    itemListElement: breadcrumbs.map((item, index) => ({
       "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      "item": new URL(item.url, Astro.site).toString(),
+      position: index + 1,
+      name: item.name,
+      item: new URL(item.url, Astro.site).toString(),
     })),
   });
 }
@@ -103,7 +103,10 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <meta name="viewport" content="width=device-width" />
     <meta name="theme-color" content="#191B41" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="google-site-verification" content="gvXKEiAuL_GaU_XA1NV3WLcVgExYpITZD0G29fNDEZQ" />
+    <meta
+      name="google-site-verification"
+      content="FixCmGWafXJu_VRCiCdt9ZVEA5gMcdamdDBZlvTmbHw"
+    />
 
     <!-- Preconnect hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -112,10 +115,22 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <link rel="dns-prefetch" href="https://evminds-es.disqus.com" />
 
     <!-- Google Fonts (non-render-blocking) -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      />
     </noscript>
 
     <!-- Primary Meta Tags -->
@@ -123,7 +138,12 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
-    <link rel="alternate" type="application/rss+xml" title="EVMinds RSS" href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="EVMinds RSS"
+      href="/rss.xml"
+    />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content={type} />
@@ -144,80 +164,112 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <meta property="twitter:image" content={ogImageURL} />
 
     <!-- Additional SEO -->
-    <meta name="keywords" content="movilidad eléctrica, coches eléctricos, baterías, energías renovables, infraestructura de carga, vehículos eléctricos, EV, noticias EV" />
+    <meta
+      name="keywords"
+      content="movilidad eléctrica, coches eléctricos, baterías, energías renovables, infraestructura de carga, vehículos eléctricos, EV, noticias EV"
+    />
     <meta name="author" content="EVMinds.es" />
-    <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
+    <meta
+      name="robots"
+      content={noIndex ? "noindex, nofollow" : "index, follow"}
+    />
 
     <!-- Umami Analytics -->
-    {umamiWebsiteId && (
-      <script
-        is:inline
-        defer
-        src="https://cloud.umami.is/script.js"
-        data-website-id={umamiWebsiteId}
-      ></script>
-    )}
+    {
+      umamiWebsiteId && (
+        <script
+          is:inline
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id={umamiWebsiteId}
+        />
+      )
+    }
 
     <!-- Article-specific meta tags -->
-    {isArticlePage && publishedAt && (
-      <meta property="article:published_time" content={publishedAt} />
-    )}
+    {
+      isArticlePage && publishedAt && (
+        <meta property="article:published_time" content={publishedAt} />
+      )
+    }
 
     <!-- JSON-LD structured data -->
-    {schemas.map((schema) => (
-      <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replaceAll('</','<\\/')} />
-    ))}
+    {
+      schemas.map((schema) => (
+        <script
+          is:inline
+          type="application/ld+json"
+          set:html={JSON.stringify(schema).replaceAll("</", "<\\/")}
+        />
+      ))
+    }
 
     <!-- Theme: apply dark class before first paint (FOUC prevention) -->
     <script is:inline>
-      (function() {
-        var stored = localStorage.getItem('evminds-theme');
-        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (stored === 'dark' || (!stored && prefersDark)) {
-          document.documentElement.classList.add('dark');
+      (function () {
+        var stored = localStorage.getItem("evminds-theme");
+        var prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        if (stored === "dark" || (!stored && prefersDark)) {
+          document.documentElement.classList.add("dark");
         }
       })();
     </script>
-
   </head>
   <body>
     <slot />
 
     <!-- Image fade-in on load -->
     <script is:inline>
-      document.addEventListener('load', function(e) {
-        if (e.target && e.target.tagName === 'IMG') e.target.classList.add('loaded');
-      }, true);
+      document.addEventListener(
+        "load",
+        function (e) {
+          if (e.target && e.target.tagName === "IMG")
+            e.target.classList.add("loaded");
+        },
+        true,
+      );
       // Images already cached/complete before listener attached
-      document.querySelectorAll('img').forEach(function(img) {
-        if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
+      document.querySelectorAll("img").forEach(function (img) {
+        if (img.complete && img.naturalWidth > 0) img.classList.add("loaded");
       });
     </script>
 
     <!-- Theme toggle system -->
     <script>
-      function getTheme(): 'light' | 'dark' {
-        const stored = localStorage.getItem('evminds-theme');
-        if (stored === 'dark' || stored === 'light') return stored;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      function getTheme(): "light" | "dark" {
+        const stored = localStorage.getItem("evminds-theme");
+        if (stored === "dark" || stored === "light") return stored;
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
       }
 
-      function setTheme(theme: 'light' | 'dark') {
-        localStorage.setItem('evminds-theme', theme);
-        document.documentElement.classList.toggle('dark', theme === 'dark');
+      function setTheme(theme: "light" | "dark") {
+        localStorage.setItem("evminds-theme", theme);
+        document.documentElement.classList.toggle("dark", theme === "dark");
       }
 
-      function toggleTheme(): 'light' | 'dark' {
-        const next = getTheme() === 'dark' ? 'light' : 'dark';
+      function toggleTheme(): "light" | "dark" {
+        const next = getTheme() === "dark" ? "light" : "dark";
         setTheme(next);
-        document.dispatchEvent(new CustomEvent('evminds:theme-change', { detail: { theme: next } }));
+        document.dispatchEvent(
+          new CustomEvent("evminds:theme-change", { detail: { theme: next } }),
+        );
         return next;
       }
 
-      (window as any).__evminds_theme = { get: getTheme, set: setTheme, toggle: toggleTheme };
+      (window as any).__evminds_theme = {
+        get: getTheme,
+        set: setTheme,
+        toggle: toggleTheme,
+      };
 
       // Re-sync on View Transitions (html class may be reset during swap)
-      function syncTheme() { setTheme(getTheme()); }
+      function syncTheme() {
+        setTheme(getTheme());
+      }
       syncTheme();
     </script>
 
@@ -230,13 +282,23 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       (window as any).__evminds_bookmarks = { isBookmarked, toggleBookmark };
 
       function updateBookmarkIcon(btn: Element, active: boolean) {
-        const defaultIcon = btn.querySelector(".bookmark-btn__icon--default") as HTMLElement;
-        const activeIcon = btn.querySelector(".bookmark-btn__icon--active") as HTMLElement;
+        const defaultIcon = btn.querySelector(
+          ".bookmark-btn__icon--default",
+        ) as HTMLElement;
+        const activeIcon = btn.querySelector(
+          ".bookmark-btn__icon--active",
+        ) as HTMLElement;
         if (defaultIcon) defaultIcon.style.display = active ? "none" : "";
         if (activeIcon) activeIcon.style.display = active ? "" : "none";
         btn.setAttribute("aria-pressed", String(active));
-        btn.setAttribute("aria-label", active ? "Quitar de guardados" : "Guardar artículo");
-        btn.setAttribute("data-tooltip", active ? "Quitar de guardados" : "Guardar artículo");
+        btn.setAttribute(
+          "aria-label",
+          active ? "Quitar de guardados" : "Guardar artículo",
+        );
+        btn.setAttribute(
+          "data-tooltip",
+          active ? "Quitar de guardados" : "Guardar artículo",
+        );
       }
 
       function syncAllBookmarkIcons() {
@@ -247,39 +309,47 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       }
 
       // Event delegation in capture phase — intercepts click before <a> navigates
-      document.addEventListener("click", (e) => {
-        const btn = (e.target as Element).closest(".bookmark-btn");
-        if (!btn) return;
+      document.addEventListener(
+        "click",
+        (e) => {
+          const btn = (e.target as Element).closest(".bookmark-btn");
+          if (!btn) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+          e.preventDefault();
+          e.stopPropagation();
 
-        const id = btn.getAttribute("data-article-id");
-        const dataStr = btn.getAttribute("data-article");
-        if (!id || !dataStr) return;
+          const id = btn.getAttribute("data-article-id");
+          const dataStr = btn.getAttribute("data-article");
+          if (!id || !dataStr) return;
 
-        try {
-          const entry: BookmarkEntry = JSON.parse(dataStr);
-          const nowBookmarked = toggleBookmark(entry);
-          updateBookmarkIcon(btn, nowBookmarked);
+          try {
+            const entry: BookmarkEntry = JSON.parse(dataStr);
+            const nowBookmarked = toggleBookmark(entry);
+            updateBookmarkIcon(btn, nowBookmarked);
 
-          // Sync other buttons for the same article on this page
-          document.dispatchEvent(
-            new CustomEvent("evminds:bookmark-change", {
-              detail: { id, bookmarked: nowBookmarked },
-            })
-          );
-        } catch {
-          // Silently fail if data-article is malformed
-        }
-      }, true); // capture: true — intercepts before <a> bubbling phase
+            // Sync other buttons for the same article on this page
+            document.dispatchEvent(
+              new CustomEvent("evminds:bookmark-change", {
+                detail: { id, bookmarked: nowBookmarked },
+              }),
+            );
+          } catch {
+            // Silently fail if data-article is malformed
+          }
+        },
+        true,
+      ); // capture: true — intercepts before <a> bubbling phase
 
       // Sync duplicate buttons when bookmark changes
-      document.addEventListener("evminds:bookmark-change", ((e: CustomEvent) => {
+      document.addEventListener("evminds:bookmark-change", ((
+        e: CustomEvent,
+      ) => {
         const { id, bookmarked } = e.detail;
-        document.querySelectorAll(`.bookmark-btn[data-article-id="${id}"]`).forEach((btn) => {
-          updateBookmarkIcon(btn, bookmarked);
-        });
+        document
+          .querySelectorAll(`.bookmark-btn[data-article-id="${id}"]`)
+          .forEach((btn) => {
+            updateBookmarkIcon(btn, bookmarked);
+          });
       }) as EventListener);
 
       // Re-sync icons after View Transitions navigation
@@ -289,65 +359,71 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <!-- Disqus Comment Count: lazy-load only when count elements exist -->
     <script is:inline>
       // Create visible badge dynamically only when comment count >= 1
-      window.cleanDisqusCounts = function() {
+      window.cleanDisqusCounts = function () {
         var idsWithComments = [];
 
-        document.querySelectorAll('.disqus-comment-count').forEach(function(el) {
-          var text = el.textContent || '';
-          var match = text.match(/\d+/);
-          var count = match ? parseInt(match[0], 10) : 0;
-          var parent = el.parentElement;
-          if (!parent) return;
+        document
+          .querySelectorAll(".disqus-comment-count")
+          .forEach(function (el) {
+            var text = el.textContent || "";
+            var match = text.match(/\d+/);
+            var count = match ? parseInt(match[0], 10) : 0;
+            var parent = el.parentElement;
+            if (!parent) return;
 
-          // Remove any previously injected badge (handles View Transitions re-runs)
-          var existing = parent.querySelector('.comment-count-badge');
-          if (existing) existing.remove();
+            // Remove any previously injected badge (handles View Transitions re-runs)
+            var existing = parent.querySelector(".comment-count-badge");
+            if (existing) existing.remove();
 
-          if (count > 0) {
-            var badge = document.createElement('span');
-            badge.className = 'comment-count-badge';
+            if (count > 0) {
+              var badge = document.createElement("span");
+              badge.className = "comment-count-badge";
 
-            var countText = document.createTextNode(count.toString() + ' ');
-            badge.appendChild(countText);
+              var countText = document.createTextNode(count.toString() + " ");
+              badge.appendChild(countText);
 
-            var icon = document.createElement('img');
-            icon.src = '/icons/icon-comment-white.svg';
-            icon.alt = '';
-            icon.width = 16;
-            icon.height = 16;
-            badge.appendChild(icon);
+              var icon = document.createElement("img");
+              icon.src = "/icons/icon-comment-white.svg";
+              icon.alt = "";
+              icon.width = 16;
+              icon.height = 16;
+              badge.appendChild(icon);
 
-            parent.insertBefore(badge, el);
+              parent.insertBefore(badge, el);
 
-            // Collect article ID for comments sync
-            var id = el.getAttribute('data-disqus-identifier');
-            if (id) idsWithComments.push(id);
-          }
-        });
+              // Collect article ID for comments sync
+              var id = el.getAttribute("data-disqus-identifier");
+              if (id) idsWithComments.push(id);
+            }
+          });
 
         // Sync has_comments to database (fire and forget)
         if (idsWithComments.length > 0) {
-          fetch('/api/comments-sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          fetch("/api/comments-sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ids: idsWithComments }),
-          }).catch(function() {});
+          }).catch(function () {});
         }
-      }
+      };
 
       // Watch for Disqus populating count spans and create badges reactively
       window._disqusObserver = null;
       function startDisqusObserver() {
         if (window._disqusObserver) window._disqusObserver.disconnect();
-        var targets = document.querySelectorAll('.disqus-comment-count');
+        var targets = document.querySelectorAll(".disqus-comment-count");
         if (!targets.length) return;
 
-        window._disqusObserver = new MutationObserver(function() {
+        window._disqusObserver = new MutationObserver(function () {
           window.cleanDisqusCounts();
         });
 
-        targets.forEach(function(el) {
-          window._disqusObserver.observe(el, { childList: true, characterData: true, subtree: true });
+        targets.forEach(function (el) {
+          window._disqusObserver.observe(el, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+          });
         });
       }
 
@@ -361,14 +437,14 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       }
 
       // Refresh Disqus counts (called after infinite scroll adds new cards)
-      window.refreshDisqusCount = function() {
+      window.refreshDisqusCount = function () {
         startDisqusObserver();
         triggerDisqusRecount();
-      }
+      };
 
       // Lazy-load count.js only when .disqus-comment-count elements exist on page
       function initDisqusCounts() {
-        if (!document.querySelector('.disqus-comment-count')) return;
+        if (!document.querySelector(".disqus-comment-count")) return;
 
         startDisqusObserver();
 
@@ -379,20 +455,20 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         }
 
         // First load: inject count.js
-        if (!document.getElementById('dsq-count-scr')) {
-          var s = document.createElement('script');
-          s.id = 'dsq-count-scr';
-          s.src = 'https://evminds-es.disqus.com/count.js';
+        if (!document.getElementById("dsq-count-scr")) {
+          var s = document.createElement("script");
+          s.id = "dsq-count-scr";
+          s.src = "https://evminds-es.disqus.com/count.js";
           s.async = true;
           s.onload = triggerDisqusRecount;
           document.body.appendChild(s);
         }
       }
 
-      if (document.readyState === 'complete') {
+      if (document.readyState === "complete") {
         initDisqusCounts();
       } else {
-        window.addEventListener('load', initDisqusCounts);
+        window.addEventListener("load", initDisqusCounts);
       }
     </script>
   </body>
