@@ -27,7 +27,7 @@ let videosQuery = supabase
   .from("articles")
   .select(ARTICLE_SELECT)
   .eq("content_type", "video")
-  .order("scraped_at", { ascending: false })
+  .order("published_at", { ascending: false })
   .limit(INITIAL_ARTICLES_LIMIT);
 
 // Apply user preference exclusions
@@ -54,7 +54,7 @@ const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
 // Calculate initial cursor for pagination
 const initialCursor =
   videos.length > 0
-    ? videos[videos.length - 1].scraped_at.toISOString()
+    ? videos[videos.length - 1].published_at.toISOString()
     : null;
 
 const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategories.length > 0;

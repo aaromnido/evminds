@@ -48,16 +48,19 @@ export const GET: APIRoute = async ({ url, request }) => {
     // Filter by content type (default: news only, /videos page sends 'video')
     const contentType = url.searchParams.get("content_type") || "news";
 
+    // Videos sort by published_at (actual publish date); articles by scraped_at
+    const orderField = contentType === "video" ? "published_at" : "scraped_at";
+
     let query = supabase
       .from("articles")
       .select(joinClause)
       .eq("content_type", contentType)
-      .order("scraped_at", { ascending: false })
+      .order(orderField, { ascending: false })
       .limit(limit);
 
     // Apply cursor pagination (fetch articles older than cursor)
     if (cursor) {
-      query = query.lt("scraped_at", cursor);
+      query = query.lt(orderField, cursor);
     }
 
     // Apply category filter (resolve slug to name for DB query)
@@ -103,10 +106,10 @@ export const GET: APIRoute = async ({ url, request }) => {
       );
     }
 
-    // Calculate next cursor (scraped_at of last article)
+    // Calculate next cursor (last article's order field)
     const nextCursor =
       data && data.length === limit
-        ? (data[data.length - 1] as any).scraped_at
+        ? (data[data.length - 1] as any)[orderField]
         : null;
 
     return new Response(

@@ -63,7 +63,7 @@ const [{ data: articleData }, { data: categoryRows }, { data: videoData }] = awa
     .from("articles")
     .select(ARTICLE_SELECT)
     .eq("content_type", "video")
-    .order("scraped_at", { ascending: false })
+    .order("published_at", { ascending: false })
     .limit(1),
 ]);
 
