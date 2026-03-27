@@ -33,6 +33,12 @@ const DISPLAY_NAMES: Record<string, string> = {
   "electromiaumiau": "Electromiaumiau",
   "motorpuntoes": "Motor.es YT",
   "somoselectricos-yt": "SomosEléctricos YT",
+  "piltrafilla": "Piltrafilla",
+  "concachalote": "Cachalote",
+  "solkuno": "Solkuno",
+  "macvoltio": "MacVoltio",
+  "luisvaldes": "Luis Valdés",
+  "rictorres": "Ricardo Torres",
 };
 
 function toDisplayName(name: string): string {
