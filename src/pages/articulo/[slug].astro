@@ -3,7 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Badge from "@/components/Badge.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
 import { getCollection, render } from "astro:content";
@@ -104,14 +104,17 @@ const relatedArticles = allArticles
           <h2 class="article-detail__related-title">Artículos relacionados</h2>
           <div class="article-detail__related-grid">
             {relatedArticles.map((related) => (
-              <ArticleCard
-                image={related.data.image}
+              <NewsCard
+                image={related.data.image || "/images/placeholder-image.webp"}
                 title={related.data.title}
                 date={formatDate(related.data.date.toISOString())}
                 excerpt={related.data.excerpt}
+                source={related.data.author}
                 category={related.data.category}
                 href={getArticleUrl(related.id)}
-                author={related.data.author}
+                articleId={`articulo-${related.id}`}
+                articleSlug={related.id}
+                identifier={`articulo-${related.id}`}
               />
             ))}
           </div>

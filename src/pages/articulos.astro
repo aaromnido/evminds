@@ -4,7 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import { getCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
@@ -26,34 +26,39 @@ const articles = allArticles
     <Header />
 
     <Subheader
-      subtitle="Experiencias reales, guías prácticas y reviews desde la carretera"
+      subtitle="Experiencias reales, guías prácticas y reviews desde la experiencia real de un usuario real"
     >
       <span slot="title">
-        <strong>Artículos</strong> de mentes eléctricas
+        <strong>Artículos</strong>
       </span>
     </Subheader>
 
-    {articles.length > 0 ? (
-      <section aria-label="Artículos propios">
-        <div class="articles__grid">
-          {articles.map((article) => (
-            <ArticleCard
-              image={article.data.image}
-              title={article.data.title}
-              date={formatDate(article.data.date.toISOString())}
-              excerpt={article.data.excerpt}
-              category={article.data.category}
-              href={getArticleUrl(article.id)}
-              author={article.data.author}
-            />
-          ))}
-        </div>
-      </section>
-    ) : (
-      <EmptyState>
-        Pronto publicaremos nuestros primeros artículos. ¡Vuelve pronto!
-      </EmptyState>
-    )}
+    {
+      articles.length > 0 ? (
+        <section aria-label="Artículos propios">
+          <div class="articles__grid">
+            {articles.map((article) => (
+              <NewsCard
+                image={article.data.image || "/images/placeholder-image.webp"}
+                title={article.data.title}
+                date={formatDate(article.data.date.toISOString())}
+                excerpt={article.data.excerpt}
+                source={article.data.author}
+                category={article.data.category}
+                href={getArticleUrl(article.id)}
+                articleId={`articulo-${article.id}`}
+                articleSlug={article.id}
+                identifier={`articulo-${article.id}`}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <EmptyState>
+          Pronto publicaremos nuestros primeros artículos. ¡Vuelve pronto!
+        </EmptyState>
+      )
+    }
 
     <Footer />
   </PageLayout>
