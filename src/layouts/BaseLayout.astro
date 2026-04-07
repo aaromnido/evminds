@@ -12,6 +12,9 @@ interface Props {
   image?: string;
   type?: "website" | "article";
   publishedAt?: string;
+  articleAuthor?: string;
+  articleSection?: string;
+  articleTags?: string[];
   noIndex?: boolean;
   breadcrumbs?: BreadcrumbItem[];
 }
@@ -22,6 +25,9 @@ const {
   image = "/logo.svg",
   type = "website",
   publishedAt,
+  articleAuthor,
+  articleSection,
+  articleTags = [],
   noIndex = false,
   breadcrumbs,
 } = Astro.props;
@@ -70,6 +76,12 @@ if (isArticlePage) {
     datePublished: publishedAt,
     url: canonicalURL.toString(),
     inLanguage: "es",
+    ...(articleAuthor && {
+      author: {
+        "@type": "Person",
+        name: articleAuthor,
+      },
+    }),
     publisher: {
       "@type": "Organization",
       name: "EVMinds.es",
@@ -192,6 +204,15 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         <meta property="article:published_time" content={publishedAt} />
       )
     }
+    {isArticlePage && articleAuthor && (
+      <meta property="article:author" content={articleAuthor} />
+    )}
+    {isArticlePage && articleSection && (
+      <meta property="article:section" content={articleSection} />
+    )}
+    {isArticlePage && articleTags.map((tag) => (
+      <meta property="article:tag" content={tag} />
+    ))}
 
     <!-- JSON-LD structured data -->
     {

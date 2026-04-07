@@ -5,6 +5,14 @@ author: "Fernando Val"
 category: "Experiencia"
 image: "/images/articulos/0001/aventura-electrica-avila-murallas.jpeg"
 excerpt: "1.476 km en un Nissan Leaf prestado, tres paradas de carga, 24€ en electricidad y una conclusión clara: se puede viajar en eléctrico. Crónica de mi primer viaje largo entre Zaragoza, Valladolid, Salamanca y Ávila."
+tags:
+  - Viajes
+  - Nissan
+  - Leaf
+  - Autonomía
+  - Carga
+  - Costes
+  - Zunder
 draft: false
 ---
 

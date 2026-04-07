@@ -37,6 +37,9 @@ const relatedArticles = allArticles
   image={article.data.image || undefined}
   type="article"
   publishedAt={article.data.date.toISOString()}
+  articleAuthor={article.data.author}
+  articleSection={article.data.category}
+  articleTags={article.data.tags}
   breadcrumbs={[
     { name: "Inicio", url: "/" },
     { name: "Artículos", url: "/articulos" },
@@ -74,6 +77,9 @@ const relatedArticles = allArticles
         <div class="article-detail__badges">
           <Badge label="EVMinds" variant="filled" />
           <Badge label={article.data.category} variant="outlined" />
+          {article.data.tags.map((tag) => (
+            <Badge label={tag} variant="outlined" />
+          ))}
         </div>
       </div>
 
@@ -174,9 +180,8 @@ const relatedArticles = allArticles
 
   .article-detail__header {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 16px;
-    flex-wrap: wrap;
   }
 
   .article-detail__badges {
@@ -185,6 +190,13 @@ const relatedArticles = allArticles
     gap: 10px;
     flex-wrap: wrap;
   }
+
+  .article-detail__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
 
   .article-detail__meta {
     display: flex;

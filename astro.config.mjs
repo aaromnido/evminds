@@ -1,11 +1,21 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
+
+// Collect article slugs from content collection for sitemap
+const articlesDir = path.resolve('./src/content/articulos');
+const articlePages = fs.existsSync(articlesDir)
+  ? fs.readdirSync(articlesDir)
+      .filter(f => f.endsWith('.md'))
+      .map(f => `https://evminds.es/articulo/${f.replace('.md', '')}`)
+  : [];
 // https://astro.build/config
 export default defineConfig({
   // Site URL for sitemap generation
@@ -33,6 +43,6 @@ export default defineConfig({
 
   integrations: [
     react(),
-    sitemap(),
+    sitemap({ customPages: articlePages }),
   ]
 });
