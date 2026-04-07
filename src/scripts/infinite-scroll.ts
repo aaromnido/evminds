@@ -57,7 +57,7 @@ function renderArticleCard(article: any): HTMLElement {
   const category = article.category;
   const articleContentType = article.content_type || "news";
   const isVideo = articleContentType === "video";
-  const href = isVideo ? "/video/" + article.slug : "/articulo/" + article.slug;
+  const href = isVideo ? "/video/" + article.slug : "/noticia/" + article.slug;
   const identifier = article.id;
   const excerptText = article.excerpt || "";
 

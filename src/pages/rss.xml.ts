@@ -1,7 +1,7 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 import { supabase } from "@/lib/supabase";
-import { getArticleUrl } from "@/lib/article-url";
+import { getNewsUrl } from "@/lib/article-url";
 
 const RSS_ARTICLES_LIMIT = 50;
 
@@ -20,7 +20,7 @@ export async function GET(context: APIContext) {
     items: (articles || []).map((article: any) => ({
       title: article.title,
       description: article.excerpt,
-      link: getArticleUrl(article.slug),
+      link: getNewsUrl(article.slug),
       pubDate: new Date(article.published_at),
       categories: article.category ? [article.category] : [],
     })),

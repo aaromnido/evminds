@@ -18,4 +18,17 @@ const recursos = defineCollection({
   }),
 });
 
-export const collections = { recursos };
+const articulos = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/articulos" }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    author: z.string().default("EVMinds"),
+    category: z.enum(["Experiencia", "Guía", "Review", "Opinión"]),
+    image: z.string().optional(),
+    excerpt: z.string(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { recursos, articulos };

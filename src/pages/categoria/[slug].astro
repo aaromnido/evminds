@@ -5,7 +5,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import NewsGrid from "@/components/NewsGrid.astro";
 import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
@@ -118,7 +118,7 @@ const breadcrumbs = [
       articles.length > 0 ? (
         <NewsGrid ariaLabel={`Noticias sobre ${category.name}`} showSkeletons>
           {articles.map((article) => (
-            <ArticleCard {...mapArticleToProps(article)} />
+            <NewsCard {...mapArticleToProps(article)} />
           ))}
         </NewsGrid>
       ) : (

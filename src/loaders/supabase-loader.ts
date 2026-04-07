@@ -13,7 +13,7 @@ export interface ArticleData {
   image_url: string | null;
   article_url: string;
   category: string;
-  content_type: 'news' | 'video' | 'blog';
+  content_type: 'news' | 'video' | 'article';
   youtube_video_id?: string | null;
   published_at: Date;
   scraped_at: Date;

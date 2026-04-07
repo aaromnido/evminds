@@ -4,7 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import Badge from "@/components/Badge.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import { STORAGE_KEY } from "@/lib/bookmarks";
@@ -34,7 +34,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
 
     <!-- Hidden: forces Astro to include ArticleCard + Badge global styles -->
     <div style="display:none;" aria-hidden="true">
-      <ArticleCard image="" title="" date="" excerpt="" source="" category="" />
+      <NewsCard image="" title="" date="" excerpt="" source="" category="" />
     </div>
 
     <Footer />
@@ -60,7 +60,7 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     var category = bookmark.category;
     var contentType = bookmark.content_type || "news";
     var isVideo = contentType === "video";
-    var href = isVideo ? "/video/" + bookmark.slug : "/articulo/" + bookmark.slug;
+    var href = isVideo ? "/video/" + bookmark.slug : "/noticia/" + bookmark.slug;
     var identifier = bookmark.id;
     var excerptText = bookmark.excerpt || "";
 

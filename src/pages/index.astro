@@ -5,7 +5,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
 import CategoryFilter from "@/components/CategoryFilter.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import NewsGrid from "@/components/NewsGrid.astro";
 import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
 import FeaturedPrimary from "@/components/FeaturedPrimary.astro";
@@ -14,6 +14,9 @@ import EmptyState from "@/components/EmptyState.astro";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
 import { readPrefsFromCookie } from "@/lib/preferences";
+import { getCollection } from "astro:content";
+import { formatDate } from "@/lib/date-utils";
+import { getArticleUrl } from "@/lib/article-url";
 import {
   ARTICLE_SELECT,
   INITIAL_ARTICLES_LIMIT,
@@ -79,13 +82,31 @@ const primaryIndex = articles.findIndex(
 const featuredPrimary =
   primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
 
-// Secondary: most recent video (top) + second most recent article (bottom)
+// Secondary: most recent video (top) + latest own article or 2nd news (bottom)
 const remaining = articles.filter((_, i) => i !== primaryIndex);
 const featuredSecondary1 = featuredVideos[0];
-const featuredSecondary2 = remaining[0];
 
-// Grid: rest of articles
-const gridArticles = remaining.slice(1);
+// Fetch latest published own article for featured slot
+const ownArticles = (await getCollection("articulos"))
+  .filter((a) => !a.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const latestArticle = ownArticles[0];
+
+const featuredSecondary2 = latestArticle
+  ? {
+      image: latestArticle.data.image || "/images/placeholder-image.webp",
+      title: latestArticle.data.title,
+      date: formatDate(latestArticle.data.date.toISOString()),
+      source: "EVMinds",
+      category: latestArticle.data.category,
+      href: getArticleUrl(latestArticle.id),
+      contentType: "article",
+      excerpt: latestArticle.data.excerpt,
+    }
+  : mapArticleToProps(remaining[0]);
+
+// Grid: rest of news (skip first only if no own article took the featured slot)
+const gridArticles = latestArticle ? remaining : remaining.slice(1);
 
 // Calculate initial cursor for pagination (scraped_at of last article)
 const initialCursor =
@@ -142,7 +163,7 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
                 <FeaturedSecondary {...{...mapArticleToProps(featuredSecondary1), category: "Vídeo"}} />
               )}
               {featuredSecondary2 && (
-                <FeaturedSecondary {...mapArticleToProps(featuredSecondary2)} />
+                <FeaturedSecondary {...featuredSecondary2} />
               )}
             </div>
           </section>
@@ -152,7 +173,7 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
         {gridArticles.length > 0 && (
           <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
             {gridArticles.map((article) => (
-              <ArticleCard {...mapArticleToProps(article)} />
+              <NewsCard {...mapArticleToProps(article)} />
             ))}
           </NewsGrid>
         )}

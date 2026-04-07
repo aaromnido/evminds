@@ -4,193 +4,119 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Badge from "@/components/Badge.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
-import BookmarkButton from "@/components/BookmarkButton.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
-import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
-import { supabase } from "@/lib/supabase";
+import { getCollection, render } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
-import { optimizedImageUrl } from "@/lib/image-utils";
-import { getCategorySlugByName } from "@/lib/categories";
 import { getArticleUrl } from "@/lib/article-url";
-import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 
-const { slug } = Astro.params;
+export const prerender = true;
 
-if (!slug) {
-  return new Response(null, { status: 404, statusText: "Not Found" });
+export async function getStaticPaths() {
+  const articles = await getCollection("articulos");
+  return articles
+    .filter((a) => !a.data.draft)
+    .map((article) => ({
+      params: { slug: article.id },
+      props: { article },
+    }));
 }
 
-// Fetch article with source info
-const { data, error } = await supabase
-  .from("articles")
-  .select("*, source:sources!inner(name, url)")
-  .eq("slug", slug)
-  .single();
+const { article } = Astro.props;
+const { Content } = await render(article);
 
-if (error || !data) {
-  return new Response(null, { status: 404, statusText: "Not Found" });
-}
+const heroImage = article.data.image || "/images/placeholder-image.webp";
+const formattedDate = formatDate(article.data.date.toISOString());
+const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
 
-const article = data as any;
-const source = Array.isArray(article.source)
-  ? article.source[0]
-  : article.source;
-
-const RELATED_ARTICLES_LIMIT = 2;
-
-// Fetch related articles (same category, excluding current)
-const { data: relatedData } = await supabase
-  .from("articles")
-  .select("id, slug, title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)")
-  .eq("category", article.category)
-  .neq("id", article.id)
-  .order("scraped_at", { ascending: false })
-  .limit(RELATED_ARTICLES_LIMIT);
-
-const relatedArticles = (relatedData || []).map((a: any) =>
-  mapArticleToProps(normalizeArticle(a))
-);
-
-// Page data
-const heroImage = article.image_url || "/images/placeholder-image.webp";
-const formattedDate = formatDate(article.published_at);
-const categorySlug = getCategorySlugByName(article.category);
-const canonicalUrl = new URL(
-  getArticleUrl(article.slug),
-  Astro.site,
-).toString();
-
-const articleDataJson = serializeBookmarkData({
-  id: article.id,
-  slug: article.slug,
-  title: article.title,
-  excerpt: article.excerpt,
-  image: article.image_url || "",
-  scraped_at: article.scraped_at || "",
-  source: source.name,
-  category: article.category,
-});
+// Related articles (same category, excluding current, max 2)
+const allArticles = await getCollection("articulos");
+const relatedArticles = allArticles
+  .filter((a) => !a.data.draft && a.id !== article.id && a.data.category === article.data.category)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 2);
 ---
 
 <BaseLayout
-  title={`${article.title} - EVMinds`}
-  description={article.excerpt}
-  image={article.image_url || undefined}
+  title={`${article.data.title} — EVMinds`}
+  description={article.data.excerpt}
+  image={article.data.image || undefined}
   type="article"
-  publishedAt={article.published_at}
+  publishedAt={article.data.date.toISOString()}
   breadcrumbs={[
     { name: "Inicio", url: "/" },
-    ...(categorySlug ? [{ name: article.category, url: `/categoria/${categorySlug}` }] : []),
-    { name: article.title, url: getArticleUrl(article.slug) },
+    { name: "Artículos", url: "/articulos" },
+    { name: article.data.title, url: getArticleUrl(article.id) },
   ]}
 >
   <main class="article-detail">
     <Header />
 
+    <!-- Title (centered, wide) -->
+    <h1 class="article-detail__title">{article.data.title}</h1>
+
+    <!-- Hero image (wide, like quienes-somos) -->
+    <div class="article-detail__hero">
+      <img
+        src={heroImage}
+        alt={article.data.title}
+        class="article-detail__hero-image"
+        loading="eager"
+        fetchpriority="high"
+        width="1200"
+        height="500"
+      />
+    </div>
+
     <article class="article-detail__content">
-      <!-- Title -->
-      <h1 class="article-detail__title">{article.title}</h1>
-
-      <!-- Hero image -->
-      <div class="article-detail__hero">
-        <img
-          src={heroImage}
-          alt={article.title}
-          class="article-detail__hero-image"
-          loading="eager"
-          fetchpriority="high"
-          width="900"
-          height="500"
-        />
-      </div>
-
+      <!-- Meta + Badges -->
       <div class="article-detail__header">
         <div class="article-detail__meta">
-          <time datetime={article.published_at}>{formattedDate}</time>
+          <time datetime={article.data.date.toISOString()}>{formattedDate}</time>
+          <span class="article-detail__meta-separator">·</span>
+          <span>{article.data.author}</span>
         </div>
 
-        <!-- Badges + Bookmark -->
         <div class="article-detail__badges">
-          <Badge label={source.name} variant="filled" />
-          {
-            categorySlug && (
-              <a
-                href={`/categoria/${categorySlug}`}
-                class="article-detail__category-link"
-              >
-                <Badge label={article.category} variant="outlined" />
-              </a>
-            )
-          }
-          {
-            !categorySlug && (
-              <Badge label={article.category} variant="outlined" />
-            )
-          }
-          <DisqusCommentCount identifier={article.id} />
-          <BookmarkButton articleId={article.id} articleData={articleDataJson} />
+          <Badge label="EVMinds" variant="filled" />
+          <Badge label={article.data.category} variant="outlined" />
         </div>
       </div>
-      <!-- Meta: date + source -->
 
-      <!-- Excerpt -->
-      <p class="article-detail__excerpt">{article.excerpt}</p>
-
-      <!-- CTA: read full article -->
-      <a
-        href={article.article_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="article-detail__cta"
-      >
-        Leer artículo completo en {source.name}
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-          ></path>
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <line x1="10" y1="14" x2="21" y2="3"></line>
-        </svg>
-      </a>
+      <!-- Full article body -->
+      <div class="article-prose">
+        <Content />
+      </div>
 
       <!-- Share buttons -->
-      <ShareButtons url={canonicalUrl} title={article.title} />
+      <ShareButtons url={canonicalUrl} title={article.data.title} />
 
       <!-- Disqus comments -->
       <DisqusComments
-        identifier={article.id}
+        identifier={`articulo-${article.id}`}
         url={canonicalUrl}
-        title={article.title}
+        title={article.data.title}
       />
 
       <!-- Related articles -->
-      {
-        relatedArticles.length > 0 && (
-          <section
-            class="article-detail__related"
-            aria-label="Artículos relacionados"
-          >
-            <h2 class="article-detail__related-title">
-              Artículos relacionados
-            </h2>
-            <div class="article-detail__related-grid">
-              {relatedArticles.map((props) => (
-                <ArticleCard {...props} />
-              ))}
-            </div>
-          </section>
-        )
-      }
+      {relatedArticles.length > 0 && (
+        <section class="article-detail__related" aria-label="Artículos relacionados">
+          <h2 class="article-detail__related-title">Artículos relacionados</h2>
+          <div class="article-detail__related-grid">
+            {relatedArticles.map((related) => (
+              <ArticleCard
+                image={related.data.image}
+                title={related.data.title}
+                date={formatDate(related.data.date.toISOString())}
+                excerpt={related.data.excerpt}
+                category={related.data.category}
+                href={getArticleUrl(related.id)}
+                author={related.data.author}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </article>
 
     <Footer />
@@ -208,6 +134,38 @@ const articleDataJson = serializeBookmarkData({
     min-height: 100vh;
   }
 
+  /* Title (centered, wide) */
+  .article-detail__title {
+    font-family: "Playfair Display", serif;
+    font-size: 56px;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--navy-2);
+    letter-spacing: -0.01em;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 0 0;
+  }
+
+  /* Hero image (wide, like quienes-somos) */
+  .article-detail__hero {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .article-detail__hero-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    max-height: 500px;
+  }
+
   .article-detail__content {
     max-width: 900px;
     margin: 0 auto;
@@ -217,7 +175,6 @@ const articleDataJson = serializeBookmarkData({
     gap: 28px;
   }
 
-  /* Header (meta + badges) */
   .article-detail__header {
     display: flex;
     align-items: center;
@@ -225,7 +182,6 @@ const articleDataJson = serializeBookmarkData({
     flex-wrap: wrap;
   }
 
-  /* Badges */
   .article-detail__badges {
     display: flex;
     align-items: center;
@@ -233,41 +189,6 @@ const articleDataJson = serializeBookmarkData({
     flex-wrap: wrap;
   }
 
-  .article-detail__category-link {
-    text-decoration: none;
-  }
-
-  .article-detail__category-link:hover {
-    opacity: 0.8;
-  }
-
-  /* Hero image */
-  .article-detail__hero {
-    border-radius: 16px;
-    overflow: hidden;
-    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
-  }
-
-  .article-detail__hero-image {
-    width: 100%;
-    height: auto;
-    max-height: 500px;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* Title */
-  .article-detail__title {
-    font-family: "Playfair Display", serif;
-    font-size: 48px;
-    font-weight: 700;
-    font-style: italic;
-    line-height: 1.1;
-    color: var(--navy-light);
-    letter-spacing: -0.01em;
-  }
-
-  /* Meta */
   .article-detail__meta {
     display: flex;
     align-items: center;
@@ -281,53 +202,123 @@ const articleDataJson = serializeBookmarkData({
     font-weight: 700;
   }
 
-  .article-detail__source-link {
-    color: var(--navy-2);
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .article-detail__source-link:hover {
-    text-decoration: underline;
-  }
-
-  /* Excerpt */
-  .article-detail__excerpt {
+  /* Prose styles for rendered Markdown */
+  .article-prose {
     font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 19px;
+    font-size: 18px;
     font-weight: 400;
-    line-height: 1.7;
+    line-height: 1.75;
     color: var(--navy-2);
     letter-spacing: -0.01em;
   }
 
-  /* CTA button */
-  .article-detail__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 32px;
+  .article-prose :global(h2) {
+    font-family: "Playfair Display", serif;
+    font-size: 32px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.2;
+    color: var(--navy-light);
+    margin-top: 48px;
+    margin-bottom: 16px;
+  }
+
+  .article-prose :global(h3) {
+    font-family: "Playfair Display", serif;
+    font-size: 24px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.3;
+    color: var(--navy-light);
+    margin-top: 36px;
+    margin-bottom: 12px;
+  }
+
+  .article-prose :global(h4) {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--navy-light);
+    margin-top: 28px;
+    margin-bottom: 8px;
+  }
+
+  .article-prose :global(p) {
+    margin-bottom: 20px;
+  }
+
+  .article-prose :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 28px 0;
+    display: block;
+  }
+
+  .article-prose :global(a) {
+    color: var(--ev-primary-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .article-prose :global(a:hover) {
+    opacity: 0.8;
+  }
+
+  .article-prose :global(strong) {
+    font-weight: 700;
+    color: var(--navy-light);
+  }
+
+  .article-prose :global(em) {
+    font-style: italic;
+  }
+
+  .article-prose :global(blockquote) {
+    border-left: 3px solid var(--ev-primary-blue);
+    padding-left: 20px;
+    margin: 24px 0;
+    font-style: italic;
+    opacity: 0.85;
+  }
+
+  .article-prose :global(ul),
+  .article-prose :global(ol) {
+    margin: 16px 0;
+    padding-left: 24px;
+  }
+
+  .article-prose :global(li) {
+    margin-bottom: 8px;
+  }
+
+  .article-prose :global(code) {
+    font-size: 0.9em;
+    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .article-prose :global(pre) {
     background-color: var(--navy-light);
     color: var(--sepia-light);
+    padding: 20px;
     border-radius: 8px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 17px;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-    align-self: flex-start;
+    overflow-x: auto;
+    margin: 24px 0;
   }
 
-  .article-detail__cta:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  .article-prose :global(pre code) {
+    background: none;
+    padding: 0;
   }
 
-  :global(.dark) .article-detail__cta {
-    background-color: #faf7f0;
-    color: #191b41;
+  .article-prose :global(hr) {
+    border: none;
+    border-top: 2px solid var(--navy-2);
+    margin: 40px 0;
+    opacity: 0.15;
   }
 
   /* Related articles */
@@ -351,22 +342,24 @@ const articleDataJson = serializeBookmarkData({
     gap: 24px;
   }
 
-  /* Tablet */
   @media (max-width: 1024px) {
     .article-detail__title {
       font-size: 42px;
     }
 
-    .article-detail__excerpt {
-      font-size: 18px;
+    .article-prose {
+      font-size: 17px;
     }
 
-    .article-detail__related-grid {
-      grid-template-columns: 1fr 1fr;
+    .article-prose :global(h2) {
+      font-size: 28px;
+    }
+
+    .article-prose :global(h3) {
+      font-size: 22px;
     }
   }
 
-  /* Mobile */
   @media (max-width: 768px) {
     .article-detail {
       padding: 0 12px 72px;
@@ -375,20 +368,36 @@ const articleDataJson = serializeBookmarkData({
 
     .article-detail__hero {
       border-radius: 12px;
+      max-width: none;
+    }
+
+    .article-detail__hero-image {
+      max-height: 300px;
     }
 
     .article-detail__title {
       font-size: 28px;
+      padding: 24px 0 0;
     }
 
-    .article-detail__excerpt {
+    .article-prose {
       font-size: 16px;
-      line-height: 1.65;
+      line-height: 1.7;
     }
 
-    .article-detail__cta {
-      font-size: 15px;
-      padding: 14px 28px;
+    .article-prose :global(h2) {
+      font-size: 24px;
+      margin-top: 36px;
+    }
+
+    .article-prose :global(h3) {
+      font-size: 20px;
+      margin-top: 28px;
+    }
+
+    .article-prose :global(img) {
+      border-radius: 8px;
+      margin: 20px 0;
     }
 
     .article-detail__related-grid {

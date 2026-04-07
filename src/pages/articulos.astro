@@ -1,0 +1,82 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import EmptyState from "@/components/EmptyState.astro";
+import { getCollection } from "astro:content";
+import { formatDate } from "@/lib/date-utils";
+import { getArticleUrl } from "@/lib/article-url";
+
+export const prerender = true;
+
+const allArticles = await getCollection("articulos");
+const articles = allArticles
+  .filter((a) => !a.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout
+  title="Artículos — EVMinds | Experiencias y Guías sobre Movilidad Eléctrica"
+  description="Artículos propios de EVMinds: experiencias reales, guías prácticas y reviews de vehículos eléctricos."
+>
+  <PageLayout>
+    <Header />
+
+    <Subheader
+      subtitle="Experiencias reales, guías prácticas y reviews desde la carretera"
+    >
+      <span slot="title">
+        <strong>Artículos</strong> de mentes eléctricas
+      </span>
+    </Subheader>
+
+    {articles.length > 0 ? (
+      <section aria-label="Artículos propios">
+        <div class="articles__grid">
+          {articles.map((article) => (
+            <ArticleCard
+              image={article.data.image}
+              title={article.data.title}
+              date={formatDate(article.data.date.toISOString())}
+              excerpt={article.data.excerpt}
+              category={article.data.category}
+              href={getArticleUrl(article.id)}
+              author={article.data.author}
+            />
+          ))}
+        </div>
+      </section>
+    ) : (
+      <EmptyState>
+        Pronto publicaremos nuestros primeros artículos. ¡Vuelve pronto!
+      </EmptyState>
+    )}
+
+    <Footer />
+  </PageLayout>
+</BaseLayout>
+
+<style>
+  .articles__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 1024px) {
+    .articles__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .articles__grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 48px;
+    }
+  }
+</style>

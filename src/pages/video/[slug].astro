@@ -3,7 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Badge from "@/components/Badge.astro";
-import ArticleCard from "@/components/ArticleCard.astro";
+import NewsCard from "@/components/NewsCard.astro";
 import BookmarkButton from "@/components/BookmarkButton.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
@@ -204,7 +204,7 @@ const articleDataJson = serializeBookmarkData({
             </h2>
             <div class="video-detail__related-grid">
               {relatedVideos.map((props) => (
-                <ArticleCard {...props} />
+                <NewsCard {...props} />
               ))}
             </div>
           </section>

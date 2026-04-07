@@ -1,0 +1,219 @@
+---
+import Badge from "./Badge.astro";
+import BookmarkButton from "./BookmarkButton.astro";
+import DisqusCommentCount from "./DisqusCommentCount.astro";
+import VideoPlayOverlay from "./VideoPlayOverlay.astro";
+import { optimizedImageUrl } from "@/lib/image-utils";
+import { serializeBookmarkData } from "@/lib/article-utils";
+
+interface Props {
+  image: string;
+  title: string;
+  date: string;
+  excerpt: string;
+  source: string;
+  category: string;
+  href?: string;
+  contentType?: string;
+  identifier?: string;
+  articleId?: string;
+  articleSlug?: string;
+  scraped_at?: string;
+}
+
+const {
+  image,
+  title,
+  date,
+  excerpt,
+  source,
+  category,
+  href = "#",
+  contentType = "news",
+  identifier,
+  articleId,
+  articleSlug,
+  scraped_at,
+} = Astro.props;
+
+const isVideo = contentType === "video";
+
+const articleDataJson = serializeBookmarkData({
+  id: articleId,
+  slug: articleSlug,
+  title,
+  excerpt,
+  image,
+  scraped_at,
+  source,
+  category,
+  contentType,
+});
+---
+
+<article class="article-card">
+  <a href={href} class="article-card__photo-link">
+    <div class="article-card__photo">
+      <img
+        src={optimizedImageUrl(image, 600)}
+        alt={title}
+        loading="lazy"
+        width="600"
+        height="300"
+      />
+      {isVideo && <VideoPlayOverlay />}
+      <div class="card-actions">
+        {identifier && <DisqusCommentCount identifier={identifier} />}
+        {articleId && (
+          <BookmarkButton articleId={articleId} articleData={articleDataJson} />
+        )}
+      </div>
+    </div>
+  </a>
+
+  <div class="article-card__content">
+    <div class="article-card__header">
+      <a href={href} class="article-card__title-link">
+        <h3 class="article-card__title">{title}</h3>
+      </a>
+      <svg
+        class="article-card__arrow"
+        width="11"
+        height="11"
+        viewBox="0 0 11 11"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M1 10L10 1M10 1H3M10 1V8"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+    </div>
+
+    <p class="article-card__date">{date}</p>
+
+    <div class="article-card__footer">
+      <div class="article-card__badges">
+        <Badge label={source} variant="filled" />
+        <Badge label={category} variant="outlined" />
+      </div>
+    </div>
+  </div>
+</article>
+
+<style is:global>
+  .article-card {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    flex: 1 0 0;
+    min-width: 0;
+  }
+
+  .article-card__photo-link {
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .article-card__photo {
+    position: relative;
+    height: 300px;
+    background-color: color-mix(in srgb, var(--navy-2) 8%, transparent);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--ev-border-subtle);
+  }
+
+  .article-card__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .article-card:hover .article-card__photo img {
+    transform: scale(1.05);
+  }
+
+  .article-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .article-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .article-card__title-link {
+    text-decoration: none;
+    flex: 1;
+  }
+
+  .article-card__title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--navy-light);
+    transition: text-decoration 0.2s ease;
+  }
+
+  .article-card:hover .article-card__title {
+    text-decoration: underline;
+  }
+
+  .article-card__arrow {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: var(--navy-2);
+  }
+
+  .article-card__excerpt {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--navy-2);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .article-card__date {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--navy-2);
+  }
+
+  .article-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .article-card__badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 768px) {
+    .article-card__footer {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+</style>

@@ -1,10 +1,10 @@
 import { CONTENT_TYPES } from './content-types';
 
 /**
- * Generate internal article detail URL from article slug
+ * Generate internal news detail URL from news slug
  */
-export function getArticleUrl(slug: string): string {
-  return `/articulo/${slug}`;
+export function getNewsUrl(slug: string): string {
+  return `/noticia/${slug}`;
 }
 
 /**
@@ -15,8 +15,17 @@ export function getVideoUrl(slug: string): string {
 }
 
 /**
+ * Generate internal article detail URL from slug
+ */
+export function getArticleUrl(slug: string): string {
+  return `/articulo/${slug}`;
+}
+
+/**
  * Generate the correct detail URL based on content type
  */
 export function getContentUrl(slug: string, contentType: string = CONTENT_TYPES.NEWS): string {
-  return contentType === CONTENT_TYPES.VIDEO ? getVideoUrl(slug) : getArticleUrl(slug);
+  if (contentType === CONTENT_TYPES.VIDEO) return getVideoUrl(slug);
+  if (contentType === CONTENT_TYPES.ARTICLE) return getArticleUrl(slug);
+  return getNewsUrl(slug);
 }
