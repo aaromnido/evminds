@@ -48,6 +48,7 @@ interface NavItem {
   label: string;
   href: string;
   active?: boolean;
+  badge?: string;
 }
 
 interface MobileMenuProps {
@@ -122,6 +123,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                 }}
               >
                 {item.label}
+                {item.badge && <span className="nav__badge">{item.badge}</span>}
               </a>
             ))}
             <MobileThemeToggle

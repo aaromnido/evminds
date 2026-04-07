@@ -7,7 +7,7 @@ const currentPath = Astro.url.pathname;
 
 const navItems = [
   { label: "Noticias", href: "/", active: currentPath === "/" || currentPath.startsWith("/noticia/") },
-  { label: "Artículos", href: "/articulos", active: currentPath === "/articulos" || currentPath.startsWith("/articulo/") },
+  { label: "Artículos", href: "/articulos", active: currentPath === "/articulos" || currentPath.startsWith("/articulo/"), badge: "New" },
   { label: "Vídeos", href: "/videos", active: currentPath === "/videos" || currentPath.startsWith("/video/") },
   { label: "Guardados", href: "/articulos-guardados", active: currentPath === "/articulos-guardados" },
   { label: "Recursos", href: "/recursos", active: currentPath === "/recursos" || currentPath.startsWith("/recursos/") },
@@ -30,6 +30,7 @@ const navItems = [
           class:list={["nav__item", { "nav__item--active": item.active }]}
         >
           {item.label}
+          {item.badge && <span class="nav__badge">{item.badge}</span>}
         </a>
       ))
     }

@@ -264,3 +264,18 @@
 .banner-link:hover img {
   opacity: 0.8;
 }
+
+/* Nav badge (e.g. "New" next to menu items) */
+.nav__badge {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background-color: var(--ev-primary-blue);
+  padding: 2px 6px;
+  border-radius: 20px;
+  margin-left: 4px;
+  vertical-align: super;
+}

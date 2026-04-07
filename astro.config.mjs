@@ -13,8 +13,8 @@ import sitemap from '@astrojs/sitemap';
 const articlesDir = path.resolve('./src/content/articulos');
 const articlePages = fs.existsSync(articlesDir)
   ? fs.readdirSync(articlesDir)
-      .filter(f => f.endsWith('.md'))
-      .map(f => `https://evminds.es/articulo/${f.replace('.md', '')}`)
+    .filter(f => f.endsWith('.md'))
+    .map(f => `https://evminds.es/articulo/${f.replace('.md', '')}`)
   : [];
 // https://astro.build/config
 export default defineConfig({
@@ -26,7 +26,6 @@ export default defineConfig({
   adapter: netlify(),
 
   vite: {
-    // @ts-expect-error - Vite peer dependency type conflict in pnpm
     plugins: [...tailwindcss()],
     resolve: {
       alias: {
