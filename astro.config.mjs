@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
-
 // https://astro.build/config
 export default defineConfig({
   // Site URL for sitemap generation
@@ -24,6 +23,12 @@ export default defineConfig({
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+  },
+
+  markdown: {
+    rehypePlugins: [
+      ['rehype-external-links', { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+    ],
   },
 
   integrations: [

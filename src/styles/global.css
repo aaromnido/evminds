@@ -256,7 +256,8 @@
 }
 
 .banner-link img {
-  margin: 0;
+  margin: 0 !important;
+  border-radius: 6px;
   transition: opacity 0.3s ease;
 }
 
