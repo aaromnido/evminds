@@ -241,3 +241,25 @@
 .article-detail__badges .comment-count-badge {
   position: static;
 }
+
+/* Banner link (sponsors, affiliates) */
+.banner-link {
+  display: block;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.banner-link:hover {
+  border-color: var(--ev-primary-blue);
+}
+
+.banner-link img {
+  margin: 0;
+  transition: opacity 0.3s ease;
+}
+
+.banner-link:hover img {
+  opacity: 0.8;
+}
