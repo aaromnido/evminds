@@ -159,11 +159,11 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
             <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
 
             <div class="featured__right">
-              {featuredSecondary1 && (
-                <FeaturedSecondary {...{...mapArticleToProps(featuredSecondary1), category: "Vídeo"}} />
-              )}
               {featuredSecondary2 && (
                 <FeaturedSecondary {...featuredSecondary2} />
+              )}
+              {featuredSecondary1 && (
+                <FeaturedSecondary {...{...mapArticleToProps(featuredSecondary1), category: "Vídeo"}} />
               )}
             </div>
           </section>
