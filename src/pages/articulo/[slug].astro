@@ -10,19 +10,14 @@ import { getCollection, render } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getArticleUrl } from "@/lib/article-url";
 
-export const prerender = true;
+const { slug } = Astro.params;
 
-export async function getStaticPaths() {
-  const articles = await getCollection("articulos");
-  return articles
-    .filter((a) => !a.data.draft)
-    .map((article) => ({
-      params: { slug: article.id },
-      props: { article },
-    }));
+const allArticles = await getCollection("articulos");
+const article = allArticles.find((a) => a.id === slug && !a.data.draft);
+
+if (!article) {
+  return new Response(null, { status: 404, statusText: "Not Found" });
 }
-
-const { article } = Astro.props;
 const { Content } = await render(article);
 
 const heroImage = article.data.image || "/images/placeholder-image.webp";
@@ -30,7 +25,6 @@ const formattedDate = formatDate(article.data.date.toISOString());
 const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
 
 // Related articles (same category, excluding current, max 2)
-const allArticles = await getCollection("articulos");
 const relatedArticles = allArticles
   .filter((a) => !a.data.draft && a.id !== article.id && a.data.category === article.data.category)
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
