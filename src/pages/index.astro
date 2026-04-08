@@ -102,6 +102,10 @@ const featuredSecondary2 = latestArticle
       href: getArticleUrl(latestArticle.id),
       contentType: "article",
       excerpt: latestArticle.data.excerpt,
+      identifier: `articulo-${latestArticle.id}`,
+      articleId: `articulo-${latestArticle.id}`,
+      articleSlug: latestArticle.id,
+      scraped_at: latestArticle.data.date.toISOString(),
     }
   : mapArticleToProps(remaining[0]);
 
