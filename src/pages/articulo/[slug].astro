@@ -18,15 +18,17 @@ const article = allArticles.find((a) => a.id === slug && !a.data.draft);
 
 if (!article) {
   // Check if this slug exists as a news article (old /articulo/ URLs → new /noticia/)
-  const { data: newsMatch } = await supabase
-    .from("articles")
-    .select("slug")
-    .eq("slug", slug)
-    .limit(1)
-    .single();
+  if (slug) {
+    const { data: newsMatch } = await supabase
+      .from("articles")
+      .select("slug")
+      .eq("slug", slug)
+      .limit(1)
+      .single();
 
-  if (newsMatch) {
-    return Astro.redirect(getNewsUrl(newsMatch.slug), 301);
+    if (newsMatch) {
+      return Astro.redirect(getNewsUrl(newsMatch.slug), 301);
+    }
   }
 
   return new Response(null, { status: 404, statusText: "Not Found" });
