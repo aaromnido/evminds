@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { formatDate } from "@/lib/date-utils";
 import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
-import { getNewsUrl } from "@/lib/article-url";
+import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 
 const { slug } = Astro.params;
@@ -30,6 +30,11 @@ const { data, error } = await supabase
 
 if (error || !data) {
   return new Response(null, { status: 404, statusText: "Not Found" });
+}
+
+// Redirect videos to their correct URL
+if (data.content_type === "video") {
+  return Astro.redirect(getVideoUrl(data.slug), 301);
 }
 
 const article = data as any;
