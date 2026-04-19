@@ -13,8 +13,9 @@ export async function GET(context: APIContext) {
     .order("scraped_at", { ascending: false })
     .limit(RSS_ARTICLES_LIMIT);
 
+  const now = new Date();
   const ownArticles = (await getCollection("articulos"))
-    .filter((a) => !a.data.draft)
+    .filter((a) => !a.data.draft && a.data.date <= now)
     .map((a) => ({
       title: a.data.title,
       description: a.data.excerpt,

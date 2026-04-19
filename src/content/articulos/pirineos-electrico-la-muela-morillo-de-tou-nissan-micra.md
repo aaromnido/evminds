@@ -1,6 +1,6 @@
 ---
 title: "Escapada pirenaica con el Nissan Micra"
-date: 2026-04-19
+date: 2026-04-21T09:00:00+02:00
 author: "Fernando Val"
 category: "Review"
 image: "/images/articulos/0002/hero-nissan-micra.png"

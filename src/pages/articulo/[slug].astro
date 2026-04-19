@@ -13,8 +13,9 @@ import { supabase } from "@/lib/supabase";
 
 const { slug } = Astro.params;
 
+const now = new Date();
 const allArticles = await getCollection("articulos");
-const article = allArticles.find((a) => a.id === slug && !a.data.draft);
+const article = allArticles.find((a) => a.id === slug && !a.data.draft && a.data.date <= now);
 
 if (!article) {
   // Check if this slug exists as a news article (old /articulo/ URLs → new /noticia/)
@@ -41,7 +42,7 @@ const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
 
 // Related articles (same category, excluding current, max 2)
 const relatedArticles = allArticles
-  .filter((a) => !a.data.draft && a.id !== article.id && a.data.category === article.data.category)
+  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== article.id && a.data.category === article.data.category)
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 2);
 ---

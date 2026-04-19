@@ -12,9 +12,10 @@ import { getArticleUrl } from "@/lib/article-url";
 
 export const prerender = true;
 
+const now = new Date();
 const allArticles = await getCollection("articulos");
 const articles = allArticles
-  .filter((a) => !a.data.draft)
+  .filter((a) => !a.data.draft && a.data.date <= now)
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 

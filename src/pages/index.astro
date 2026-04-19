@@ -87,8 +87,9 @@ const remaining = articles.filter((_, i) => i !== primaryIndex);
 const featuredSecondary1 = featuredVideos[0];
 
 // Fetch latest published own article for featured slot
+const now = new Date();
 const ownArticles = (await getCollection("articulos"))
-  .filter((a) => !a.data.draft)
+  .filter((a) => !a.data.draft && a.data.date <= now)
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 const latestArticle = ownArticles[0];
 
