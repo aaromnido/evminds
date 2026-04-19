@@ -27,6 +27,7 @@ const articulos = defineCollection({
     author: z.string().default("EVMinds"),
     category: z.enum(["Experiencia", "Guía", "Review", "Opinión"]),
     image: z.string().optional(),
+    imageFolder: z.string().optional(),
     excerpt: z.string(),
     tags: z.array(z.enum(ALL_TAGS as [string, ...string[]])).default([]),
     draft: z.boolean().default(false),

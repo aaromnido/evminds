@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
+import { remarkArticleImages } from './src/plugins/remark-article-images.mjs';
 
 // Collect article slugs from content collection for sitemap
 const articlesDir = path.resolve('./src/content/articulos');
@@ -35,6 +36,7 @@ export default defineConfig({
   },
 
   markdown: {
+    remarkPlugins: [remarkArticleImages],
     rehypePlugins: [
       ['rehype-external-links', { target: '_blank', rel: ['noopener', 'noreferrer'] }],
     ],

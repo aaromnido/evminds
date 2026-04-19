@@ -4,6 +4,7 @@ date: 2026-04-08
 author: "Fernando Val"
 category: "Experiencia"
 image: "/images/articulos/0001/aventura-electrica-avila-murallas.jpeg"
+imageFolder: "0001"
 excerpt: "1.476 km en un Nissan Leaf prestado, tres paradas de carga, 24€ en electricidad y una conclusión clara: se puede viajar en eléctrico. Crónica de mi primer viaje largo entre Zaragoza, Valladolid, Salamanca y Ávila."
 tags:
   - Viajes
@@ -30,7 +31,7 @@ Todo empezó con una pregunta inocente en el grupo de WhatsApp de la AUVE (Asoci
 
 ## Primer día, un sábado de compras
 
-![El Nissan Leaf N-Connecta prestado por Nissan ARVESA](/images/articulos/0001/aventura-electrica-leaf.jpeg)
+![El Nissan Leaf N-Connecta prestado por Nissan ARVESA](aventura-electrica-leaf.jpeg)
 
 Sábado por la mañana. Javier me lo tiene preparado y **cargado al 100%**. Tras una breve clase de funcionamiento, me subo y noto lo primero que nota todo el mundo: el silencio. Para ir probando sensaciones y el Propilot, me doy un rodeo por la carretera de Valencia hasta Muel antes de conectar con la A2 hacia La Muela. **55 km, todo subida, y llego a casa con un 78% de batería.** Primera lección aprendida: las cuestas se comen la autonomía, pero no tanto como temía.
 
@@ -42,11 +43,11 @@ Recojo a mi mujer y a mi hija y nos vamos al Centro Comercial Puerto Venecia, en
 
 ### La Muela - Monreal de Ariza (106km)
 
-![Parada en Monreal de Ariza para cargar y comer](/images/articulos/0001/aventura-electrica-monreal.jpeg)
+![Parada en Monreal de Ariza para cargar y comer](aventura-electrica-monreal.jpeg)
 
 El plan era salir a mediodía, pero ya sabéis cómo son los domingos en familia. Al final **arranco a las 14:10** con un objetivo claro: llegar a Monreal de Ariza y comer en el Restaurante Ciudad Alcóbriga mientras el Leaf carga en su **punto de carga tipo 2 de 22 kW** (aunque el Leaf solo aprovecha 6,6 kW). Todo el camino entre **90–100 km/h** para conservar batería. El Propilot hace buena parte del trabajo, y los **106 km** se pasan volando.
 
-![Cargador rápido inactivo en la gasolinera AVIA de Cetina](/images/articulos/0001/aventura-electrica-cetina.jpeg)
+![Cargador rápido inactivo en la gasolinera AVIA de Cetina](aventura-electrica-cetina.jpeg)
 
 De camino, una parada en la gasolinera AVIA de Cetina para comprobar un cargador rápido trío (CCS, CHAdeMO y Tipo 2) que lleva meses instalado pero sin activar. La responsable de la gasolinera me confirma lo que temía: Iberdrola no hace más que darles largas, mientras ellos ven cómo cada vez más conductores preguntan por el servicio. Frustrante.
 
@@ -54,7 +55,7 @@ De camino, una parada en la gasolinera AVIA de Cetina para comprobar un cargador
 
 ### Monreal de Ariza - Aranda de Duero (160km)
 
-![Cargando en la electrolinera Easycharger en Aranda de Duero](/images/articulos/0001/aventura-electrica-aranda.jpeg)
+![Cargando en la electrolinera Easycharger en Aranda de Duero](aventura-electrica-aranda.jpeg)
 
 Este es el tramo que más respeto me da. A **80 km/h en las subidas y 90 km/h en las bajadas**, con travesías a 40–50 km/h, el consumo baja a **15,2 kW/100km**, pero los kilómetros pesan. A las **18:50h llego al Área Tudanca** de Fuentespina, junto a Aranda de Duero, **con un exiguo 10%**. Primer momento de tensión real del viaje.
 
@@ -70,7 +71,7 @@ Café, redes sociales, y una charla improvisada con otro propietario de Leaf que
 
 ## Mi día a día en el trabajo
 
-![El Leaf aparcado en el Parque Tecnológico de Boecillo](/images/articulos/0001/aventura-electrica-boecillo.jpeg)
+![El Leaf aparcado en el Parque Tecnológico de Boecillo](aventura-electrica-boecillo.jpeg)
 
 Comienza la semana laboral. Desde el hotel en Boecillo hasta la sede de mi empresa, en el Parque Tecnológico, el Leaf se convierte en mi coche de diario. El lunes aprovecho una visita a Valladolid para **cargar gratis en un cargador rápido de 50 kW en Centrolid**, frente a Mercaolid. **Hasta el 95% sin gastar un céntimo.**
 
@@ -84,13 +85,13 @@ El viernes, al salir del trabajo, recojo a mi mujer, mi hija menor y mi suegra e
 
 Llegamos con carga de sobra. Tras unas compras en un Lidl (sin punto de carga, por supuesto) y dejar equipajes en el apartamento, **llevo el Leaf a dormir al parking del Hotel Vincci de Salamanca: 9 € la noche** con carga incluida.
 
-![Cargando en el Destination Charger del Hotel Vincci en Salamanca](/images/articulos/0001/aventura-electrica-salamanca.jpeg)
+![Cargando en el Destination Charger del Hotel Vincci en Salamanca](aventura-electrica-salamanca.jpeg)
 
 Pero la tranquilidad dura poco. El Destination Charger de Tesla tiene dos puntos, ambos con placa roja "Exclusivo Tesla". Pruebo el de la izquierda: nada. Momento de pánico contenido. Gracias a los compañeros de la AUVE, que son una mina de conocimiento colectivo, pruebo el de la derecha y... funciona. Respiro.
 
 ## Excursión a Ávila
 
-![Murallas de Ávila durante nuestra excursión](/images/articulos/0001/aventura-electrica-avila.jpeg)
+![Murallas de Ávila durante nuestra excursión](aventura-electrica-avila.jpeg)
 
 Sábado, 100% de carga y plan familiar: excursión a **Ávila**. A **110–120 km/h y con la fuerte subida, el consumo se dispara y llego con un 48%**, algo menos de lo previsto. No me preocupa, porque planeo cargar allí. Pero al llegar al punto de carga público, la manguera de 7 kW está ocupada... por otro Leaf. En 2019, encontrarte con otro eléctrico en un cargador ya es toda una anécdota.
 
@@ -104,7 +105,7 @@ Domingo. Batería al 100% y tres paradas de recarga planificadas. Pensaba salir 
 
 **Primer tramo, Salamanca - Tordesillas (98 km).** Podría llegar a Aranda del tirón, pero prefiero no jugármela. A 120 km/h, paro en el **punto de carga de Easycharger** en Tordesillas. Café y vuelta a la carretera con un 98%.
 
-![Cargando en Easycharger Tordesillas durante el viaje de vuelta](/images/articulos/0001/aventura-electrica-tordesillas.jpeg)
+![Cargando en Easycharger Tordesillas durante el viaje de vuelta](aventura-electrica-tordesillas.jpeg)
 
 **Segundo tramo, Tordesillas - Aranda de Duero (114 km).** Otra estación de Easycharger. Merece la pena destacar el gran trabajo que está haciendo Daniel Pérez y su empresa, extendiendo una red de carga con cuatro puntos rápidos de 50 kW en cada estación. Llego con un 48%, comemos en la cafetería del área de servicio, y salimos con un 98%. Lo vamos a necesitar.
 
@@ -114,7 +115,7 @@ Domingo. Batería al 100% y tres paradas de recarga planificadas. Pensaba salir 
 
 Tengo un as en la manga: si al pasar La Almunia de Doña Godina veo que no llegamos, puedo parar en el Hotel 280, que tiene cargador semi-rápido. Pero eso supondría 30–40 minutos más, y prefiero evitarlo.
 
-![Llegando a La Muela con el 7% de batería, misión cumplida](/images/articulos/0001/aventura-electrica-llegada.png)
+![Llegando a La Muela con el 7% de batería, misión cumplida](aventura-electrica-llegada.png)
 
 Decido tirar para adelante. El peor momento llega en el repecho final hacia La Muela: bajo del 10% y aparece el temido mensaje de que debo parar a cargar. Mi mujer, comprensiblemente, está al borde del infarto. Pero a 90 km/h, pegado detrás de un camión, consigo alcanzar la salida de La Muela y llegar a casa **con un 7% de batería**.
 
@@ -125,5 +126,5 @@ Y luego está la cuenta. En total, **1.476 km recorridos por apenas 24 € en el
 **Mi agradecimiento a Javier Muñoz de Nissan ARVESA, Zaragoza, por el detallazo de prestarme el vehículo que hizo posible esta aventura.**
 
 <a href="https://red.nissan.es/arvesa" target="_blank" class="banner-link">
-  <img src="/images/articulos/0001/nissan-arvesa.png" alt="Nissan ARVESA, Zaragoza" />
+  <img src="/images/ads/nissan-leomotor.png" alt="Nissan Leomotor" />
 </a>
