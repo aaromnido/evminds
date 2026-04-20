@@ -8,6 +8,7 @@ import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
 import { getCollection, render } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
+import { calculateReadingTime } from "@/lib/reading-time";
 import { getArticleUrl, getNewsUrl } from "@/lib/article-url";
 import { supabase } from "@/lib/supabase";
 
@@ -38,6 +39,7 @@ const { Content } = await render(article);
 
 const heroImage = article.data.image || "/images/placeholder-image.webp";
 const formattedDate = formatDate(article.data.date.toISOString());
+const readingTime = calculateReadingTime(article.body || "");
 const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
 
 // Related articles (same category, excluding current, max 2)
@@ -88,6 +90,8 @@ const relatedArticles = allArticles
           <time datetime={article.data.date.toISOString()}>{formattedDate}</time>
           <span class="article-detail__meta-separator">·</span>
           <span>{article.data.author}</span>
+          <span class="article-detail__meta-separator">·</span>
+          <span>{readingTime} min de lectura</span>
         </div>
 
         <div class="article-detail__badges">
