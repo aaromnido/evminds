@@ -72,7 +72,7 @@ const relatedArticles = allArticles
     <div class="article-detail__hero">
       <img
         src={heroImage}
-        alt={article.data.title}
+        alt={article.data.imageAlt || article.data.title}
         class="article-detail__hero-image"
         loading="eager"
         fetchpriority="high"
@@ -337,6 +337,56 @@ const relatedArticles = allArticles
   .article-prose :global(pre code) {
     background: none;
     padding: 0;
+  }
+
+  .article-prose :global(.data-card) {
+    background-color: var(--navy-2);
+    color: var(--ev-text-on-image);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin: 32px 0;
+  }
+
+  .article-prose :global(.data-card h2),
+  .article-prose :global(.data-card h3) {
+    color: var(--ev-text-on-image);
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  .article-prose :global(.data-card dl) {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 48px;
+    row-gap: 24px;
+    margin: 0;
+  }
+
+  .article-prose :global(.data-card dt) {
+    font-weight: 700;
+    color: var(--ev-text-on-image);
+    opacity: 0.75;
+  }
+
+  .article-prose :global(.data-card dd) {
+    margin: 0;
+    color: var(--ev-text-on-image);
+  }
+
+  @media (max-width: 640px) {
+    .article-prose :global(.data-card dl) {
+      grid-template-columns: 1fr;
+      row-gap: 4px;
+    }
+
+    .article-prose :global(.data-card dd) {
+      margin-bottom: 8px;
+    }
+  }
+
+  .article-prose :global(.data-card strong) {
+    color: var(--ev-text-on-image);
+    font-weight: 700;
   }
 
   .article-prose :global(hr) {
