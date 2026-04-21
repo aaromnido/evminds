@@ -42,11 +42,20 @@ const formattedDate = formatDate(article.data.date.toISOString());
 const readingTime = calculateReadingTime(article.body || "");
 const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
 
-// Related articles (same category, excluding current, max 2)
+// Related articles: score by shared tags (x2) + same category (+1), fallback to most recent
 const relatedArticles = allArticles
-  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== article.id && a.data.category === article.data.category)
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 2);
+  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== article.id)
+  .map((a) => {
+    const sharedTags = a.data.tags.filter((t) => article.data.tags.includes(t)).length;
+    const sameCategory = a.data.category === article.data.category ? 1 : 0;
+    return { article: a, score: sharedTags * 2 + sameCategory };
+  })
+  .sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.article.data.date.getTime() - a.article.data.date.getTime();
+  })
+  .slice(0, 2)
+  .map((x) => x.article);
 ---
 
 <BaseLayout
