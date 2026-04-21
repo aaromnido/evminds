@@ -107,7 +107,7 @@ El **cargador es de 150 kW**. Con el Micra **pasar del 12% al 33% en seis minuto
   <dt>Cargas realizadas</dt>
   <dd>2 (El Grado y McDonald's PLAZA)</dd>
   <dt>Coste total en cargas</dt>
-  <dd>5,92€</dd>
+  <dd>5,92€ (PowerGo)</dd>
   <dt>Tiempo de carga acumulado</dt>
   <dd>36 minutos</dd>
   <dt>Potencia máxima observada</dt>
@@ -115,9 +115,9 @@ El **cargador es de 150 kW**. Con el Micra **pasar del 12% al 33% en seis minuto
   <dt>Batería de llegada a casa</dt>
   <dd>25%</dd>
   <dt>Clima</dt>
-  <dd>lluvia pirenaica, A/C a 23°</dd>
+  <dd>Entre 22º y 26ºlluvia pirenaica, A/C a 23°</dd>
   <dt>Velocidad</dt>
-  <dd>120 km/h en autovía, 90 en nacional, "Autopilot" activado</dd>
+  <dd>120 km/h en autovía (80%), 90 en nacional (20%), "Autopilot" activado</dd>
 </dl>
 
 </div>
