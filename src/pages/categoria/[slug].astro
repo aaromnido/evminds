@@ -9,7 +9,7 @@ import NewsCard from "@/components/NewsCard.astro";
 import EmptyState from "@/components/EmptyState.astro";
 import NewsGrid from "@/components/NewsGrid.astro";
 import InfiniteScrollConfig from "@/components/InfiniteScrollConfig.astro";
-import { getCategoryBySlug, getAllCategorySlugs } from "@/lib/categories";
+import { getCategoryBySlug } from "@/lib/categories";
 import { getSourceBySlug } from "@/lib/sources";
 import { supabase } from "@/lib/supabase";
 import { readPrefsFromCookie } from "@/lib/preferences";
@@ -20,14 +20,6 @@ import {
   mapArticleToProps,
   getAvailableCategorySlugs,
 } from "@/lib/article-utils";
-
-// Generate static paths for all categories
-export async function getStaticPaths() {
-  const categorySlugs = getAllCategorySlugs();
-  return categorySlugs.map((slug) => ({
-    params: { slug },
-  }));
-}
 
 const { slug } = Astro.params;
 const category = getCategoryBySlug(slug!);

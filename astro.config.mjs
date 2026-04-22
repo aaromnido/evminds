@@ -9,11 +9,32 @@ import react from '@astrojs/react';
 import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
 
-// Collect article slugs from content collection for sitemap
+// Collect article slugs from content collection for sitemap.
+// Mirror the same filters as the detail/listing pages:
+// exclude drafts and articles scheduled in the future.
 const articlesDir = path.resolve('./src/content/articulos');
+const now = new Date();
+
+const readFrontmatterField = (raw, field) => {
+  const match = raw.match(new RegExp(`^${field}:\\s*(.+?)$`, 'm'));
+  if (!match) return undefined;
+  return match[1].trim().replace(/^["']|["']$/g, '');
+};
+
 const articlePages = fs.existsSync(articlesDir)
   ? fs.readdirSync(articlesDir)
     .filter(f => f.endsWith('.md'))
+    .filter(f => {
+      const raw = fs.readFileSync(path.join(articlesDir, f), 'utf-8');
+      const frontmatterMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+      if (!frontmatterMatch) return false;
+      const frontmatter = frontmatterMatch[1];
+      const draft = readFrontmatterField(frontmatter, 'draft') === 'true';
+      if (draft) return false;
+      const dateStr = readFrontmatterField(frontmatter, 'date');
+      if (!dateStr) return false;
+      return new Date(dateStr) <= now;
+    })
     .map(f => `https://evminds.es/articulo/${f.replace('.md', '')}`)
   : [];
 // https://astro.build/config
