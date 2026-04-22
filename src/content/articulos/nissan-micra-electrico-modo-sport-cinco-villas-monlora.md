@@ -1,16 +1,16 @@
 ---
 title: "Nissan Micra eléctrico en modo Sport: 218 km de curvas por las Cinco Villas"
-date: 2026-04-21
+date: 2026-04-24T09:00:00+02:00
 author: "Fernando Val"
 category: "Review"
-image: "TODO"
+image: "/images/articulos/0003/hero-nissan-micra.webp"
 excerpt: "218 km por Cinco Villas y Campo de Borja en modo Sport. Curvas enlazadas, las vistas del Monasterio de Monlora y un consumo que no se dispara cuando lo pisas. El Micra me ha ganado."
 tags:
   - Nissan
   - Micra
   - Review
   - Autonomía
-draft: true
+draft: false
 ---
 
 ## Un Micra, el modo Sport y una mañana libre
@@ -19,7 +19,7 @@ En el artículo anterior os conté la escapada a Morillo de Tou con el Nissan Mi
 
 Así que aproveché una mañana libre, soleada y con el termómetro entre 18° y 27°, y me preparé una **rutilla circular de 218 km** por dos zonas que conozco bien y tienen carreteras divertidas: **las Cinco Villas y el Campo de Borja**. Un 80% de secundarias, un 20% de autovía, y todo el trayecto solo en el coche para centrarme sin distracciones.
 
-![Ruta circular La Muela, Zuera, Monlora, Ejea, Tauste, Gallur, Borja, Épila en Google Maps, 218 km](TODO)
+![Ruta circular La Muela, Zuera, Monlora, Ejea, Tauste, Gallur, Borja, Épila en Google Maps, 218 km](/images/articulos/0003/ruta.webp)
 
 ## La ruta: circular por Cinco Villas y Campo de Borja (218 km)
 
@@ -31,13 +31,14 @@ Todo el recorrido con el **climatizador a 23°, en modo Sport**, y el Autopilot 
 
 Si no conoces Monlora, apúntalo. Es un santuario a unos **800 metros de altitud**, en lo alto de una loma, rodeado de campo abierto. La subida ya es parte de la experiencia: **estrecha, empinada, con curvas cerradas**. De esas carreteras que en un coche torpe se hacen pesadas y en uno ágil y eléctrico como el Micra, te sacan la sonrisa.
 
-![Nissan Micra eléctrico Tekna en la explanada del Monasterio de Monlora](TODO)
+![Nissan Micra eléctrico Tekna en la explanada del Monasterio de Monlora](/images/articulos/0003/monlora-1.webp)
 
 Arriba te espera la explanada del monasterio, y las vistas. **Aquí es donde el sitio te deja sin palabras.** A un lado, **los Pirineos**. A otro, **las Cinco Villas** extendiéndose hasta Navarra. Enfrente, **el valle del Ebro con el Moncayo al fondo**. En un día despejado como el que yo tuve, es de las mejores panorámicas que puedes tener. Hay un restaurante en el que, al menos la última vez que estuve, se come muy bien gastronomía casera de la zon y brasa. No es lujoso, pero es muy agradable. Eso sí, creo que solo abre fin de seman y festivos, aseguraos antes de acercaros.
 
-![Vistas desde el Monasterio de Monlora hacia los Pirineos y las Cinco Villas](TODO)
+![Vistas desde el Monasterio de Monlora hacia los Pirineos y las Cinco Villas](/images/articulos/0003/monlora-3.webp)
 
-![Nissan Micra eléctrico con el Moncayo al fondo desde Monlora](TODO)
+![Nissan Micra eléctrico con el Moncayo al fondo desde Monlora](/images/articulos/0003/monlora-2.webp)
+![Nissan Micra eléctrico con el Moncayo al fondo desde Monlora](/images/articulos/0003/monlora-4.webp)
 
 ## Modo Sport: qué cambia realmente
 
@@ -57,13 +58,15 @@ La dirección es precisa. No es de las que te dan sensación de pilotaje puro, p
 
 Un punto que no destaqué lo suficiente en el primer artículo: **los asientos**. Me gustan más que los de mi e-Niro. Te envuelven bien, te sujetan en curva. Eso sí, sin llegar a ser deportivos.
 
-![Interior del Nissan Micra eléctrico Tekna con el modo Sport activado](TODO)
+![Interior del Nissan Micra eléctrico Tekna con el modo Sport activado](/images/articulos/0003/micra-3.webp)
 
-## Los 150 CV del Micra, cuando los pisas
+## Los 150 CV del Micra, cuando le pisas
 
 Con datos fríos, **150 CV no son una barbaridad**. En papel. En carretera, el Micra los aprovecha de una forma que me ha sorprendido para bien. Es un coche pequeño y ligero, y eso se traduce en que **esos caballos se sienten más que en otro coche de más peso**. Las aceleraciones saliendo de curva, con el coche ya apoyado, son inmediatas. Los adelantamientos en recto, sin la menor complicación. Como en la mayoría de los eléctricos, pisas y en dos segundos ya has adelantado.
 
 No tiene el pegarte-al-asiento de los 400 CV de otros eléctricos, pero tiene algo que considero mucho más valioso en una rutilla así: **equilibrio**. Es un coche que no te dice "vamos a batir un récord", **te dice "vamos a pasarlo bien"**. Y eso, en una mañana tranquila por curvas enlazadas, es exactamente lo que buscaba.
+
+![Interior del Nissan Micra eléctrico Tekna con el modo Sport activado](/images/articulos/0003/micra-1.webp)
 
 ## Consumo de una escapada deportiva
 
@@ -106,7 +109,7 @@ Es un coche que **te hace sentir cómodo en un viaje largo, que te hace sonreír
 
 **¿Lo recomendaría? Sí, con mucha convicción**, para quien encaje en su tipo de uso: ciudad, trayectos diarios, escapadas de fin de semana y rutitas divertidas como la de hoy. Si lo que necesitas son 500 km de una tirada, no es tu coche. **Si lo que quieres es un utilitario eléctrico que te saque la sonrisa cada vez que lo coges, sí lo es**.
 
-![Nissan Micra eléctrico Tekna con las Cinco Villas al fondo](TODO)
+![Nissan Micra eléctrico Tekna con las Cinco Villas al fondo](/images/articulos/0003/micra-2.webp)
 
 Tengo pendiente un artículo final de impresiones generales con todas las piezas juntas: a quién se lo recomendaría, a quién no, qué me llevo, qué mejoraría. Pronto por aquí.
 
