@@ -10,8 +10,6 @@ import { getCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getArticleUrl } from "@/lib/article-url";
 
-export const prerender = true;
-
 const now = new Date();
 const allArticles = await getCollection("articulos");
 const articles = allArticles
