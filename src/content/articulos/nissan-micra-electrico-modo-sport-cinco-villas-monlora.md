@@ -33,7 +33,7 @@ Si no conoces Monlora, apúntalo. Es un santuario a unos **800 metros de altitud
 
 ![Nissan Micra eléctrico Tekna en la explanada del Monasterio de Monlora](/images/articulos/0003/monlora-1.webp)
 
-Arriba te espera la explanada del monasterio, y las vistas. **Aquí es donde el sitio te deja sin palabras.** A un lado, **los Pirineos**. A otro, **las Cinco Villas** extendiéndose hasta Navarra. Enfrente, **el valle del Ebro con el Moncayo al fondo**. En un día despejado como el que yo tuve, es de las mejores panorámicas que puedes tener. Hay un restaurante en el que, al menos la última vez que estuve, se come muy bien gastronomía casera de la zon y brasa. No es lujoso, pero es muy agradable. Eso sí, creo que solo abre fin de seman y festivos, aseguraos antes de acercaros.
+Arriba te espera la explanada del monasterio, y las vistas. **Aquí es donde el sitio te deja sin palabras.** A un lado, **los Pirineos**. A otro, **las Cinco Villas** extendiéndose hasta Navarra. Enfrente, **el valle del Ebro con el Moncayo al fondo**. En un día despejado como el que yo tuve, es de las mejores panorámicas que puedes tener. Hay un restaurante en el que, al menos la última vez que estuve, se come muy bien, gastronomía casera de la zona y brasa. No es lujoso, pero es muy agradable. Eso sí, creo que solo abre fines de semana y festivos, aseguraos antes de acercaros.
 
 ![Vistas desde el Monasterio de Monlora hacia los Pirineos y las Cinco Villas](/images/articulos/0003/monlora-3.webp)
 
@@ -52,9 +52,9 @@ El volante y la suspensión no los noté diferentes. Pero es que en Confort ya v
 
 ## El chasis en conducción viva: aplomo, dirección y frenos
 
-Aquí el Tekna me ha ganado del todo. La suspensión algo más firme de este acabado filtra muy bien los baches de las carreteras aragonesas, que no siempre están en buen estado, y a cambio **te da un aplomo que invita a pisar**. **El coche no balancea en curva, va completamente plano**, y eso da una confianza brutal para atacar enlazadas.
+Aquí el Tekna me ha ganado del todo. La suspensión algo más firme de este acabado filtra muy bien los baches de las carreteras aragonesas, que no siempre están en buen estado, y a cambio **te da un aplomo que invita a pisar**. **El coche no balancea en curva, va completamente plano**, y eso da una confianza brutal para atacar curvas enlazadas.
 
-La dirección es precisa. No es de las que te dan sensación de pilotaje puro, pero te transmite lo que hace el tren delantero y te pone el coche donde lo quieres sin esfuerzo. Tampoco en esta ocasión usé mucho los frenos, ya que jugando con las levas y los diferentes modos de regeneración fue ssuficiente para entrar con seguridad en la mayoría de curvas. Aún así, los frenos en sí, cuando los usé, respondieron muy bien, con buen tacto y sin sorpresas.
+La dirección es precisa. No es de las que te dan sensación de pilotaje puro, pero te transmite lo que hace el tren delantero y te pone el coche donde lo quieres sin esfuerzo. Tampoco en esta ocasión usé mucho los frenos, ya que jugando con las levas y los diferentes modos de regeneración fue suficiente para entrar con seguridad en la mayoría de curvas. Aún así, los frenos en sí, cuando los usé, respondieron muy bien, con buen tacto y sin sorpresas.
 
 Un punto que no destaqué lo suficiente en el primer artículo: **los asientos**. Me gustan más que los de mi e-Niro. Te envuelven bien, te sujetan en curva. Eso sí, sin llegar a ser deportivos.
 
