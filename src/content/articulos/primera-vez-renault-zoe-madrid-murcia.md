@@ -91,7 +91,7 @@ Luego, en el día a día, es una gozada. A pesar de su escasa potencia (según l
 
 ![Renault Zoe cargando en punto de recarga público](/images/articulos/0005/zoe-3.webp)
 
-Eso sí, los **cargadores de abordo de los Renault Zoe son bastante delicados**, eso lo aprendí después, al ver que había cargadores, como los de El Corte Inglés de Murcia, donde dan error. Supongo que será por tema de puesta a tierra un poco precaria, o por existencia de armónicos, o vete tú a saber. El caso es que, aunque funciona en la inmensa mayoría de cargadores, nunca estás del todo libre de ese intríngulis de saber si el cargador en el que has previsto cargar va a funcionar o no.
+Eso sí, los **cargadores de a bordo de los Renault Zoe son bastante delicados**, eso lo aprendí después, al ver que había cargadores, como los de El Corte Inglés de Murcia, donde dan error. Supongo que será por tema de puesta a tierra un poco precaria, o por existencia de armónicos, o vete tú a saber. El caso es que, aunque funciona en la inmensa mayoría de cargadores, nunca estás del todo libre de ese intríngulis de saber si el cargador en el que has previsto cargar va a funcionar o no.
 
 Obviamente, el tener solamente la opción de cargar en CA a **22 kW** te limita un tanto los viajes, ya que tiene menos de **300 km** de autonomía y necesitas casi una hora para cargar el **50%** de la batería.
 
