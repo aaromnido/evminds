@@ -38,6 +38,7 @@ export const TAGS = {
   "e-Niro": "e-Niro",
   Leaf: "Leaf",
   Micra: "Micra",
+  Zoe: "Zoe",
 
   // Topics
   Autonomía: "Autonomía",
