@@ -1,0 +1,139 @@
+---
+/**
+ * Site-wide ribbon inviting visitors to the Telegram community.
+ * Sits at the very top of every page, above the header.
+ */
+---
+
+<aside class="telegram-ribbon" aria-label="Únete a nuestra comunidad de Telegram">
+  <div class="telegram-ribbon__container">
+    <p class="telegram-ribbon__text">
+      <em class="telegram-ribbon__title">Sigamos debatiendo entre amigos.</em>
+      <span class="telegram-ribbon__subtitle">Únete a la comunidad en Telegram.</span>
+    </p>
+    <a
+      class="telegram-ribbon__button"
+      href="https://t.me/evminders"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"
+          fill="currentColor"
+        ></path>
+      </svg>
+      <span class="telegram-ribbon__button-text">Unirse a @evminders</span>
+      <span class="telegram-ribbon__button-text-short">@evminders</span>
+    </a>
+  </div>
+</aside>
+
+<style>
+  .telegram-ribbon {
+    background-color: var(--ev-primary-blue);
+    color: #fff;
+    width: 100%;
+  }
+
+  .telegram-ribbon__container {
+    max-width: 1488px;
+    margin: 0 auto;
+    padding: 8px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 40px;
+  }
+
+  .telegram-ribbon__text {
+    margin: 0;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    color: inherit;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .telegram-ribbon__title {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .telegram-ribbon__subtitle {
+    opacity: 0.85;
+  }
+
+  .telegram-ribbon__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #faf7f0;
+    color: #191b41;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .telegram-ribbon__button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .telegram-ribbon__button-text-short {
+    display: none;
+  }
+
+  /* Tablet: hide the italic eye-catcher; keep the call to join + button */
+  @media (max-width: 1024px) {
+    .telegram-ribbon__title {
+      display: none;
+    }
+  }
+
+  /* Mobile: tighter padding, shorter button label, smaller text */
+  @media (max-width: 768px) {
+    .telegram-ribbon__container {
+      padding: 8px 12px;
+      gap: 10px;
+    }
+
+    .telegram-ribbon__text {
+      font-size: 13px;
+    }
+
+    .telegram-ribbon__button {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .telegram-ribbon__button-text {
+      display: none;
+    }
+
+    .telegram-ribbon__button-text-short {
+      display: inline;
+    }
+  }
+
+  /* Very small mobile: ribbon stays single row, subtitle truncates with ellipsis */
+  @media (max-width: 380px) {
+    .telegram-ribbon__subtitle {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+</style>

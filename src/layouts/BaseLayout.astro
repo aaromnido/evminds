@@ -1,5 +1,6 @@
 ---
 import "@/styles/global.css";
+import TelegramRibbon from "@/components/TelegramRibbon.astro";
 
 interface BreadcrumbItem {
   name: string;
@@ -239,6 +240,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     </script>
   </head>
   <body>
+    <TelegramRibbon />
     <slot />
 
     <!-- Image fade-in on load -->
