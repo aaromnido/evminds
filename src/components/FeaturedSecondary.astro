@@ -4,6 +4,7 @@ import BookmarkButton from "./BookmarkButton.astro";
 import DisqusCommentCount from "./DisqusCommentCount.astro";
 import VideoPlayOverlay from "./VideoPlayOverlay.astro";
 import { serializeBookmarkData } from "@/lib/article-utils";
+import { optimizedImageUrl } from "@/lib/image-utils";
 
 interface Props {
   image: string;
@@ -59,7 +60,7 @@ const articleDataJson = serializeBookmarkData({
   class="featured-secondary"
 >
   <img
-    src={image}
+    src={optimizedImageUrl(image, 600)}
     alt={title}
     class="featured-secondary__image"
     loading="lazy"
