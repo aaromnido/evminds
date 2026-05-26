@@ -27,7 +27,9 @@ if (!slug) {
 // Fetch article with source info
 const { data, error } = await supabase
   .from("articles")
-  .select("*, source:sources!inner(name, url, lang)")
+  .select(
+    "id, slug, title, excerpt, image_url, article_url, category, content_type, published_at, scraped_at, ai_summary, ai_warnings, source:sources!inner(name, lang)",
+  )
   .eq("slug", slug)
   .single();
 
