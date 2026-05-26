@@ -158,11 +158,11 @@ serve(async (req) => {
             // Categorize by keywords
             const category = categorize(title, excerpt);
 
-            // Cache image to Supabase Storage (YouTube thumbnails included)
+            // Cache image to Cloudinary (YouTube thumbnails included)
             let imageUrl = article.image_url;
             if (imageUrl) {
               const articleId = crypto.randomUUID();
-              imageUrl = await cacheImage(imageUrl, articleId, supabaseClient);
+              imageUrl = await cacheImage(imageUrl, articleId);
             }
 
             const youtubeVideoId = article.youtube_video_id || null;
