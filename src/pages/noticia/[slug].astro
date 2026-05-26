@@ -164,7 +164,7 @@ const articleDataJson = serializeBookmarkData({
           <ul class="article-detail__ai-warnings-list">
             {(article.ai_warnings as AiWarning[]).map((w) => (
               <li class={`article-detail__ai-warning article-detail__ai-warning--${w.type}`}>
-                {resolveWarningText(w, source.lang)}
+                {resolveWarningText(w, "es")}
               </li>
             ))}
           </ul>
