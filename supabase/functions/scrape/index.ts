@@ -25,6 +25,7 @@ import { parseYouTube } from './parsers/youtube-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
 import { isYouTubeEVRelated } from './parsers/youtube-ev-filter.ts';
 import { isNotHEV } from './parsers/hev-filter.ts';
+import { isNotEBike } from './parsers/ebike-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
@@ -131,6 +132,15 @@ serve(async (req) => {
           articles = articles.filter(a => isNotHEV(a.title, a.excerpt));
           if (beforeHEV > articles.length) {
             console.log(`HEV filter ${source.name}: ${beforeHEV} -> ${articles.length} (removed ${beforeHEV - articles.length} HEV)`);
+          }
+        }
+
+        // Filter out e-bikes / electric bicycles / mopeds from all sources
+        {
+          const beforeEBike = articles.length;
+          articles = articles.filter(a => isNotEBike(a.title, a.excerpt));
+          if (beforeEBike > articles.length) {
+            console.log(`E-bike filter ${source.name}: ${beforeEBike} -> ${articles.length} (removed ${beforeEBike - articles.length} e-bike)`);
           }
         }
 
