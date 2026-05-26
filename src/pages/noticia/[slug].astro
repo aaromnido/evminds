@@ -15,7 +15,7 @@ import { getCategorySlugByName } from "@/lib/categories";
 import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
-import { formatSummaryParagraph } from "@/lib/format-summary";
+import { formatSummaryParagraph, summaryToMetaDescription } from "@/lib/format-summary";
 import FlagEN from "@/components/FlagEN.astro";
 
 const { slug } = Astro.params;
@@ -69,6 +69,12 @@ const canonicalUrl = new URL(
   Astro.site,
 ).toString();
 
+// Meta description: prefer the AI summary (1500ch unique editorial content)
+// truncated to ~160ch over the source's excerpt (short, often duplicated).
+const metaDescription = article.ai_summary
+  ? summaryToMetaDescription(article.ai_summary)
+  : article.excerpt;
+
 const articleDataJson = serializeBookmarkData({
   id: article.id,
   slug: article.slug,
@@ -83,7 +89,7 @@ const articleDataJson = serializeBookmarkData({
 
 <BaseLayout
   title={`${article.title} - EVMinds`}
-  description={article.excerpt}
+  description={metaDescription}
   image={article.image_url || undefined}
   type="article"
   publishedAt={article.published_at}
