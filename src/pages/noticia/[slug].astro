@@ -14,6 +14,8 @@ import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
+import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
+import { formatSummaryParagraph } from "@/lib/format-summary";
 
 const { slug } = Astro.params;
 
@@ -24,7 +26,7 @@ if (!slug) {
 // Fetch article with source info
 const { data, error } = await supabase
   .from("articles")
-  .select("*, source:sources!inner(name, url)")
+  .select("*, source:sources!inner(name, url, lang)")
   .eq("slug", slug)
   .single();
 
@@ -141,6 +143,29 @@ const articleDataJson = serializeBookmarkData({
 
       <!-- Excerpt -->
       <p class="article-detail__excerpt">{article.excerpt}</p>
+
+      <!-- AI summary -->
+      {article.ai_summary && (
+        <section class="article-detail__ai-summary">
+          {article.ai_summary.split("\n\n").map((para: string) => (
+            <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
+          ))}
+        </section>
+      )}
+
+      <!-- AI transparency notes -->
+      {article.ai_warnings && article.ai_warnings.length > 0 && (
+        <aside class="article-detail__ai-warnings" aria-labelledby="ai-warnings-heading">
+          <h2 id="ai-warnings-heading" class="article-detail__ai-warnings-title">Conviene saber:</h2>
+          <ul class="article-detail__ai-warnings-list">
+            {(article.ai_warnings as AiWarning[]).map((w) => (
+              <li class={`article-detail__ai-warning article-detail__ai-warning--${w.type}`}>
+                {resolveWarningText(w, source.lang)}
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
 
       <!-- CTA: read full article -->
       <a
@@ -304,6 +329,67 @@ const articleDataJson = serializeBookmarkData({
     line-height: 1.7;
     color: var(--navy-2);
     letter-spacing: -0.01em;
+  }
+
+  /* AI summary */
+  .article-detail__ai-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .article-detail__ai-summary-paragraph {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--navy-2);
+    margin: 0;
+  }
+
+  /* AI transparency notes */
+  .article-detail__ai-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 20px;
+    background-color: rgba(25, 27, 65, 0.04);
+    border-radius: 6px;
+  }
+
+  .article-detail__ai-warnings-title {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--navy-2);
+    opacity: 0.7;
+    margin: 0;
+  }
+
+  .article-detail__ai-warnings-list {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .article-detail__ai-warning {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--navy-2);
+  }
+
+  :global(.dark) .article-detail__ai-warnings {
+    background-color: rgba(250, 247, 240, 0.06);
+  }
+
+  :global(.dark) .article-detail__ai-warnings-title {
+    color: var(--sepia-light);
   }
 
   /* CTA button */

@@ -55,7 +55,9 @@ function buildPrompt(
     return `You are a news editor specialized in electric vehicles, writing for an audience of EV enthusiasts.
 Given an article title and excerpt, generate:
 
-1. A "summary" of 4 paragraphs (8-12 sentences total) in English. It must be an editorial synthesis, NOT a copy-paste of the excerpt. Journalistic, neutral, informative tone. Separate paragraphs with a double newline (\\n\\n).
+1. A "summary" of 5 paragraphs (10-15 sentences total) in English. It must be an editorial synthesis, NOT a copy-paste of the excerpt. Journalistic, neutral, informative tone. Separate paragraphs with a double newline (\\n\\n).
+
+Mark key concepts (figures, model names, technical terms, dates) in **bold** using Markdown syntax (\`**word**\`). Use bold sparingly: 3-6 expressions per paragraph maximum, not on full sentences. The goal is to make the text scannable and dynamic, not to highlight everything.
 
 2. A "warnings" array containing transparency-warning TYPES. Each item is an object with a single "type" field. Only include a warning if it is clearly supported by the text. If there are none, return [].
 
@@ -78,7 +80,11 @@ Source URL: ${articleUrl}`;
   return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES).
 Dado un título y un extracto, genera:
 
-1. Un "summary" de 4 párrafos (8-12 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
+1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
+
+Reglas de estilo en español:
+- NO uses guiones largos (—) como inciso. En español es más natural separar con comas. Ejemplo correcto: "La batería, según el comunicado, ofrece 900 km". Ejemplo INCORRECTO: "La batería —según el comunicado— ofrece 900 km".
+- Marca con negritas (sintaxis Markdown: \`**palabra**\`) los conceptos clave: cifras, nombres de modelo, términos técnicos, fechas. Usa negritas con moderación, 3-6 expresiones por párrafo máximo, nunca sobre frases enteras. El objeto es que el texto sea escaneable y dinámico, no resaltar todo.
 
 2. Un array "warnings" con TIPOS de aviso de transparencia. Cada elemento es un objeto con un único campo "type". Solo incluye un warning si está claramente respaldado por el texto. Si no hay ninguno, devuelve [].
 
