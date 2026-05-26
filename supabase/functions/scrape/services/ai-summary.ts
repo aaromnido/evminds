@@ -43,6 +43,15 @@ const VALID_WARNING_TYPES: ReadonlySet<WarningType> = new Set<WarningType>([
 
 const EMPTY: SummaryResult = { summary: null, warnings: [] };
 
+const MAX_ATTEMPTS = 5;
+const RETRYABLE_STATUS = new Set([429, 503]);
+// Linear backoff between attempts: 500ms, 1s, 1.5s, 2s (total worst case ~5s).
+const RETRY_DELAY_MS = 500;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function buildPrompt(
   title: string,
   excerpt: string,
@@ -168,33 +177,53 @@ export async function generateSummary(
     return EMPTY;
   }
 
-  try {
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: buildPrompt(title, excerpt, articleUrl, lang) }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 4096,
-          response_mime_type: 'application/json',
-          response_schema: RESPONSE_SCHEMA,
-          // gemini-2.5-flash is a "thinking" model by default; disable to
-          // free the full output budget for the actual response and cut
-          // latency from ~10s to ~2-3s.
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
-    });
+  const requestBody = JSON.stringify({
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: buildPrompt(title, excerpt, articleUrl, lang) }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 4096,
+      response_mime_type: 'application/json',
+      response_schema: RESPONSE_SCHEMA,
+      // gemini-2.5-flash is a "thinking" model by default; disable to
+      // free the full output budget for the actual response and cut
+      // latency from ~10s to ~2-3s.
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  });
 
-    if (!response.ok) {
+  try {
+    let response: Response | null = null;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody,
+      });
+
+      if (response.ok) break;
+
+      if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_ATTEMPTS) {
+        console.warn(
+          `Gemini ${response.status} on attempt ${attempt}/${MAX_ATTEMPTS}; retrying in ${RETRY_DELAY_MS * attempt}ms`,
+        );
+        await sleep(RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
       const errBody = await response.text();
       console.error(`Gemini API error (${response.status}): ${errBody}`);
+      return EMPTY;
+    }
+
+    if (!response || !response.ok) {
+      const status = response?.status ?? 'unknown';
+      console.error(`Gemini API exhausted retries (last status: ${status})`);
       return EMPTY;
     }
 
