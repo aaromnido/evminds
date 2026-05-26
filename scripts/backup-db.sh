@@ -13,12 +13,7 @@ USER="postgres.pjpfsclekrvsvwftpkyv"
 DB="postgres"
 MAX_BACKUPS=10
 
-# Check for password
-if [ -z "${PGPASSWORD:-}" ]; then
-  echo "Enter database password:"
-  read -s PGPASSWORD
-  export PGPASSWORD
-fi
+# Credentials are read from ~/.pgpass (chmod 600). pg_dump prompts if missing.
 
 # Create backup directory
 mkdir -p "$BACKUP_DIR"
