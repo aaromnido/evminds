@@ -8,7 +8,7 @@
  */
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
@@ -181,9 +181,13 @@ export async function generateSummary(
         ],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
           response_mime_type: 'application/json',
           response_schema: RESPONSE_SCHEMA,
+          // gemini-2.5-flash is a "thinking" model by default; disable to
+          // free the full output budget for the actual response and cut
+          // latency from ~10s to ~2-3s.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
