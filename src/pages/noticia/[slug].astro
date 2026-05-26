@@ -150,6 +150,9 @@ const articleDataJson = serializeBookmarkData({
           {article.ai_summary.split("\n\n").map((para: string) => (
             <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
           ))}
+          <p class="article-detail__ai-disclaimer">
+            Este texto es una interpretación de la noticia por parte de EVMinds.
+          </p>
         </section>
       )}
 
@@ -345,6 +348,16 @@ const articleDataJson = serializeBookmarkData({
     line-height: 1.7;
     color: var(--navy-2);
     margin: 0;
+  }
+
+  .article-detail__ai-disclaimer {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 10px;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--navy-2);
+    opacity: 0.6;
+    margin: 4px 0 0;
   }
 
   /* AI transparency notes */
