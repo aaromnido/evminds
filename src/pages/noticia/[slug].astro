@@ -16,6 +16,7 @@ import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
 import { formatSummaryParagraph } from "@/lib/format-summary";
+import FlagEN from "@/components/FlagEN.astro";
 
 const { slug } = Astro.params;
 
@@ -177,6 +178,7 @@ const articleDataJson = serializeBookmarkData({
         rel="noopener noreferrer"
         class="article-detail__cta"
       >
+        {source.lang === "en" && <FlagEN label="Fuente en inglés" />}
         Leer artículo completo en {source.name}
         <svg
           width="24"
@@ -403,6 +405,13 @@ const articleDataJson = serializeBookmarkData({
 
   :global(.dark) .article-detail__ai-warnings-title {
     color: var(--sepia-light);
+  }
+
+  .article-detail__cta-flag {
+    display: inline-block;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
   }
 
   /* CTA button */

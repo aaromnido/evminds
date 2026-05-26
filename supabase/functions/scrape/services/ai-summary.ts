@@ -30,6 +30,10 @@ export interface SummaryWarning {
 export interface SummaryResult {
   summary: string | null;
   warnings: SummaryWarning[];
+  /** Spanish translation of the original title — only set when source.lang !== 'es' */
+  translatedTitle?: string;
+  /** Spanish translation of the original excerpt — only set when source.lang !== 'es' */
+  translatedExcerpt?: string;
 }
 
 const VALID_WARNING_TYPES: ReadonlySet<WarningType> = new Set<WarningType>([
@@ -61,32 +65,39 @@ function buildPrompt(
   const isEnglish = lang.toLowerCase().startsWith('en');
 
   if (isEnglish) {
-    return `You are a news editor specialized in electric vehicles, writing for an audience of EV enthusiasts.
-Given an article title and excerpt, generate:
+    return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES). Recibes un artículo en inglés y debes generar TODO en español de España, incluida la traducción del título y el extracto originales.
 
-1. A "summary" of 5 paragraphs (10-15 sentences total) in English. It must be an editorial synthesis, NOT a copy-paste of the excerpt. Journalistic, neutral, informative tone. Separate paragraphs with a double newline (\\n\\n).
+A partir del título y extracto en inglés, genera:
 
-Highlight important elements with **bold** using Markdown syntax (\`**text**\`). Combine two kinds of emphasis:
-- Single words or short pairs for figures, model names, technical terms, dates (e.g. \`**900 km**\`, \`**CLTC**\`, \`**2027**\`).
-- Phrases or sentence fragments that capture a key idea or claim from the paragraph (e.g. \`**recharge in 5 minutes**\`, \`**no confirmed European launch date**\`).
-Use 3-6 highlights per paragraph. Never bold a full sentence. The goal is to make the text scannable and dynamic.
+1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
 
-2. A "warnings" array containing transparency-warning TYPES. Each item is an object with a single "type" field. Only include a warning if it is clearly supported by the text. If there are none, return [].
+Reglas de estilo en español:
+- NO uses guiones largos (—) como inciso. En español es más natural separar con comas. Ejemplo correcto: "La batería, según el comunicado, ofrece 900 km". Ejemplo INCORRECTO: "La batería —según el comunicado— ofrece 900 km".
+- Marca con negritas (sintaxis Markdown: \`**texto**\`) los elementos clave del párrafo. Combina dos tipos de resalte:
+  · Palabras sueltas o parejas cortas para cifras, nombres de modelo, términos técnicos, fechas (ej. \`**900 km**\`, \`**CLTC**\`, \`**2027**\`).
+  · Frases o partes de frase que recojan una idea clave o una afirmación importante del párrafo (ej. \`**recarga al 80% en 5 minutos**\`, \`**sin fecha confirmada para Europa**\`).
+  Usa 3-6 destacados por párrafo. Nunca pongas en negrita una frase entera.
 
-Valid warning types (the "type" field must match exactly):
-- "price_non_european": Price quoted in China or another non-European market
-- "price_subsidized": Price includes subsidies, financing discounts, or government aid
-- "autonomy_cltc": Range in CLTC cycle (Chinese homologation) without WLTP context
-- "autonomy_wltp_no_real": WLTP range without real-world context
-- "launch_non_european": Launch planned outside Europe
-- "prototype_as_product": Prototype-stage technology presented as a commercial product
+2. Un array "warnings" con TIPOS de aviso de transparencia. Cada elemento es un objeto con un único campo "type". Solo incluye un warning si está claramente respaldado por el texto. Si no hay ninguno, devuelve [].
 
-Output format example:
-{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}]}
+Tipos válidos de warning (el campo "type" debe coincidir exactamente):
+- "price_non_european": Precio mencionado en China u otro mercado no europeo
+- "price_subsidized": Precio que incluye subvenciones, descuentos por financiación o ayudas
+- "autonomy_cltc": Autonomía en ciclo CLTC (homologación china) sin contexto WLTP
+- "autonomy_wltp_no_real": Autonomía WLTP sin contexto de uso real
+- "launch_non_european": Lanzamiento previsto fuera de Europa
+- "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
 
-Title: ${title}
-Excerpt: ${excerpt}
-Source URL: ${articleUrl}`;
+3. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+
+4. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.
+
+Formato de salida (ejemplo):
+{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "translated_title": "...", "translated_excerpt": "..."}
+
+Título original (inglés): ${title}
+Extracto original (inglés): ${excerpt}
+URL fuente: ${articleUrl}`;
   }
 
   return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES).
@@ -119,23 +130,30 @@ Extracto: ${excerpt}
 URL fuente: ${articleUrl}`;
 }
 
-const RESPONSE_SCHEMA = {
-  type: 'OBJECT',
-  properties: {
+function buildResponseSchema(isEnglish: boolean) {
+  const properties: Record<string, unknown> = {
     summary: { type: 'STRING' },
     warnings: {
       type: 'ARRAY',
       items: {
         type: 'OBJECT',
-        properties: {
-          type: { type: 'STRING' },
-        },
+        properties: { type: { type: 'STRING' } },
         required: ['type'],
       },
     },
-  },
-  required: ['summary', 'warnings'],
-};
+  };
+  const required = ['summary', 'warnings'];
+
+  // For non-Spanish sources, also require Spanish translations of title/excerpt
+  // so the article can be stored in Spanish in the database.
+  if (isEnglish) {
+    properties.translated_title = { type: 'STRING' };
+    properties.translated_excerpt = { type: 'STRING' };
+    required.push('translated_title', 'translated_excerpt');
+  }
+
+  return { type: 'OBJECT', properties, required };
+}
 
 function parseAndValidate(raw: unknown): SummaryResult | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -158,7 +176,14 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
     warnings.push({ type: wo.type as WarningType });
   }
 
-  return { summary: obj.summary.trim(), warnings };
+  const result: SummaryResult = { summary: obj.summary.trim(), warnings };
+  if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
+    result.translatedTitle = obj.translated_title.trim();
+  }
+  if (typeof obj.translated_excerpt === 'string' && obj.translated_excerpt.trim()) {
+    result.translatedExcerpt = obj.translated_excerpt.trim();
+  }
+  return result;
 }
 
 /**
@@ -183,6 +208,7 @@ export async function generateSummary(
     return EMPTY;
   }
 
+  const isEnglish = lang.toLowerCase().startsWith('en');
   const requestBody = JSON.stringify({
     contents: [
       {
@@ -194,7 +220,7 @@ export async function generateSummary(
       temperature: 0.4,
       maxOutputTokens: 4096,
       response_mime_type: 'application/json',
-      response_schema: RESPONSE_SCHEMA,
+      response_schema: buildResponseSchema(isEnglish),
       // gemini-2.5-flash is a "thinking" model by default; disable to
       // free the full output budget for the actual response and cut
       // latency from ~10s to ~2-3s.

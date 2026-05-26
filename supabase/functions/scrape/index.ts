@@ -156,9 +156,6 @@ serve(async (req) => {
             let title = article.title;
             let excerpt = article.excerpt;
 
-            // Categorize by keywords
-            const category = categorize(title, excerpt);
-
             // Cache image to Cloudinary (YouTube thumbnails included)
             let imageUrl = article.image_url;
             if (imageUrl) {
@@ -166,17 +163,34 @@ serve(async (req) => {
               imageUrl = await cacheImage(imageUrl, articleId);
             }
 
-            // Generate AI summary + transparency warnings (language follows source.lang)
-            const { summary: aiSummary, warnings: aiWarnings } = await generateSummary(
+            // Generate AI summary + transparency warnings. For non-Spanish
+            // sources, Gemini also returns Spanish translations of title and
+            // excerpt so the article can be stored fully in Spanish.
+            const {
+              summary: aiSummary,
+              warnings: aiWarnings,
+              translatedTitle,
+              translatedExcerpt,
+            } = await generateSummary(
               title,
               excerpt,
               article.article_url,
               source.lang,
             );
 
+            // Replace original title/excerpt with the Spanish translation when
+            // available. If Gemini failed to translate, we fall back to the
+            // original (coherent: original language remains throughout).
+            if (translatedTitle) title = translatedTitle;
+            if (translatedExcerpt) excerpt = translatedExcerpt;
+
+            // Categorize and slugify with the final (translated when applicable)
+            // values so the slug, category, and DB row are consistent.
+            const category = categorize(title, excerpt);
+
             const youtubeVideoId = article.youtube_video_id || null;
 
-            // Generate unique slug from title
+            // Generate unique slug from (final) title
             let baseSlug = slugify(title);
             let slug = baseSlug;
             let suffix = 2;

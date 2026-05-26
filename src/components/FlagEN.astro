@@ -1,0 +1,62 @@
+---
+/**
+ * SVG flag marking English-language content. Uses the United Kingdom flag
+ * as the visual convention for the English language.
+ * Source: flag-icons (MIT license). https://github.com/lipis/flag-icons
+ *
+ * Used to flag articles whose original source language is English, so
+ * readers know the linked article will be in English even when our
+ * surrounding content is translated to Spanish.
+ */
+
+interface Props {
+  class?: string;
+  label?: string;
+}
+
+const { class: className, label = "Fuente en inglés" } = Astro.props;
+
+// Generate a short unique ID so clipPath references don't collide when the
+// component is rendered multiple times on the same page.
+const uid = crypto.randomUUID().slice(0, 8);
+const clipId = `flag-en-${uid}`;
+const clipId2 = `flag-en-cross-${uid}`;
+---
+
+<svg
+  class:list={["flag-en", className]}
+  viewBox="0 0 60 30"
+  width="22"
+  height="11"
+  role="img"
+  aria-label={label}
+>
+  <title>{label}</title>
+  <clipPath id={clipId}>
+    <path d="M0 0v30h60V0z" />
+  </clipPath>
+  <clipPath id={clipId2}>
+    <path d="M30 15h30v15zv15H0zH0V0zV0h30z" />
+  </clipPath>
+  <g clip-path={`url(#${clipId})`}>
+    <path fill="#012169" d="M0 0v30h60V0z" />
+    <path stroke="#fff" stroke-width="6" d="M0 0l60 30m0-30L0 30" />
+    <path
+      stroke="#C8102E"
+      stroke-width="4"
+      clip-path={`url(#${clipId2})`}
+      d="M0 0l60 30m0-30L0 30"
+    />
+    <path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60" />
+    <path stroke="#C8102E" stroke-width="6" d="M30 0v30M0 15h60" />
+  </g>
+</svg>
+
+<style>
+  .flag-en {
+    display: inline-block;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+  }
+</style>
