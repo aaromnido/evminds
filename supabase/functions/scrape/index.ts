@@ -28,6 +28,7 @@ import { isNotHEV } from './parsers/hev-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
+import { generateSummary } from './services/ai-summary.ts';
 import type { Source, RawArticle, ScraperResult } from './types.ts';
 import { YOUTUBE_EV_FILTERED_SOURCES } from './types.ts';
 
@@ -165,6 +166,14 @@ serve(async (req) => {
               imageUrl = await cacheImage(imageUrl, articleId);
             }
 
+            // Generate AI summary + transparency warnings (language follows source.lang)
+            const { summary: aiSummary, warnings: aiWarnings } = await generateSummary(
+              title,
+              excerpt,
+              article.article_url,
+              source.lang,
+            );
+
             const youtubeVideoId = article.youtube_video_id || null;
 
             // Generate unique slug from title
@@ -193,6 +202,9 @@ serve(async (req) => {
               category,
               published_at: article.published_at.toISOString(),
               content_type: isYouTubeSource ? 'video' : 'news',
+              ai_summary: aiSummary,
+              ai_warnings: aiWarnings.length > 0 ? aiWarnings : null,
+              ai_generated_at: aiSummary ? new Date().toISOString() : null,
             };
 
             if (youtubeVideoId) {
