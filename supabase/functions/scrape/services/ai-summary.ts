@@ -90,19 +90,21 @@ Tipos válidos de warning (el campo "type" debe coincidir exactamente):
 - "launch_non_european": Lanzamiento previsto fuera de Europa
 - "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
 
-3. Un "discussion_prompt": invitación a comentar de 1-2 frases en español de España que:
-- Identifique el ángulo más debatible o polémico del artículo (precio, diseño, marca, tecnología, expectativas, momento del mercado, política, etc.).
+3. Un "discussion_prompt": invitación a comentar de 2-3 frases en español de España que:
+- Identifique un ángulo real e interesante del artículo (técnico, comercial, estratégico, contextual, de expectativas). NO tiene que ser polémico ni provocador, basta con que dé pie a una conversación honesta.
 - Mencione algo CONCRETO del contenido. Nada genérico tipo "¿qué te parece?".
-- Tono cercano, casi de mensaje entre amigos. NUNCA marketinero, NUNCA agresivo. "Como el que no quiere la cosa".
-- Cuando sea apropiado, usa hedges suaves ("quizás", "tal vez") en vez de afirmaciones rotundas.
-- Cierra con una invitación EXPLÍCITA a opinar. Varía la forma en cada artículo: "¿Tú cómo lo ves?", "¿Qué opinas?", "Se admiten apuestas", "Cuéntanos qué piensas", "¿Estás de acuerdo?", "¿Lo ves así?", "Danos tu lectura", "Déjanos tu opinión", etc.
-- NO empieces siempre con "¿". Alterna: una observación + una invitación funciona mejor que pregunta-pregunta.
+- Tono BLANCO, neutro, honesto. Reconoce el hecho noticioso SIN ironía y SIN juicio. NUNCA cínico, NUNCA provocador, NUNCA marketinero, NUNCA agresivo con la noticia.
+- NO inyectes opinión editorial. Evita palabras como "arriesgado", "puro postureo", "promesas vacías", "modo titular", "marketing del 100%", "coleccionando promesas", ni frases tipo "dice mucho" / "dice bastante". Deja que sea el lector el que se moje, no tú.
+- Estructura recomendada: (a) una observación neutral del hecho, (b) una pregunta real y abierta sobre cómo lo ve el lector, (c) una invitación EXPLÍCITA y suave a dejar opinión.
+- Cierre EXPLÍCITO a comentar, variando la forma en cada artículo: "Cuéntanos.", "Cuéntanos qué piensas.", "Cuéntanos cómo lo ves.", "Déjanos tu opinión.", "Déjanos tu lectura.", "Danos tu lectura.", "Nos interesa leerte.", "¿Tú cómo lo ves? Cuéntanos.", etc.
+- NO empieces siempre con "¿". Alterna estructuras.
 - Sin negritas, sin Markdown, sin guiones largos.
 
-Ejemplos del tono buscado:
-- "Confiar el diseño del primer Ferrari eléctrico a un ex-Apple quizás ha sido arriesgado. ¿Tú cómo lo ves?"
-- "900 km de autonomía suena a futuro, pero llegar a Europa es otra historia. ¿Qué opinas?"
-- "Otra batería de estado sólido prometida. ¿Esta vez sí o seguimos esperando? Se admiten apuestas."
+Ejemplos del tono buscado (referencia exacta):
+- "El primer Ferrari eléctrico llega con la firma de un ex-Apple en el diseño, una mezcla poco habitual. ¿Te encaja con el espíritu del Cavallino o no acabas de verlo? Cuéntanos."
+- "Un SUV con 640 km de autonomía por 18.000 dólares es una cifra muy llamativa, aunque para el mercado chino. ¿Te interesaría si llegase a Europa, aunque fuera al precio europeo habitual? Déjanos tu opinión."
+- "Los ánodos de silicio prometen mejor gestión térmica, y AMG ha decidido apostar por ello junto a Sila. ¿Crees que las prestaciones reales acompañarán al anuncio? Cuéntanos qué piensas."
+- "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."
 
 4. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
 
@@ -138,19 +140,21 @@ Tipos válidos de warning (el campo "type" debe coincidir exactamente):
 - "launch_non_european": Lanzamiento previsto fuera de Europa
 - "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
 
-3. Un "discussion_prompt": invitación a comentar de 1-2 frases en español de España que:
-- Identifique el ángulo más debatible o polémico del artículo (precio, diseño, marca, tecnología, expectativas, momento del mercado, política, etc.).
+3. Un "discussion_prompt": invitación a comentar de 2-3 frases en español de España que:
+- Identifique un ángulo real e interesante del artículo (técnico, comercial, estratégico, contextual, de expectativas). NO tiene que ser polémico ni provocador, basta con que dé pie a una conversación honesta.
 - Mencione algo CONCRETO del contenido. Nada genérico tipo "¿qué te parece?".
-- Tono cercano, casi de mensaje entre amigos. NUNCA marketinero, NUNCA agresivo. "Como el que no quiere la cosa".
-- Cuando sea apropiado, usa hedges suaves ("quizás", "tal vez") en vez de afirmaciones rotundas.
-- Cierra con una invitación EXPLÍCITA a opinar. Varía la forma en cada artículo: "¿Tú cómo lo ves?", "¿Qué opinas?", "Se admiten apuestas", "Cuéntanos qué piensas", "¿Estás de acuerdo?", "¿Lo ves así?", "Danos tu lectura", "Déjanos tu opinión", etc.
-- NO empieces siempre con "¿". Alterna: una observación + una invitación funciona mejor que pregunta-pregunta.
+- Tono BLANCO, neutro, honesto. Reconoce el hecho noticioso SIN ironía y SIN juicio. NUNCA cínico, NUNCA provocador, NUNCA marketinero, NUNCA agresivo con la noticia.
+- NO inyectes opinión editorial. Evita palabras como "arriesgado", "puro postureo", "promesas vacías", "modo titular", "marketing del 100%", "coleccionando promesas", ni frases tipo "dice mucho" / "dice bastante". Deja que sea el lector el que se moje, no tú.
+- Estructura recomendada: (a) una observación neutral del hecho, (b) una pregunta real y abierta sobre cómo lo ve el lector, (c) una invitación EXPLÍCITA y suave a dejar opinión.
+- Cierre EXPLÍCITO a comentar, variando la forma en cada artículo: "Cuéntanos.", "Cuéntanos qué piensas.", "Cuéntanos cómo lo ves.", "Déjanos tu opinión.", "Déjanos tu lectura.", "Danos tu lectura.", "Nos interesa leerte.", "¿Tú cómo lo ves? Cuéntanos.", etc.
+- NO empieces siempre con "¿". Alterna estructuras.
 - Sin negritas, sin Markdown, sin guiones largos.
 
-Ejemplos del tono buscado:
-- "Confiar el diseño del primer Ferrari eléctrico a un ex-Apple quizás ha sido arriesgado. ¿Tú cómo lo ves?"
-- "900 km de autonomía suena a futuro, pero llegar a Europa es otra historia. ¿Qué opinas?"
-- "Otra batería de estado sólido prometida. ¿Esta vez sí o seguimos esperando? Se admiten apuestas."
+Ejemplos del tono buscado (referencia exacta):
+- "El primer Ferrari eléctrico llega con la firma de un ex-Apple en el diseño, una mezcla poco habitual. ¿Te encaja con el espíritu del Cavallino o no acabas de verlo? Cuéntanos."
+- "Un SUV con 640 km de autonomía por 18.000 dólares es una cifra muy llamativa, aunque para el mercado chino. ¿Te interesaría si llegase a Europa, aunque fuera al precio europeo habitual? Déjanos tu opinión."
+- "Los ánodos de silicio prometen mejor gestión térmica, y AMG ha decidido apostar por ello junto a Sila. ¿Crees que las prestaciones reales acompañarán al anuncio? Cuéntanos qué piensas."
+- "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."
 
 Formato de salida (ejemplo):
 {"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}
