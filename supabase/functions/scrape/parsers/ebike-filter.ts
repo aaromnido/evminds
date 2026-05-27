@@ -23,6 +23,7 @@ const BLACKLIST = [
   'electric moped',
   // Spanish
   'bicicleta',
+  'bibicleta',
   'bicis',
   'bici eléctrica',
   'bici electrica',
@@ -30,6 +31,12 @@ const BLACKLIST = [
   'ciclomotor eléctrico',
   'ciclomotor electrico',
   'pedelec',
+  // Cycling-specific signals that catch articles whose title/excerpt
+  // never mention "bicicleta" directly (typos, brand-only headlines, etc.).
+  'mountain bike',
+  'mtb',
+  'ruedas de 29',
+  '29 pulgadas',
 ];
 
 /**
