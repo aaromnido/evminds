@@ -66,62 +66,16 @@ function buildPrompt(
 ): string {
   const isEnglish = lang.toLowerCase().startsWith('en');
 
-  if (isEnglish) {
-    return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES). Recibes un artículo en inglés y debes generar TODO en español de España, incluida la traducción del título y el extracto originales.
+  const intro = isEnglish
+    ? `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES). Recibes un artículo en inglés y debes generar TODO en español de España, incluida la traducción del título y el extracto originales.
 
-A partir del título y extracto en inglés, genera:
+A partir del título y extracto en inglés, genera:`
+    : `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES).
+Dado un título y un extracto, genera:`;
 
-1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
+  const sharedBody = `1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
 
-Reglas de estilo en español:
-- NO uses guiones largos (—) como inciso. En español es más natural separar con comas. Ejemplo correcto: "La batería, según el comunicado, ofrece 900 km". Ejemplo INCORRECTO: "La batería —según el comunicado— ofrece 900 km".
-- Marca con negritas (sintaxis Markdown: \`**texto**\`) los elementos clave del párrafo. Combina dos tipos de resalte:
-  · Palabras sueltas o parejas cortas para cifras, nombres de modelo, términos técnicos, fechas (ej. \`**900 km**\`, \`**CLTC**\`, \`**2027**\`).
-  · Frases o partes de frase que recojan una idea clave o una afirmación importante del párrafo (ej. \`**recarga al 80% en 5 minutos**\`, \`**sin fecha confirmada para Europa**\`).
-  Usa 3-6 destacados por párrafo. Nunca pongas en negrita una frase entera.
-
-2. Un array "warnings" con TIPOS de aviso de transparencia. Cada elemento es un objeto con un único campo "type". Solo incluye un warning si está claramente respaldado por el texto. Si no hay ninguno, devuelve [].
-
-Tipos válidos de warning (el campo "type" debe coincidir exactamente):
-- "price_non_european": Precio mencionado en China u otro mercado no europeo
-- "price_subsidized": Precio que incluye subvenciones, descuentos por financiación o ayudas
-- "autonomy_cltc": Autonomía en ciclo CLTC (homologación china) sin contexto WLTP
-- "autonomy_wltp_no_real": Autonomía WLTP sin contexto de uso real
-- "launch_non_european": Lanzamiento previsto fuera de Europa
-- "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
-
-3. Un "discussion_prompt": invitación a comentar de 2-3 frases en español de España que:
-- Identifique un ángulo real e interesante del artículo (técnico, comercial, estratégico, contextual, de expectativas). NO tiene que ser polémico ni provocador, basta con que dé pie a una conversación honesta.
-- Mencione algo CONCRETO del contenido. Nada genérico tipo "¿qué te parece?".
-- Tono BLANCO, neutro, honesto. Reconoce el hecho noticioso SIN ironía y SIN juicio. NUNCA cínico, NUNCA provocador, NUNCA marketinero, NUNCA agresivo con la noticia.
-- NO inyectes opinión editorial. Evita palabras como "arriesgado", "puro postureo", "promesas vacías", "modo titular", "marketing del 100%", "coleccionando promesas", ni frases tipo "dice mucho" / "dice bastante". Deja que sea el lector el que se moje, no tú.
-- Estructura recomendada: (a) una observación neutral del hecho, (b) una pregunta real y abierta sobre cómo lo ve el lector, (c) una invitación EXPLÍCITA y suave a dejar opinión.
-- Cierre EXPLÍCITO a comentar, variando la forma en cada artículo: "Cuéntanos.", "Cuéntanos qué piensas.", "Cuéntanos cómo lo ves.", "Déjanos tu opinión.", "Déjanos tu lectura.", "Danos tu lectura.", "Nos interesa leerte.", "¿Tú cómo lo ves? Cuéntanos.", etc.
-- NO empieces siempre con "¿". Alterna estructuras.
-- Sin negritas, sin Markdown, sin guiones largos.
-
-Ejemplos del tono buscado (referencia exacta):
-- "El primer Ferrari eléctrico llega con la firma de un ex-Apple en el diseño, una mezcla poco habitual. ¿Te encaja con el espíritu del Cavallino o no acabas de verlo? Cuéntanos."
-- "Un SUV con 640 km de autonomía por 18.000 dólares es una cifra muy llamativa, aunque para el mercado chino. ¿Te interesaría si llegase a Europa, aunque fuera al precio europeo habitual? Déjanos tu opinión."
-- "Los ánodos de silicio prometen mejor gestión térmica, y AMG ha decidido apostar por ello junto a Sila. ¿Crees que las prestaciones reales acompañarán al anuncio? Cuéntanos qué piensas."
-- "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."
-
-4. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
-
-5. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.
-
-Formato de salida (ejemplo):
-{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}
-
-Título original (inglés): ${title}
-Extracto original (inglés): ${excerpt}
-URL fuente: ${articleUrl}`;
-  }
-
-  return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES).
-Dado un título y un extracto, genera:
-
-1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
+REGLA CRÍTICA contra alucinaciones — NO inventes datos técnicos que no estén en el extracto original (ciclo de homologación CLTC/WLTP, mercados geográficos de lanzamiento, capacidad de batería, autonomía oficial, precios, fechas, nombres de personas, plantas de fabricación, contextos comerciales). Limítate a parafrasear, sintetizar y dar contexto sobre lo que SÍ aparece en el texto. Si el extracto no menciona un dato, no lo añadas y no especules sobre él. Mejor un resumen escueto y honesto que uno rico y fabricado.
 
 Reglas de estilo en español:
 - NO uses guiones largos (—) como inciso. En español es más natural separar con comas. Ejemplo correcto: "La batería, según el comunicado, ofrece 900 km". Ejemplo INCORRECTO: "La batería —según el comunicado— ofrece 900 km".
@@ -130,15 +84,17 @@ Reglas de estilo en español:
   · Frases o partes de frase que recojan una idea clave o una afirmación importante del párrafo (ej. \`**recarga al 80% en 5 minutos**\`, \`**sin fecha confirmada para Europa**\`).
   Usa 3-6 destacados por párrafo. Nunca pongas en negrita una frase entera. El objetivo es que el texto sea escaneable y dinámico.
 
-2. Un array "warnings" con TIPOS de aviso de transparencia. Cada elemento es un objeto con un único campo "type". Solo incluye un warning si está claramente respaldado por el texto. Si no hay ninguno, devuelve [].
+2. Un array "warnings" con TIPOS de aviso de transparencia. Cada elemento es un objeto con un único campo "type". Si no hay ninguno, devuelve [].
+
+REGLA CRÍTICA — solo dispara un warning si su ángulo aparece de forma LITERAL en el título o el extracto originales. NO infieras por marca, plataforma, magnitud de la cifra de autonomía, geografía del fabricante, ni por contexto general del sector. En la duda, NO añadas el warning: mejor un falso negativo que un falso positivo.
 
 Tipos válidos de warning (el campo "type" debe coincidir exactamente):
-- "price_non_european": Precio mencionado en China u otro mercado no europeo
-- "price_subsidized": Precio que incluye subvenciones, descuentos por financiación o ayudas
-- "autonomy_cltc": Autonomía en ciclo CLTC (homologación china) sin contexto WLTP
-- "autonomy_wltp_no_real": Autonomía WLTP sin contexto de uso real
-- "launch_non_european": Lanzamiento previsto fuera de Europa
-- "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
+- "price_non_european": solo si el precio se da literalmente en yuanes, dólares para mercado USA, o cualquier contexto explícitamente no europeo. Marca europea con precios en euros NO dispara este warning.
+- "price_subsidized": solo si el extracto menciona literalmente subvenciones, ayudas públicas, descuentos por financiación o equivalentes.
+- "autonomy_cltc": solo si el extracto menciona literalmente "CLTC", "ciclo chino" u "homologación china". Una cifra de autonomía alta NO basta para asumir CLTC.
+- "autonomy_wltp_no_real": solo si el extracto da una cifra WLTP y, además, omite cualquier matiz de uso real. Aplicar con mucha cautela.
+- "launch_non_european": solo si el extracto indica que el lanzamiento es exclusivo de un mercado no europeo (China, USA, Asia). Un lanzamiento europeo escalonado, retrasado o con ambición global NO dispara este warning.
+- "prototype_as_product": solo si el extracto presenta una tecnología en fase prototipo como producto comercial disponible.
 
 3. Un "discussion_prompt": invitación a comentar de 2-3 frases en español de España que:
 - Identifique un ángulo real e interesante del artículo (técnico, comercial, estratégico, contextual, de expectativas). NO tiene que ser polémico ni provocador, basta con que dé pie a una conversación honesta.
@@ -154,14 +110,36 @@ Ejemplos del tono buscado (referencia exacta):
 - "El primer Ferrari eléctrico llega con la firma de un ex-Apple en el diseño, una mezcla poco habitual. ¿Te encaja con el espíritu del Cavallino o no acabas de verlo? Cuéntanos."
 - "Un SUV con 640 km de autonomía por 18.000 dólares es una cifra muy llamativa, aunque para el mercado chino. ¿Te interesaría si llegase a Europa, aunque fuera al precio europeo habitual? Déjanos tu opinión."
 - "Los ánodos de silicio prometen mejor gestión térmica, y AMG ha decidido apostar por ello junto a Sila. ¿Crees que las prestaciones reales acompañarán al anuncio? Cuéntanos qué piensas."
-- "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."
+- "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."`;
 
-Formato de salida (ejemplo):
-{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}
+  const translationSections = isEnglish
+    ? `
 
-Título: ${title}
+4. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+
+5. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
+    : '';
+
+  const outputExample = isEnglish
+    ? `{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}`
+    : `{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}`;
+
+  const inputBlock = isEnglish
+    ? `Título original (inglés): ${title}
+Extracto original (inglés): ${excerpt}
+URL fuente: ${articleUrl}`
+    : `Título: ${title}
 Extracto: ${excerpt}
 URL fuente: ${articleUrl}`;
+
+  return `${intro}
+
+${sharedBody}${translationSections}
+
+Formato de salida (ejemplo):
+${outputExample}
+
+${inputBlock}`;
 }
 
 function buildResponseSchema(isEnglish: boolean) {
