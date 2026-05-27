@@ -30,6 +30,8 @@ export interface SummaryWarning {
 export interface SummaryResult {
   summary: string | null;
   warnings: SummaryWarning[];
+  /** Soft 1-2 sentence invitation to comment, tied to the article's key debate. */
+  discussionPrompt?: string;
   /** Spanish translation of the original title — only set when source.lang !== 'es' */
   translatedTitle?: string;
   /** Spanish translation of the original excerpt — only set when source.lang !== 'es' */
@@ -88,12 +90,26 @@ Tipos válidos de warning (el campo "type" debe coincidir exactamente):
 - "launch_non_european": Lanzamiento previsto fuera de Europa
 - "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
 
-3. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+3. Un "discussion_prompt": invitación a comentar de 1-2 frases en español de España que:
+- Identifique el ángulo más debatible o polémico del artículo (precio, diseño, marca, tecnología, expectativas, momento del mercado, política, etc.).
+- Mencione algo CONCRETO del contenido. Nada genérico tipo "¿qué te parece?".
+- Tono cercano, casi de mensaje entre amigos. NUNCA marketinero, NUNCA agresivo. "Como el que no quiere la cosa".
+- Cuando sea apropiado, usa hedges suaves ("quizás", "tal vez") en vez de afirmaciones rotundas.
+- Cierra con una invitación EXPLÍCITA a opinar. Varía la forma en cada artículo: "¿Tú cómo lo ves?", "¿Qué opinas?", "Se admiten apuestas", "Cuéntanos qué piensas", "¿Estás de acuerdo?", "¿Lo ves así?", "Danos tu lectura", "Déjanos tu opinión", etc.
+- NO empieces siempre con "¿". Alterna: una observación + una invitación funciona mejor que pregunta-pregunta.
+- Sin negritas, sin Markdown, sin guiones largos.
 
-4. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.
+Ejemplos del tono buscado:
+- "Confiar el diseño del primer Ferrari eléctrico a un ex-Apple quizás ha sido arriesgado. ¿Tú cómo lo ves?"
+- "900 km de autonomía suena a futuro, pero llegar a Europa es otra historia. ¿Qué opinas?"
+- "Otra batería de estado sólido prometida. ¿Esta vez sí o seguimos esperando? Se admiten apuestas."
+
+4. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+
+5. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.
 
 Formato de salida (ejemplo):
-{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "translated_title": "...", "translated_excerpt": "..."}
+{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}
 
 Título original (inglés): ${title}
 Extracto original (inglés): ${excerpt}
@@ -122,8 +138,22 @@ Tipos válidos de warning (el campo "type" debe coincidir exactamente):
 - "launch_non_european": Lanzamiento previsto fuera de Europa
 - "prototype_as_product": Tecnología en fase prototipo presentada como producto comercial
 
+3. Un "discussion_prompt": invitación a comentar de 1-2 frases en español de España que:
+- Identifique el ángulo más debatible o polémico del artículo (precio, diseño, marca, tecnología, expectativas, momento del mercado, política, etc.).
+- Mencione algo CONCRETO del contenido. Nada genérico tipo "¿qué te parece?".
+- Tono cercano, casi de mensaje entre amigos. NUNCA marketinero, NUNCA agresivo. "Como el que no quiere la cosa".
+- Cuando sea apropiado, usa hedges suaves ("quizás", "tal vez") en vez de afirmaciones rotundas.
+- Cierra con una invitación EXPLÍCITA a opinar. Varía la forma en cada artículo: "¿Tú cómo lo ves?", "¿Qué opinas?", "Se admiten apuestas", "Cuéntanos qué piensas", "¿Estás de acuerdo?", "¿Lo ves así?", "Danos tu lectura", "Déjanos tu opinión", etc.
+- NO empieces siempre con "¿". Alterna: una observación + una invitación funciona mejor que pregunta-pregunta.
+- Sin negritas, sin Markdown, sin guiones largos.
+
+Ejemplos del tono buscado:
+- "Confiar el diseño del primer Ferrari eléctrico a un ex-Apple quizás ha sido arriesgado. ¿Tú cómo lo ves?"
+- "900 km de autonomía suena a futuro, pero llegar a Europa es otra historia. ¿Qué opinas?"
+- "Otra batería de estado sólido prometida. ¿Esta vez sí o seguimos esperando? Se admiten apuestas."
+
 Formato de salida (ejemplo):
-{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}]}
+{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}
 
 Título: ${title}
 Extracto: ${excerpt}
@@ -141,8 +171,9 @@ function buildResponseSchema(isEnglish: boolean) {
         required: ['type'],
       },
     },
+    discussion_prompt: { type: 'STRING' },
   };
-  const required = ['summary', 'warnings'];
+  const required = ['summary', 'warnings', 'discussion_prompt'];
 
   // For non-Spanish sources, also require Spanish translations of title/excerpt
   // so the article can be stored in Spanish in the database.
@@ -177,6 +208,9 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
   }
 
   const result: SummaryResult = { summary: obj.summary.trim(), warnings };
+  if (typeof obj.discussion_prompt === 'string' && obj.discussion_prompt.trim()) {
+    result.discussionPrompt = obj.discussion_prompt.trim();
+  }
   if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
     result.translatedTitle = obj.translated_title.trim();
   }

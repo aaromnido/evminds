@@ -179,6 +179,7 @@ serve(async (req) => {
             const {
               summary: aiSummary,
               warnings: aiWarnings,
+              discussionPrompt: aiDiscussionPrompt,
               translatedTitle,
               translatedExcerpt,
             } = await generateSummary(
@@ -228,6 +229,7 @@ serve(async (req) => {
               content_type: isYouTubeSource ? 'video' : 'news',
               ai_summary: aiSummary,
               ai_warnings: aiWarnings.length > 0 ? aiWarnings : null,
+              ai_discussion_prompt: aiDiscussionPrompt ?? null,
               ai_generated_at: aiSummary ? new Date().toISOString() : null,
             };
 

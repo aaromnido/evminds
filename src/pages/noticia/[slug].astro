@@ -28,7 +28,7 @@ if (!slug) {
 const { data, error } = await supabase
   .from("articles")
   .select(
-    "id, slug, title, excerpt, image_url, article_url, category, content_type, published_at, scraped_at, ai_summary, ai_warnings, source:sources!inner(name, lang)",
+    "id, slug, title, excerpt, image_url, article_url, category, content_type, published_at, scraped_at, ai_summary, ai_warnings, ai_discussion_prompt, source:sources!inner(name, lang)",
   )
   .eq("slug", slug)
   .single();
@@ -160,6 +160,9 @@ const articleDataJson = serializeBookmarkData({
           {article.ai_summary.split("\n\n").map((para: string) => (
             <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
           ))}
+          {article.ai_discussion_prompt && (
+            <p class="article-detail__ai-summary-paragraph">{article.ai_discussion_prompt}</p>
+          )}
           <p class="article-detail__ai-disclaimer">
             Síntesis editorial de EVMinds a partir de la noticia original.
           </p>
