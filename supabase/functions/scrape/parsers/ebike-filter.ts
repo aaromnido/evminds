@@ -23,10 +23,13 @@ const BLACKLIST = [
   'electric moped',
   // Spanish
   'bicicleta',
+  'bicis',
   'bici eléctrica',
   'bici electrica',
+  'ciclismo',
   'ciclomotor eléctrico',
   'ciclomotor electrico',
+  'pedelec',
 ];
 
 /**
