@@ -3,6 +3,13 @@
 // Styled to match ThemeToggle (header icon button). Dispatches `search:open`,
 // which SearchModal listens for. Keyboard shortcut (⌘K/Ctrl+K) is handled by
 // SearchModal itself, so this is just the pointer affordance.
+import NewBadge from "./NewBadge.astro";
+
+interface Props {
+  /** Show a floating "New" badge over the button */
+  showNew?: boolean;
+}
+const { showNew = false } = Astro.props;
 ---
 
 <button class="search-button" type="button" data-search-open aria-label="Buscar" title="Buscar (⌘K)">
@@ -10,10 +17,16 @@
     <circle cx="11" cy="11" r="8"></circle>
     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
   </svg>
+  {showNew && (
+    <span class="search-button__badge" aria-hidden="true">
+      <NewBadge />
+    </span>
+  )}
 </button>
 
 <style>
   .search-button {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -31,6 +44,13 @@
 
   .search-button:hover { opacity: 0.7; }
   .search-button:active { opacity: 0.5; }
+
+  .search-button__badge {
+    position: absolute;
+    top: -10px;
+    right: -8px;
+    pointer-events: none;
+  }
 </style>
 
 <script is:inline>

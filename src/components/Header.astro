@@ -9,7 +9,7 @@ const currentPath = Astro.url.pathname;
 
 const navItems = [
   { label: "Noticias", href: "/", active: currentPath === "/" || currentPath.startsWith("/noticia/") },
-  { label: "Artículos", href: "/articulos", active: currentPath === "/articulos" || currentPath.startsWith("/articulo/"), badge: "New" },
+  { label: "Artículos", href: "/articulos", active: currentPath === "/articulos" || currentPath.startsWith("/articulo/") },
   { label: "Vídeos", href: "/videos", active: currentPath === "/videos" || currentPath.startsWith("/video/") },
   { label: "Guardados", href: "/articulos-guardados", active: currentPath === "/articulos-guardados" },
   { label: "Recursos", href: "/recursos", active: currentPath === "/recursos" || currentPath.startsWith("/recursos/") },
@@ -32,17 +32,16 @@ const navItems = [
           class:list={["nav__item", { "nav__item--active": item.active }]}
         >
           {item.label}
-          {item.badge && <span class="nav__badge">{item.badge}</span>}
         </a>
       ))
     }
-    <SearchButton />
+    <SearchButton showNew />
     <ThemeToggle />
   </nav>
 
   {/* Mobile actions: search + menu */}
   <div class="header__mobile-actions">
-    <SearchButton />
+    <SearchButton showNew />
     <MobileMenu navItems={navItems} client:idle />
   </div>
 </header>
@@ -108,7 +107,7 @@ const navItems = [
   .header__mobile-actions {
     display: none;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
   }
 
   /* Mobile - Hide desktop navigation, show mobile actions */
