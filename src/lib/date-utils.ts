@@ -12,6 +12,19 @@ export function formatDate(isoString: string): string {
 }
 
 /**
+ * Format ISO timestamp to a short Spanish date (compact, for dense lists)
+ * @example formatShortDate("2026-01-20T10:30:00Z") → "20 ene 2026"
+ */
+export function formatShortDate(isoString: string): string {
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+/**
  * Format ISO timestamp to relative time in Spanish
  * @example formatRelativeTime("2024-01-20T10:30:00Z") → "hace 2 días"
  */
