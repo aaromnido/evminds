@@ -12,14 +12,14 @@ export function formatDate(isoString: string): string {
 }
 
 /**
- * Format ISO timestamp to a short Spanish date (compact, for dense lists)
- * @example formatShortDate("2026-01-20T10:30:00Z") → "20 ene 2026"
+ * Format ISO timestamp to a short numeric Spanish date (compact, for dense lists)
+ * @example formatShortDate("2026-01-20T10:30:00Z") → "20/01/2026"
  */
 export function formatShortDate(isoString: string): string {
   const date = new Date(isoString);
   return new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "short",
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   }).format(date);
 }

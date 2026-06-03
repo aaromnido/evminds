@@ -1,6 +1,8 @@
 ---
 import Logo from "./Logo.astro";
 import ThemeToggle from "./ThemeToggle.astro";
+import SearchButton from "./SearchButton.astro";
+import SearchModal from "./SearchModal.astro";
 import { MobileMenu } from "./MobileMenu";
 
 const currentPath = Astro.url.pathname;
@@ -34,12 +36,18 @@ const navItems = [
         </a>
       ))
     }
+    <SearchButton />
     <ThemeToggle />
   </nav>
 
-  {/* Mobile Menu */}
-  <MobileMenu navItems={navItems} client:idle />
+  {/* Mobile actions: search + menu */}
+  <div class="header__mobile-actions">
+    <SearchButton />
+    <MobileMenu navItems={navItems} client:idle />
+  </div>
 </header>
+
+<SearchModal />
 
 <style>
   .site-header {
@@ -97,10 +105,20 @@ const navItems = [
     white-space: nowrap;
   }
 
-  /* Mobile - Hide desktop navigation */
+  .header__mobile-actions {
+    display: none;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Mobile - Hide desktop navigation, show mobile actions */
   @media (max-width: 768px) {
     .nav {
       display: none;
+    }
+
+    .header__mobile-actions {
+      display: flex;
     }
   }
 </style>

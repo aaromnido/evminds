@@ -1,0 +1,47 @@
+---
+// Magnifier button that opens the Spotlight search modal.
+// Styled to match ThemeToggle (header icon button). Dispatches `search:open`,
+// which SearchModal listens for. Keyboard shortcut (⌘K/Ctrl+K) is handled by
+// SearchModal itself, so this is just the pointer affordance.
+---
+
+<button class="search-button" type="button" data-search-open aria-label="Buscar" title="Buscar (⌘K)">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+</button>
+
+<style>
+  .search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--navy-2);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+
+  .search-button:hover { opacity: 0.7; }
+  .search-button:active { opacity: 0.5; }
+</style>
+
+<script is:inline>
+  // Bind once; delegated so it works for every SearchButton instance and survives
+  // View Transitions. SearchModal listens for the `search:open` event.
+  if (!window.__searchButtonInit) {
+    window.__searchButtonInit = true;
+    document.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-search-open]')) {
+        document.dispatchEvent(new CustomEvent('search:open'));
+      }
+    });
+  }
+</script>
