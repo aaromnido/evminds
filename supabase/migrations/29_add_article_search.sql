@@ -42,7 +42,7 @@ ALTER TABLE public.articles
 
 -- 4. GIN trigram index — accelerates ILIKE '%term%' (substring) and similarity().
 CREATE INDEX IF NOT EXISTS idx_articles_search_trgm
-  ON public.articles USING gin (search_text gin_trgm_ops);
+  ON public.articles USING gin (search_text extensions.gin_trgm_ops);
 
 -- 5. Search RPC: normalizes the user's query the same way as the column, matches
 --    by substring, and ranks by trigram word_similarity, then recency.
