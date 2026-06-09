@@ -39,6 +39,7 @@ const DISPLAY_NAMES: Record<string, string> = {
   "macvoltio": "MacVoltio",
   "luisvaldes": "Luis Valdés",
   "rictorres": "Ricardo Torres",
+  "cocheselectricos.org": "Coches Eléctricos Org",
 };
 
 function toDisplayName(name: string): string {
