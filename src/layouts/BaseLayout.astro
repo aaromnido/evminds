@@ -36,7 +36,14 @@ const {
 } = Astro.props;
 
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+// Canonical is always the no-trailing-slash form (root "/" excepted), regardless
+// of how the crawler reached the page. This prevents Google from treating
+// /noticia/slug and /noticia/slug/ as duplicates and picking its own canonical.
+const canonicalPath =
+  Astro.url.pathname === "/"
+    ? "/"
+    : Astro.url.pathname.replace(/\/+$/, "");
+const canonicalURL = new URL(canonicalPath, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
 const siteUrl = Astro.site?.toString() || "https://evminds.es";
 const isHomePage = Astro.url.pathname === "/";
