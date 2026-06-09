@@ -18,6 +18,7 @@ interface Props {
   articleTags?: string[];
   noIndex?: boolean;
   breadcrumbs?: BreadcrumbItem[];
+  videoObject?: object | null;
 }
 
 const {
@@ -31,6 +32,7 @@ const {
   articleTags = [],
   noIndex = false,
   breadcrumbs,
+  videoObject = null,
 } = Astro.props;
 
 const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
@@ -89,6 +91,11 @@ if (isArticlePage) {
       url: siteUrl,
     },
   });
+}
+
+// VideoObject schema (video watch pages)
+if (videoObject) {
+  schemas.push(videoObject);
 }
 
 // BreadcrumbList schema

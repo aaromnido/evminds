@@ -77,6 +77,39 @@ const articleDataJson = serializeBookmarkData({
   category: video.category,
   contentType: "video",
 });
+
+// Converts a human-readable duration ("12:34" / "1:02:15") to ISO 8601 ("PT12M34S").
+// Returns undefined when the duration is missing or malformed, so the optional
+// VideoObject.duration field is simply omitted instead of carrying a bad value.
+function toIsoDuration(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  const parts = value.split(":").map((p) => parseInt(p, 10));
+  if (parts.some((n) => Number.isNaN(n))) return undefined;
+  const [h, m, s] = parts.length === 3 ? parts : [0, ...parts];
+  return `PT${h ? `${h}H` : ""}${m ? `${m}M` : ""}${s ? `${s}S` : ""}` || undefined;
+}
+
+// VideoObject structured data — fixes Search Console "video not on a watch page"
+// and "no thumbnail URL" warnings. All fields come from real scraped YouTube data.
+const isoDuration = toIsoDuration(video.duration);
+const videoObject = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: video.title,
+  description: video.excerpt || video.title,
+  thumbnailUrl: thumbnailUrl,
+  uploadDate: video.published_at,
+  ...(youtubeVideoId && {
+    embedUrl: `https://www.youtube.com/embed/${youtubeVideoId}`,
+    contentUrl: video.article_url,
+  }),
+  ...(isoDuration && { duration: isoDuration }),
+  publisher: {
+    "@type": "Organization",
+    name: "EVMinds.es",
+    url: Astro.site?.toString() || "https://evminds.es",
+  },
+};
 ---
 
 <BaseLayout
@@ -85,6 +118,7 @@ const articleDataJson = serializeBookmarkData({
   image={thumbnailUrl}
   type="article"
   publishedAt={video.published_at}
+  videoObject={videoObject}
   breadcrumbs={[
     { name: "Inicio", url: "/" },
     { name: "Vídeos", url: "/videos" },
@@ -108,7 +142,6 @@ const articleDataJson = serializeBookmarkData({
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
-            loading="lazy"
           ></iframe>
         </div>
       ) : (
