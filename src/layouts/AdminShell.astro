@@ -1,0 +1,95 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Admin · evminds" } = Astro.props;
+// Set by the middleware on authenticated admin requests.
+const userEmail = Astro.locals.user?.email ?? "";
+---
+
+<AdminLayout title={title}>
+  <div class="admin-shell">
+    <header class="admin-shell__bar">
+      <a class="admin-shell__brand" href="/admin">evminds <b>admin</b></a>
+      <div class="admin-shell__account">
+        {userEmail && <span class="admin-shell__user">{userEmail}</span>}
+        <form method="POST" action="/admin/logout">
+          <button class="admin-shell__logout" type="submit">Salir</button>
+        </form>
+      </div>
+    </header>
+    <main class="admin-shell__main">
+      <slot />
+    </main>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-shell {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-shell__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .admin-shell__brand {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    color: var(--foreground);
+    text-decoration: none;
+  }
+
+  .admin-shell__brand b {
+    font-style: normal;
+    color: var(--muted-foreground);
+    font-weight: 600;
+  }
+
+  .admin-shell__account {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  .admin-shell__user {
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+  }
+
+  .admin-shell__logout {
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 3px);
+    background: var(--background);
+    color: var(--foreground);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .admin-shell__logout:hover {
+    background: var(--secondary);
+  }
+
+  .admin-shell__main {
+    flex: 1;
+    width: 100%;
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    box-sizing: border-box;
+  }
+</style>

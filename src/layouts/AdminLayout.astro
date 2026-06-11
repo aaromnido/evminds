@@ -1,0 +1,56 @@
+---
+import "@/styles/global.css";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Admin · evminds" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <!-- The admin must never be indexed. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#191B41" />
+    <title>{title}</title>
+
+    <!-- Fonts (same family as the public site) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
+
+    <!-- Apply dark class before first paint (FOUC prevention), same as BaseLayout -->
+    <script is:inline>
+      (function () {
+        var stored = localStorage.getItem("evminds-theme");
+        var prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        if (stored === "dark" || (!stored && prefersDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body class="admin">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  body.admin {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    min-height: 100dvh;
+    margin: 0;
+  }
+</style>
