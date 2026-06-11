@@ -1,0 +1,100 @@
+---
+import AdminShell from "@/layouts/AdminShell.astro";
+import NewsCreateForm, {
+  type SourceOption,
+  type NewsCreateValues,
+} from "@/components/admin/NewsCreateForm.tsx";
+
+const supabase = Astro.locals.supabase;
+
+let errorMsg = "";
+let values: NewsCreateValues | undefined;
+
+if (supabase && Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const get = (k: string) => String(form.get(k) ?? "").trim();
+
+  const sourceId = get("source_id");
+  const title = get("title");
+  const slug = get("slug");
+  const excerpt = get("excerpt");
+  const category = get("category");
+  const contentType = get("content_type") || "news";
+  const articleUrl = get("article_url");
+  const imageUrl = get("image_url");
+  const publishedAtRaw = get("published_at");
+  const youtubeId = get("youtube_video_id");
+
+  values = {
+    source_id: sourceId,
+    title,
+    slug,
+    excerpt,
+    category,
+    content_type: contentType,
+    article_url: articleUrl,
+    image_url: imageUrl,
+    published_at: publishedAtRaw,
+    youtube_video_id: youtubeId,
+  };
+
+  if (!sourceId || !title || !slug || !excerpt || !category || !articleUrl || !publishedAtRaw) {
+    errorMsg = "Faltan campos obligatorios (medio, título, slug, extracto, categoría, URL, fecha).";
+  } else {
+    const payload = {
+      source_id: sourceId,
+      title,
+      slug,
+      excerpt,
+      category,
+      content_type: contentType,
+      article_url: articleUrl,
+      image_url: imageUrl || null,
+      published_at: new Date(publishedAtRaw).toISOString(),
+      youtube_video_id: contentType === "video" && youtubeId ? youtubeId : null,
+    };
+    // Cast: hand-written Database type infers `never` on .from() (typecheck task).
+    const { error } = await supabase.from("articles").insert(payload as never);
+    if (error) {
+      errorMsg =
+        error.code === "23505"
+          ? "Ya existe una noticia con ese slug o URL. Cámbialos."
+          : `No se pudo crear: ${error.message}`;
+    } else {
+      return Astro.redirect("/admin/noticias");
+    }
+  }
+}
+
+// Sources for the <select> + distinct categories for the datalist.
+let sources: SourceOption[] = [];
+let categories: string[] = [];
+if (supabase) {
+  const [{ data: srcRows }, { data: catRows }] = await Promise.all([
+    supabase.from("sources").select("id, name").order("name"),
+    supabase.from("articles").select("category"),
+  ]);
+  sources = (srcRows ?? []) as unknown as SourceOption[];
+  categories = Array.from(
+    new Set(
+      ((catRows ?? []) as unknown as { category: string }[])
+        .map((r) => r.category)
+        .filter(Boolean),
+    ),
+  ).sort();
+}
+---
+
+<AdminShell
+  title="Nueva noticia · Admin"
+  pageTitle="Nueva noticia"
+  pageDescription="Alta manual de una noticia (tabla articles)."
+>
+  <NewsCreateForm
+    client:load
+    sources={sources}
+    categories={categories}
+    values={values}
+    error={errorMsg || undefined}
+  />
+</AdminShell>
