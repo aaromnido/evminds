@@ -1,6 +1,13 @@
 /**
- * Database types generated from Supabase schema
- * This ensures type safety across frontend and API routes
+ * Database types for the Supabase schema.
+ *
+ * ⚠️ HAND-MAINTAINED — do NOT run `supabase gen types` over this file.
+ * It is curated by hand (Omit-based Insert/Update helpers, the
+ * `ArticleWithSource` domain helper below) and the CLI output would clobber
+ * those. After any schema migration, update the relevant table block here by
+ * hand to keep types in sync with the DB.
+ *
+ * This ensures type safety across frontend and API routes.
  */
 
 export interface Database {
@@ -40,9 +47,42 @@ export interface Database {
           ai_warnings: { type: string }[] | null;
           ai_discussion_prompt: string | null;
           ai_generated_at: string | null;
+          archived: boolean;
         };
-        Insert: Omit<Database["public"]["Tables"]["articles"]["Row"], "id" | "scraped_at">;
+        Insert: Omit<Database["public"]["Tables"]["articles"]["Row"], "id" | "scraped_at" | "archived">;
         Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
+      };
+      posts: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          excerpt: string;
+          content: string;
+          image_url: string | null;
+          image_alt: string | null;
+          category: string;
+          tags: string[];
+          author: string;
+          status: "draft" | "published";
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+          has_comments: boolean;
+        };
+        Insert: Omit<Database["public"]["Tables"]["posts"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["posts"]["Insert"]>;
+      };
+      profiles: {
+        Row: {
+          id: string;
+          role: "admin" | "user";
+          display_name: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
       };
     };
   };
