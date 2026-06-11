@@ -1,6 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import LogoutButton from "@/components/admin/LogoutButton.tsx";
+import AdminSidebarLayout from "@/components/admin/AdminSidebarLayout.tsx";
 
 interface Props {
   title?: string;
@@ -9,28 +9,15 @@ interface Props {
 const { title = "Admin · evminds" } = Astro.props;
 // Set by the middleware on authenticated admin requests.
 const userEmail = Astro.locals.user?.email ?? "";
+const activePath = Astro.url.pathname;
 ---
 
 <AdminLayout title={title}>
-  <div class="flex min-h-dvh flex-col">
-    <header
-      class="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-3"
-    >
-      <a href="/admin" class="flex items-center gap-2">
-        <img src="/logo.svg" alt="evminds" class="h-[21px] w-auto" width={617} height={102} />
-        <span class="text-lg font-medium text-muted-foreground">admin</span>
-      </a>
-      <div class="flex items-center gap-3">
-        {
-          userEmail && (
-            <span class="text-sm text-muted-foreground">{userEmail}</span>
-          )
-        }
-        <LogoutButton />
-      </div>
-    </header>
-    <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
-      <slot />
-    </main>
-  </div>
+  <AdminSidebarLayout
+    client:load
+    userEmail={userEmail}
+    activePath={activePath}
+  >
+    <slot />
+  </AdminSidebarLayout>
 </AdminLayout>
