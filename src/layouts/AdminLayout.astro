@@ -19,14 +19,6 @@ const { title = "Admin · evminds" } = Astro.props;
     <meta name="theme-color" content="#191B41" />
     <title>{title}</title>
 
-    <!-- Fonts (same family as the public site) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    />
-
     <!-- Apply dark class before first paint (FOUC prevention), same as BaseLayout -->
     <script is:inline>
       (function () {
@@ -40,17 +32,7 @@ const { title = "Admin · evminds" } = Astro.props;
       })();
     </script>
   </head>
-  <body class="admin">
+  <body class="min-h-dvh bg-background font-sans text-foreground antialiased">
     <slot />
   </body>
 </html>
-
-<style is:global>
-  body.admin {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    min-height: 100dvh;
-    margin: 0;
-  }
-</style>

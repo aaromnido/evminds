@@ -20,95 +20,34 @@ const sections = [
 ---
 
 <AdminShell title="Panel · Admin evminds">
-  <h1 class="dashboard__title">Panel de administración</h1>
-  <p class="dashboard__lead">Gestiona el contenido de evminds desde aquí.</p>
+  <h1 class="text-3xl font-bold tracking-tight">Panel de administración</h1>
+  <p class="mt-1 mb-7 text-muted-foreground">
+    Gestiona el contenido de evminds desde aquí.
+  </p>
 
-  <div class="dashboard__grid">
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
     {
       sections.map((s) =>
         s.ready ? (
-          <a class="dashboard__card" href={s.href}>
-            <span class="dashboard__card-title">{s.title}</span>
-            <span class="dashboard__card-desc">{s.desc}</span>
+          <a
+            href={s.href}
+            class="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-card-foreground transition-all hover:-translate-y-0.5 hover:border-ring"
+          >
+            <span class="font-bold">{s.title}</span>
+            <span class="text-sm text-muted-foreground">{s.desc}</span>
           </a>
         ) : (
-          <div class="dashboard__card dashboard__card--soon">
-            <span class="dashboard__card-title">
+          <div class="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-card-foreground opacity-60">
+            <span class="flex items-center gap-2 font-bold">
               {s.title}
-              <span class="dashboard__badge">Próximamente</span>
+              <span class="rounded-full bg-secondary px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-secondary-foreground uppercase">
+                Próximamente
+              </span>
             </span>
-            <span class="dashboard__card-desc">{s.desc}</span>
+            <span class="text-sm text-muted-foreground">{s.desc}</span>
           </div>
         ),
       )
     }
   </div>
 </AdminShell>
-
-<style>
-  .dashboard__title {
-    font-family: "Playfair Display", serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: 1.9rem;
-    margin: 0 0 0.25rem;
-  }
-
-  .dashboard__lead {
-    margin: 0 0 1.75rem;
-    color: var(--muted-foreground);
-  }
-
-  .dashboard__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: 1rem;
-  }
-
-  .dashboard__card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding: 1.25rem;
-    background: var(--card);
-    color: var(--card-foreground);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    text-decoration: none;
-    transition:
-      border-color 0.15s ease,
-      transform 0.15s ease;
-  }
-
-  .dashboard__card:not(.dashboard__card--soon):hover {
-    border-color: var(--ring);
-    transform: translateY(-2px);
-  }
-
-  .dashboard__card--soon {
-    opacity: 0.6;
-  }
-
-  .dashboard__card-title {
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .dashboard__card-desc {
-    font-size: 0.85rem;
-    color: var(--muted-foreground);
-  }
-
-  .dashboard__badge {
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 0.15rem 0.45rem;
-    border-radius: 999px;
-    background: var(--secondary);
-    color: var(--secondary-foreground);
-  }
-</style>
