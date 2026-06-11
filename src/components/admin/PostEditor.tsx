@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 
 const CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
@@ -24,6 +25,8 @@ interface Props {
   post?: PostFormValues;
   error?: string;
   submitLabel?: string;
+  /** Show the destructive delete button (edit mode only). */
+  showDelete?: boolean;
 }
 
 // Native field styling that matches the shadcn Input look (for <select>/<textarea>).
@@ -44,6 +47,7 @@ export default function PostEditor({
   post,
   error,
   submitLabel = "Guardar",
+  showDelete = false,
 }: Props) {
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
@@ -191,10 +195,35 @@ export default function PostEditor({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit" name="_action" value="save">
+          {submitLabel}
+        </Button>
         <a href="/admin/posts" className={buttonVariants({ variant: "outline" })}>
           Cancelar
         </a>
+        {showDelete && (
+          <button
+            type="submit"
+            name="_action"
+            value="delete"
+            formNoValidate
+            onClick={(e) => {
+              if (
+                !window.confirm(
+                  "¿Eliminar este artículo? Esta acción no se puede deshacer.",
+                )
+              ) {
+                e.preventDefault();
+              }
+            }}
+            className={cn(
+              buttonVariants({ variant: "destructive" }),
+              "ml-auto",
+            )}
+          >
+            Eliminar
+          </button>
+        )}
       </div>
     </form>
   );
