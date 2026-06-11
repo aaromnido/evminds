@@ -15,11 +15,84 @@ import { supabase } from "@/lib/supabase";
 const { slug } = Astro.params;
 
 const now = new Date();
-const allArticles = await getCollection("articulos");
-const article = allArticles.find((a) => a.id === slug && !a.data.draft && a.data.date <= now);
 
-if (!article) {
-  // Check if this slug exists as a news article (old /articulo/ URLs → new /noticia/)
+// --- Dual content source during the .md → posts transition (Fase 4) ---
+// Try the own markdown collection first (unchanged behaviour for the 5 existing
+// articles), then the `posts` table. RLS (posts_public_read) returns only
+// published & due rows, so drafts/scheduled never leak.
+const allArticles = await getCollection("articulos");
+const mdArticle = allArticles.find(
+  (a) => a.id === slug && !a.data.draft && a.data.date <= now,
+);
+
+interface ArticleView {
+  title: string;
+  excerpt: string;
+  image?: string;
+  imageAlt?: string;
+  date: Date;
+  author: string;
+  category: string;
+  tags: string[];
+  slug: string;
+  bodyText: string; // plain text used only for reading-time
+}
+
+let view: ArticleView | null = null;
+let Content: Awaited<ReturnType<typeof render>>["Content"] | null = null;
+let bodyHtml: string | null = null;
+
+if (mdArticle) {
+  Content = (await render(mdArticle)).Content;
+  view = {
+    title: mdArticle.data.title,
+    excerpt: mdArticle.data.excerpt,
+    image: mdArticle.data.image,
+    imageAlt: mdArticle.data.imageAlt,
+    date: mdArticle.data.date,
+    author: mdArticle.data.author,
+    category: mdArticle.data.category,
+    tags: mdArticle.data.tags,
+    slug: mdArticle.id,
+    bodyText: mdArticle.body ?? "",
+  };
+} else if (slug) {
+  const { data: post } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (post) {
+    const p = post as unknown as {
+      title: string;
+      excerpt: string;
+      content: string;
+      image_url: string | null;
+      image_alt: string | null;
+      author: string;
+      category: string;
+      tags: string[] | null;
+      published_at: string | null;
+      slug: string;
+    };
+    bodyHtml = p.content;
+    view = {
+      title: p.title,
+      excerpt: p.excerpt,
+      image: p.image_url ?? undefined,
+      imageAlt: p.image_alt ?? undefined,
+      date: p.published_at ? new Date(p.published_at) : now,
+      author: p.author,
+      category: p.category,
+      tags: p.tags ?? [],
+      slug: p.slug,
+      bodyText: p.content.replace(/<[^>]+>/g, " "),
+    };
+  }
+}
+
+if (!view) {
+  // Old /articulo/ URL that's actually a news item → 301 to /noticia/
   if (slug) {
     const { data: newsMatch } = await supabase
       .from("articles")
@@ -35,19 +108,20 @@ if (!article) {
 
   return new Response(null, { status: 404, statusText: "Not Found" });
 }
-const { Content } = await render(article);
 
-const heroImage = article.data.image || "/images/placeholder-image.webp";
-const formattedDate = formatDate(article.data.date.toISOString());
-const readingTime = calculateReadingTime(article.body || "");
-const canonicalUrl = new URL(getArticleUrl(article.id), Astro.site).toString();
+const v = view;
+const heroImage = v.image || "/images/placeholder-image.webp";
+const formattedDate = formatDate(v.date.toISOString());
+const readingTime = calculateReadingTime(v.bodyText);
+const canonicalUrl = new URL(getArticleUrl(v.slug), Astro.site).toString();
 
-// Related articles: score by shared tags (x2) + same category (+1), fallback to most recent
+// Related articles: score by shared tags (x2) + same category (+1), fallback to
+// most recent. Still drawn from the .md collection during the transition.
 const relatedArticles = allArticles
-  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== article.id)
+  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== v.slug)
   .map((a) => {
-    const sharedTags = a.data.tags.filter((t) => article.data.tags.includes(t)).length;
-    const sameCategory = a.data.category === article.data.category ? 1 : 0;
+    const sharedTags = a.data.tags.filter((t) => v.tags.includes(t)).length;
+    const sameCategory = a.data.category === v.category ? 1 : 0;
     return { article: a, score: sharedTags * 2 + sameCategory };
   })
   .sort((a, b) => {
@@ -59,31 +133,31 @@ const relatedArticles = allArticles
 ---
 
 <BaseLayout
-  title={`${article.data.title} — EVMinds`}
-  description={article.data.excerpt}
-  image={article.data.image || undefined}
+  title={`${v.title} — EVMinds`}
+  description={v.excerpt}
+  image={v.image || undefined}
   type="article"
-  publishedAt={article.data.date.toISOString()}
-  articleAuthor={article.data.author}
-  articleSection={article.data.category}
-  articleTags={article.data.tags}
+  publishedAt={v.date.toISOString()}
+  articleAuthor={v.author}
+  articleSection={v.category}
+  articleTags={v.tags}
   breadcrumbs={[
     { name: "Inicio", url: "/" },
     { name: "Artículos", url: "/articulos" },
-    { name: article.data.title, url: getArticleUrl(article.id) },
+    { name: v.title, url: getArticleUrl(v.slug) },
   ]}
 >
   <main class="article-detail">
     <Header />
 
     <!-- Title (centered, wide) -->
-    <h1 class="article-detail__title">{article.data.title}</h1>
+    <h1 class="article-detail__title">{v.title}</h1>
 
     <!-- Hero image (wide, like quienes-somos) -->
     <div class="article-detail__hero">
       <img
         src={heroImage}
-        alt={article.data.imageAlt || article.data.title}
+        alt={v.imageAlt || v.title}
         class="article-detail__hero-image"
         loading="eager"
         fetchpriority="high"
@@ -96,35 +170,36 @@ const relatedArticles = allArticles
       <!-- Meta + Badges -->
       <div class="article-detail__header">
         <div class="article-detail__meta">
-          <time datetime={article.data.date.toISOString()}>{formattedDate}</time>
+          <time datetime={v.date.toISOString()}>{formattedDate}</time>
           <span class="article-detail__meta-separator">·</span>
-          <span>{article.data.author}</span>
+          <span>{v.author}</span>
           <span class="article-detail__meta-separator">·</span>
           <span>{readingTime} min de lectura</span>
         </div>
 
         <div class="article-detail__badges">
           <Badge label="EVMinds" variant="filled" />
-          <Badge label={article.data.category} variant="outlined" />
-          {article.data.tags.map((tag) => (
+          <Badge label={v.category} variant="outlined" />
+          {v.tags.map((tag) => (
             <Badge label={tag} variant="outlined" />
           ))}
         </div>
       </div>
 
-      <!-- Full article body -->
+      <!-- Full article body: .md renders via <Content/>, posts via raw HTML -->
       <div class="article-prose">
-        <Content />
+        {Content ? <Content /> : <Fragment set:html={bodyHtml} />}
       </div>
 
       <!-- Share buttons -->
-      <ShareButtons url={canonicalUrl} title={article.data.title} />
+      <ShareButtons url={canonicalUrl} title={v.title} />
 
-      <!-- Disqus comments -->
+      <!-- Disqus comments. Identifier is articulo-${slug} (NOT a UUID) so threads
+           stay linked when .md articles migrate to posts in Fase 5. -->
       <DisqusComments
-        identifier={`articulo-${article.id}`}
+        identifier={`articulo-${v.slug}`}
         url={canonicalUrl}
-        title={article.data.title}
+        title={v.title}
       />
 
       <!-- Related articles -->
