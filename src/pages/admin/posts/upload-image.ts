@@ -23,11 +23,17 @@ const ALLOWED_TYPES = [
   "image/gif",
   "image/avif",
 ];
+// Whitelisted Cloudinary folders — never pass a client value straight through.
+const ALLOWED_FOLDERS = ["posts", "news"] as const;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const form = await request.formData();
     const file = form.get("file");
+    const folderRaw = String(form.get("folder") ?? "posts");
+    const folder = (ALLOWED_FOLDERS as readonly string[]).includes(folderRaw)
+      ? folderRaw
+      : "posts";
 
     if (!(file instanceof File) || file.size === 0) {
       return json({ error: "No se recibió ningún archivo." }, 400);
@@ -42,7 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ error: "La imagen supera el máximo de 10 MB." }, 413);
     }
 
-    const url = await uploadImage(file);
+    const url = await uploadImage(file, folder);
     return json({ url });
   } catch (err) {
     console.error("upload-image error:", err);

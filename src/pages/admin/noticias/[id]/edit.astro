@@ -1,0 +1,119 @@
+---
+import AdminShell from "@/layouts/AdminShell.astro";
+import NewsEditor, {
+  type NewsFormValues,
+} from "@/components/admin/NewsEditor.tsx";
+
+const supabase = Astro.locals.supabase;
+const { id } = Astro.params;
+
+let errorMsg = "";
+let formValues: NewsFormValues | undefined;
+let notFound = false;
+let categories: string[] = [];
+
+if (!supabase || !id) {
+  notFound = true;
+} else if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = String(form.get("_action") ?? "");
+
+  if (action === "archive" || action === "unarchive") {
+    // Cast: hand-written Database type infers `never` on .from() (typecheck task).
+    const { error } = await supabase
+      .from("articles")
+      .update({ archived: action === "archive" } as never)
+      .eq("id", id);
+    if (!error) return Astro.redirect("/admin/noticias");
+    errorMsg = `No se pudo ${action === "archive" ? "archivar" : "desarchivar"}: ${error.message}`;
+  } else {
+    const get = (k: string) => String(form.get(k) ?? "").trim();
+    const title = get("title");
+    const excerpt = get("excerpt");
+    const category = get("category");
+    const imageUrl = get("image_url");
+
+    if (!title || !excerpt || !category) {
+      errorMsg = "Faltan campos obligatorios (título, extracto, categoría).";
+      formValues = { title, excerpt, category, image_url: imageUrl };
+    } else {
+      const { error } = await supabase
+        .from("articles")
+        .update({
+          title,
+          excerpt,
+          category,
+          image_url: imageUrl || null,
+        } as never)
+        .eq("id", id);
+      if (error) errorMsg = `No se pudo guardar: ${error.message}`;
+      else return Astro.redirect("/admin/noticias");
+    }
+  }
+}
+
+// GET (or failed POST): fetch the row + source name to prefill, plus the
+// distinct categories already in use for the datalist suggestions.
+if (!notFound && supabase && id) {
+  const [{ data, error }, { data: catRows }] = await Promise.all([
+    supabase
+      .from("articles")
+      .select(
+        "title, excerpt, category, image_url, archived, article_url, published_at, content_type, source:sources!inner(name)",
+      )
+      .eq("id", id)
+      .single(),
+    supabase.from("articles").select("category"),
+  ]);
+
+  if (error || !data) {
+    notFound = true;
+  } else {
+    const row = data as unknown as {
+      title: string;
+      excerpt: string;
+      category: string;
+      image_url: string | null;
+      archived: boolean;
+      article_url: string;
+      published_at: string;
+      content_type: string;
+      source: { name: string } | null;
+    };
+    // Keep the edited (failed-submit) values if present, only fill the rest.
+    formValues = {
+      title: formValues?.title ?? row.title,
+      excerpt: formValues?.excerpt ?? row.excerpt,
+      category: formValues?.category ?? row.category,
+      image_url: formValues?.image_url ?? (row.image_url ?? ""),
+      archived: row.archived,
+      sourceName: row.source?.name,
+      articleUrl: row.article_url,
+      publishedAt: row.published_at,
+      contentType: row.content_type,
+    };
+    categories = Array.from(
+      new Set(
+        ((catRows ?? []) as unknown as { category: string }[])
+          .map((r) => r.category)
+          .filter(Boolean),
+      ),
+    ).sort();
+  }
+}
+
+if (notFound) return Astro.redirect("/admin/noticias");
+---
+
+<AdminShell
+  title="Editar noticia · Admin"
+  pageTitle="Editar noticia"
+  pageDescription="Modifica una noticia scrapeada (tabla articles)."
+>
+  <NewsEditor
+    client:load
+    article={formValues ?? {}}
+    error={errorMsg || undefined}
+    categories={categories}
+  />
+</AdminShell>
