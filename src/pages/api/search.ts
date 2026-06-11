@@ -37,8 +37,19 @@ function normalize(s: string): string {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
+interface SearchResult {
+  id: string;
+  title: string;
+  href: string;
+  source: string;
+  category: string;
+  contentType: string;
+  image: string;
+  date: string;
+}
+
 /** Search the own-articles content collection (markdown) in memory. */
-async function searchOwnArticles(q: string) {
+async function searchOwnArticles(q: string): Promise<SearchResult[]> {
   const nq = normalize(q);
   const now = new Date();
   const entries = await getCollection("articulos");
@@ -64,6 +75,58 @@ async function searchOwnArticles(q: string) {
     }));
 }
 
+/**
+ * Search published `posts` (own content stored in the DB) in memory. Mirrors
+ * searchOwnArticles: same haystack (title/excerpt/category/tags, not body),
+ * same ARTICLE shape/URL, id = articulo-${slug}. RLS posts_public_read keeps
+ * this to published & due rows. The hand-written Database type makes .from()
+ * infer `never`, hence the localized cast (see .claude/tasks/typecheck-cleanup.md).
+ */
+async function searchPosts(q: string): Promise<SearchResult[]> {
+  const nq = normalize(q);
+  const { data, error } = await supabase
+    .from("posts")
+    .select("title, excerpt, category, tags, slug, author, image_url, published_at");
+
+  if (error) {
+    console.error("Search posts error:", error);
+    return [];
+  }
+
+  const rows = (data ?? []) as unknown as {
+    title: string;
+    excerpt: string;
+    category: string;
+    tags: string[] | null;
+    slug: string;
+    author: string;
+    image_url: string | null;
+    published_at: string | null;
+  }[];
+
+  return rows
+    .filter((p) => {
+      const haystack = normalize(
+        [p.title, p.excerpt, p.category, (p.tags || []).join(" ")].join(" "),
+      );
+      return haystack.includes(nq);
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime(),
+    )
+    .map((p) => ({
+      id: `articulo-${p.slug}`,
+      title: p.title,
+      href: getContentUrl(p.slug, CONTENT_TYPES.ARTICLE),
+      source: p.author,
+      category: p.category,
+      contentType: CONTENT_TYPES.ARTICLE,
+      image: p.image_url || "/images/placeholder-image.webp",
+      date: formatShortDate(p.published_at ?? new Date().toISOString()),
+    }));
+}
+
 export const GET: APIRoute = async ({ url }) => {
   const q = (url.searchParams.get("q") || "").trim();
 
@@ -72,9 +135,10 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   try {
-    // Both sources in parallel: own markdown articles + DB news/videos.
-    const [own, dbRes] = await Promise.all([
+    // Three sources in parallel: own markdown articles + own DB posts + DB news/videos.
+    const [own, posts, dbRes] = await Promise.all([
       searchOwnArticles(q),
+      searchPosts(q),
       supabase
         .rpc("search_articles", { search_query: q, max_results: SEARCH_LIMIT })
         .select(ARTICLE_SELECT),
@@ -96,8 +160,13 @@ export const GET: APIRoute = async ({ url }) => {
       date: formatShortDate(a.published_at.toISOString()),
     }));
 
+    // Merge own content (.md wins on slug collision, mirroring the listing and
+    // detail page during the Fase 5 migration window), then DB news/videos.
+    const ownSlugs = new Set(own.map((r) => r.id));
+    const ownContent = [...own, ...posts.filter((p) => !ownSlugs.has(p.id))];
+
     // Own articles first, then DB results, capped at the overall limit.
-    const results = [...own, ...dbResults].slice(0, SEARCH_LIMIT);
+    const results = [...ownContent, ...dbResults].slice(0, SEARCH_LIMIT);
 
     return json({ results });
   } catch (err) {
