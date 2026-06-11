@@ -20,8 +20,15 @@ interface LoginFormProps {
  */
 export default function LoginForm({ errorMsg }: LoginFormProps) {
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm [--card-spacing:--spacing(8)]">
       <CardHeader>
+        <img
+          src="/logo.svg"
+          alt="evminds"
+          className="mx-auto mb-5 h-7 w-auto"
+          width={617}
+          height={102}
+        />
         <CardTitle>evminds admin</CardTitle>
         <CardDescription>Accede para gestionar el contenido.</CardDescription>
       </CardHeader>

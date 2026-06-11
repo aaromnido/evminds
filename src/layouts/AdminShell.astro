@@ -1,6 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import { buttonVariants } from "@/components/ui/button";
+import LogoutButton from "@/components/admin/LogoutButton.tsx";
 
 interface Props {
   title?: string;
@@ -16,8 +16,9 @@ const userEmail = Astro.locals.user?.email ?? "";
     <header
       class="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-3"
     >
-      <a href="/admin" class="text-lg font-bold tracking-tight">
-        evminds <span class="font-medium text-muted-foreground">admin</span>
+      <a href="/admin" class="flex items-center gap-2">
+        <img src="/logo.svg" alt="evminds" class="h-[21px] w-auto" width={617} height={102} />
+        <span class="text-lg font-medium text-muted-foreground">admin</span>
       </a>
       <div class="flex items-center gap-3">
         {
@@ -25,11 +26,7 @@ const userEmail = Astro.locals.user?.email ?? "";
             <span class="text-sm text-muted-foreground">{userEmail}</span>
           )
         }
-        <form method="POST" action="/admin/logout">
-          <button type="submit" class={buttonVariants({ variant: "outline", size: "sm" })}>
-            Salir
-          </button>
-        </form>
+        <LogoutButton />
       </div>
     </header>
     <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
