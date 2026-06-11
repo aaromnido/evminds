@@ -1,0 +1,34 @@
+---
+import AdminShell from "@/layouts/AdminShell.astro";
+import PostsList, { type PostListItem } from "@/components/admin/PostsList.tsx";
+
+// Authed admin client set by the middleware. RLS policy posts_admin_all lets
+// the admin read ALL posts (drafts + scheduled + published), not just public ones.
+const supabase = Astro.locals.supabase;
+
+let posts: PostListItem[] = [];
+let errorMsg: string | undefined;
+
+if (supabase) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, slug, title, status, published_at, updated_at, category")
+    .order("updated_at", { ascending: false });
+  if (error) errorMsg = error.message;
+  // Cast: hand-written Database type infers `never` on .from() (see typecheck
+  // cleanup task). Shape is guaranteed by the explicit select above.
+  else posts = (data ?? []) as unknown as PostListItem[];
+}
+
+const nowIso = new Date().toISOString();
+---
+
+<AdminShell
+  title="Artículos propios · Admin"
+  pageTitle="Artículos propios"
+  pageDescription="Contenido original (tabla posts)."
+  actionLabel="Nuevo artículo"
+  actionHref="/admin/posts/new"
+>
+  <PostsList posts={posts} error={errorMsg} nowIso={nowIso} />
+</AdminShell>

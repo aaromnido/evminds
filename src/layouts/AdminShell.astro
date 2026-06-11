@@ -3,10 +3,24 @@ import AdminLayout from "@/layouts/AdminLayout.astro";
 import AdminSidebarLayout from "@/components/admin/AdminSidebarLayout.tsx";
 
 interface Props {
+  /** Browser tab title. */
   title?: string;
+  /** Page title shown in the top bar. */
+  pageTitle: string;
+  pageDescription?: string;
+  /** Optional primary action on the right of the top bar. */
+  actionLabel?: string;
+  actionHref?: string;
 }
 
-const { title = "Admin · evminds" } = Astro.props;
+const {
+  title = "Admin · evminds",
+  pageTitle,
+  pageDescription,
+  actionLabel,
+  actionHref,
+} = Astro.props;
+
 // Set by the middleware on authenticated admin requests.
 const userEmail = Astro.locals.user?.email ?? "";
 const activePath = Astro.url.pathname;
@@ -17,6 +31,10 @@ const activePath = Astro.url.pathname;
     client:load
     userEmail={userEmail}
     activePath={activePath}
+    pageTitle={pageTitle}
+    pageDescription={pageDescription}
+    actionLabel={actionLabel}
+    actionHref={actionHref}
   >
     <slot />
   </AdminSidebarLayout>

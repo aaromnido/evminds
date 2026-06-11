@@ -19,12 +19,11 @@ const sections = [
 ];
 ---
 
-<AdminShell title="Panel · Admin evminds">
-  <h1 class="text-3xl font-bold tracking-tight">Panel de administración</h1>
-  <p class="mt-1 mb-7 text-muted-foreground">
-    Gestiona el contenido de evminds desde aquí.
-  </p>
-
+<AdminShell
+  title="Panel · Admin evminds"
+  pageTitle="Panel de administración"
+  pageDescription="Gestiona el contenido de evminds desde aquí."
+>
   <div class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
     {
       sections.map((s) =>
