@@ -32,10 +32,19 @@ if (!supabase || !id) {
     const excerpt = get("excerpt");
     const category = get("category");
     const imageUrl = get("image_url");
+    const aiSummary = get("ai_summary");
+    const aiDiscussionPrompt = get("ai_discussion_prompt");
 
     if (!title || !excerpt || !category) {
       errorMsg = "Faltan campos obligatorios (título, extracto, categoría).";
-      formValues = { title, excerpt, category, image_url: imageUrl };
+      formValues = {
+        title,
+        excerpt,
+        category,
+        image_url: imageUrl,
+        ai_summary: aiSummary,
+        ai_discussion_prompt: aiDiscussionPrompt,
+      };
     } else {
       const { error } = await supabase
         .from("articles")
@@ -44,6 +53,8 @@ if (!supabase || !id) {
           excerpt,
           category,
           image_url: imageUrl || null,
+          ai_summary: aiSummary || null,
+          ai_discussion_prompt: aiDiscussionPrompt || null,
         } as never)
         .eq("id", id);
       if (error) errorMsg = `No se pudo guardar: ${error.message}`;
@@ -59,7 +70,7 @@ if (!notFound && supabase && id) {
     supabase
       .from("articles")
       .select(
-        "title, excerpt, category, image_url, archived, article_url, published_at, content_type, source:sources!inner(name)",
+        "title, excerpt, category, image_url, archived, article_url, published_at, content_type, ai_summary, ai_discussion_prompt, ai_warnings, ai_generated_at, source:sources!inner(name)",
       )
       .eq("id", id)
       .single(),
@@ -78,6 +89,10 @@ if (!notFound && supabase && id) {
       article_url: string;
       published_at: string;
       content_type: string;
+      ai_summary: string | null;
+      ai_discussion_prompt: string | null;
+      ai_warnings: { type: string }[] | null;
+      ai_generated_at: string | null;
       source: { name: string } | null;
     };
     // Keep the edited (failed-submit) values if present, only fill the rest.
@@ -87,6 +102,11 @@ if (!notFound && supabase && id) {
       category: formValues?.category ?? row.category,
       image_url: formValues?.image_url ?? (row.image_url ?? ""),
       archived: row.archived,
+      ai_summary: formValues?.ai_summary ?? (row.ai_summary ?? ""),
+      ai_discussion_prompt:
+        formValues?.ai_discussion_prompt ?? (row.ai_discussion_prompt ?? ""),
+      ai_warnings: (row.ai_warnings ?? []).map((w) => w.type),
+      ai_generated_at: row.ai_generated_at ?? undefined,
       sourceName: row.source?.name,
       articleUrl: row.article_url,
       publishedAt: row.published_at,
@@ -112,6 +132,7 @@ if (notFound) return Astro.redirect("/admin/noticias");
 >
   <NewsEditor
     client:load
+    id={id!}
     article={formValues ?? {}}
     error={errorMsg || undefined}
     categories={categories}

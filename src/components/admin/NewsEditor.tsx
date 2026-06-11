@@ -11,6 +11,12 @@ export interface NewsFormValues {
   category?: string;
   image_url?: string;
   archived?: boolean;
+  // AI fields (Gemini): summary + discussion prompt are editable; warnings and
+  // the generated-at timestamp are shown read-only.
+  ai_summary?: string;
+  ai_discussion_prompt?: string;
+  ai_warnings?: string[];
+  ai_generated_at?: string;
   // Read-only context (scraper-managed; shown for orientation, not editable).
   sourceName?: string;
   articleUrl?: string;
@@ -19,6 +25,7 @@ export interface NewsFormValues {
 }
 
 interface Props {
+  id: string;
   article: NewsFormValues;
   error?: string;
   /** Distinct categories already in use, for the datalist suggestions. */
@@ -28,11 +35,39 @@ interface Props {
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
 
-export default function NewsEditor({ article, error, categories = [] }: Props) {
+export default function NewsEditor({ id, article, error, categories = [] }: Props) {
   const [imageUrl, setImageUrl] = useState(article.image_url ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenMsg, setRegenMsg] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+
+  const regenerate = async () => {
+    setRegenMsg(null);
+    setRegenerating(true);
+    try {
+      const res = await fetch(`/admin/noticias/${id}/regenerate`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "La regeneración falló.");
+      }
+      // Reload so the (uncontrolled) summary/prompt fields — and any title/excerpt
+      // translation — reflect what the function just wrote to the DB.
+      window.location.reload();
+    } catch (err) {
+      setRegenMsg({
+        ok: false,
+        text: err instanceof Error ? err.message : "Error al regenerar.",
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -171,6 +206,81 @@ export default function NewsEditor({ article, error, categories = [] }: Props) {
             alt="Vista previa"
             className="mt-1 aspect-video w-full rounded-md border border-input object-cover"
           />
+        )}
+      </div>
+
+      {/* AI section (Gemini). Summary + discussion prompt are editable and saved
+          with the form; warnings + generated-at are read-only. "Regenerar IA"
+          calls the regenerate-ai Edge Function via the gated proxy. */}
+      <div className="flex flex-col gap-4 rounded-md border border-border bg-muted/30 p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium">IA (Gemini)</span>
+          {article.ai_generated_at && (
+            <span className="text-xs text-muted-foreground">
+              Generado: {article.ai_generated_at.slice(0, 16).replace("T", " ")}
+            </span>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={regenerating}
+            onClick={regenerate}
+            className="ml-auto"
+          >
+            {regenerating ? "Generando…" : "Regenerar IA"}
+          </Button>
+          {regenMsg && (
+            <span
+              role="status"
+              className={cn(
+                "w-full text-sm",
+                regenMsg.ok ? "text-foreground" : "text-destructive",
+              )}
+            >
+              {regenMsg.text}
+            </span>
+          )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="ai_summary">Resumen IA</Label>
+          <textarea
+            id="ai_summary"
+            name="ai_summary"
+            defaultValue={article.ai_summary ?? ""}
+            rows={6}
+            placeholder="Sin resumen. Pulsa «Regenerar IA» o escríbelo a mano."
+            className={fieldClass}
+          />
+          <p className="text-xs text-muted-foreground">
+            Admite Markdown (negritas, etc.), igual que lo genera Gemini.
+          </p>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="ai_discussion_prompt">Pregunta de debate</Label>
+          <textarea
+            id="ai_discussion_prompt"
+            name="ai_discussion_prompt"
+            defaultValue={article.ai_discussion_prompt ?? ""}
+            rows={2}
+            className={fieldClass}
+          />
+        </div>
+
+        {article.ai_warnings && article.ai_warnings.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Avisos:</span>
+            {article.ai_warnings.map((w) => (
+              <span
+                key={w}
+                className="rounded border border-border bg-background px-2 py-0.5 text-xs"
+              >
+                {w}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
