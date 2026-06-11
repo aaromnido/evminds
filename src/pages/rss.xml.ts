@@ -1,8 +1,8 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { getCollection } from "astro:content";
 import { supabase } from "@/lib/supabase";
 import { getNewsUrl, getArticleUrl } from "@/lib/article-url";
+import { getOwnArticles } from "@/lib/own-articles";
 
 const RSS_ARTICLES_LIMIT = 50;
 
@@ -13,16 +13,13 @@ export async function GET(context: APIContext) {
     .order("scraped_at", { ascending: false })
     .limit(RSS_ARTICLES_LIMIT);
 
-  const now = new Date();
-  const ownArticles = (await getCollection("articulos"))
-    .filter((a) => !a.data.draft && a.data.date <= now)
-    .map((a) => ({
-      title: a.data.title,
-      description: a.data.excerpt,
-      link: getArticleUrl(a.id),
-      pubDate: a.data.date,
-      categories: [a.data.category],
-    }));
+  const ownArticles = (await getOwnArticles()).map((a) => ({
+    title: a.title,
+    description: a.excerpt,
+    link: getArticleUrl(a.slug),
+    pubDate: a.date,
+    categories: [a.category],
+  }));
 
   const newsItems = (newsArticles || []).map((article: any) => ({
     title: article.title,

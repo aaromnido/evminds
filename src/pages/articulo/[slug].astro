@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/date-utils";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { getArticleUrl, getNewsUrl } from "@/lib/article-url";
 import { supabase } from "@/lib/supabase";
+import { getOwnArticles } from "@/lib/own-articles";
 
 const { slug } = Astro.params;
 
@@ -116,17 +117,18 @@ const readingTime = calculateReadingTime(v.bodyText);
 const canonicalUrl = new URL(getArticleUrl(v.slug), Astro.site).toString();
 
 // Related articles: score by shared tags (x2) + same category (+1), fallback to
-// most recent. Still drawn from the .md collection during the transition.
-const relatedArticles = allArticles
-  .filter((a) => !a.data.draft && a.data.date <= now && a.id !== v.slug)
+// most recent. Drawn from the unified own-content pool (.md + posts).
+const ownArticles = await getOwnArticles();
+const relatedArticles = ownArticles
+  .filter((a) => a.slug !== v.slug)
   .map((a) => {
-    const sharedTags = a.data.tags.filter((t) => v.tags.includes(t)).length;
-    const sameCategory = a.data.category === v.category ? 1 : 0;
+    const sharedTags = a.tags.filter((t) => v.tags.includes(t)).length;
+    const sameCategory = a.category === v.category ? 1 : 0;
     return { article: a, score: sharedTags * 2 + sameCategory };
   })
   .sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    return b.article.data.date.getTime() - a.article.data.date.getTime();
+    return b.article.date.getTime() - a.article.date.getTime();
   })
   .slice(0, 2)
   .map((x) => x.article);
@@ -209,16 +211,16 @@ const relatedArticles = allArticles
           <div class="article-detail__related-grid">
             {relatedArticles.map((related) => (
               <NewsCard
-                image={related.data.image || "/images/placeholder-image.webp"}
-                title={related.data.title}
-                date={formatDate(related.data.date.toISOString())}
-                excerpt={related.data.excerpt}
-                source={related.data.author}
-                category={related.data.category}
-                href={getArticleUrl(related.id)}
-                articleId={`articulo-${related.id}`}
-                articleSlug={related.id}
-                identifier={`articulo-${related.id}`}
+                image={related.image || "/images/placeholder-image.webp"}
+                title={related.title}
+                date={formatDate(related.date.toISOString())}
+                excerpt={related.excerpt}
+                source={related.author}
+                category={related.category}
+                href={getArticleUrl(related.slug)}
+                articleId={`articulo-${related.slug}`}
+                articleSlug={related.slug}
+                identifier={`articulo-${related.slug}`}
               />
             ))}
           </div>

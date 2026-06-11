@@ -6,81 +6,12 @@ import Footer from "@/components/Footer.astro";
 import Subheader from "@/components/Subheader.astro";
 import NewsCard from "@/components/NewsCard.astro";
 import EmptyState from "@/components/EmptyState.astro";
-import { getCollection } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { getArticleUrl } from "@/lib/article-url";
-import { supabase } from "@/lib/supabase";
+import { getOwnArticles } from "@/lib/own-articles";
 
-const now = new Date();
-
-// --- Unified own-content listing (Fase 4b) ---
-// Two heterogeneous sources, one normalized shape feeding NewsCard.
-// During the .md → posts transition we read both: the markdown collection
-// (the 5 existing articles) and the `posts` table (RLS posts_public_read
-// returns only status='published' AND published_at <= now(), so drafts and
-// future-scheduled posts never leak). identifier = articulo-${slug} in both,
-// so Disqus threads / bookmarks stay linked across the Fase 5 migration.
-interface ArticleCard {
-  title: string;
-  image?: string;
-  date: Date;
-  excerpt: string;
-  author: string;
-  category: string;
-  slug: string;
-}
-
-// Source A: own markdown collection.
-const allArticles = await getCollection("articulos");
-const mdCards: ArticleCard[] = allArticles
-  .filter((a) => !a.data.draft && a.data.date <= now)
-  .map((a) => ({
-    title: a.data.title,
-    image: a.data.image,
-    date: a.data.date,
-    excerpt: a.data.excerpt,
-    author: a.data.author,
-    category: a.data.category,
-    slug: a.id,
-  }));
-
-// Source B: published posts. The hand-written Database type makes .from()
-// infer `never`, hence the localized cast (see .claude/tasks/typecheck-cleanup.md).
-const { data: postsData } = await supabase
-  .from("posts")
-  .select("title, image_url, excerpt, author, category, slug, published_at");
-const postCards: ArticleCard[] = (
-  (postsData ?? []) as unknown as {
-    title: string;
-    image_url: string | null;
-    excerpt: string;
-    author: string;
-    category: string;
-    slug: string;
-    published_at: string | null;
-  }[]
-).map((p) => ({
-  title: p.title,
-  image: p.image_url ?? undefined,
-  date: p.published_at ? new Date(p.published_at) : now,
-  excerpt: p.excerpt,
-  author: p.author,
-  category: p.category,
-  slug: p.slug,
-}));
-
-/**
- * Merge the two normalized sources into the final ordered listing.
- * .md wins on slug collision (it's the source of truth until Fase 5 migrates
- * the 5 markdown articles), then everything is ordered newest-first.
- */
-function mergeArticles(md: ArticleCard[], posts: ArticleCard[]): ArticleCard[] {
-  const mdSlugs = new Set(md.map((a) => a.slug));
-  const deduped = posts.filter((p) => !mdSlugs.has(p.slug));
-  return [...md, ...deduped].sort((a, b) => b.date.getTime() - a.date.getTime());
-}
-
-const articles = mergeArticles(mdCards, postCards);
+// Unified own-content source (.md + published posts), newest first.
+const articles = await getOwnArticles();
 ---
 
 <BaseLayout
