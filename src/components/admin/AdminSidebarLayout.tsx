@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: FilePenLine,
     ready: true,
   },
-  { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: false },
+  { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: true },
 ];
 
 interface Props {

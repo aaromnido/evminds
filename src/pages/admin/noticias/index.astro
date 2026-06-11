@@ -1,0 +1,66 @@
+---
+import AdminShell from "@/layouts/AdminShell.astro";
+import NewsList, { type NewsListItem } from "@/components/admin/NewsList.tsx";
+
+// Authed admin client (middleware). The articles_admin_write policy (is_admin())
+// lets the admin read EVERY row — archived included — unlike anon public-read.
+const supabase = Astro.locals.supabase;
+
+const PAGE_SIZE = 50;
+const params = Astro.url.searchParams;
+const q = (params.get("q") ?? "").trim();
+const estado = params.get("estado") ?? "activas"; // activas | archivadas | sin-ia | todas
+const page = Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1);
+const from = (page - 1) * PAGE_SIZE;
+const to = from + PAGE_SIZE - 1;
+
+let items: NewsListItem[] = [];
+let total = 0;
+let errorMsg: string | undefined;
+
+if (supabase) {
+  let query = supabase
+    .from("articles")
+    .select(
+      "id, slug, title, category, content_type, published_at, archived, ai_summary, source:sources!inner(name)",
+      { count: "exact" },
+    );
+
+  if (estado === "archivadas") query = query.eq("archived", true);
+  else if (estado === "activas") query = query.eq("archived", false);
+  else if (estado === "sin-ia") query = query.is("ai_summary", null);
+  // "todas" → no archived filter
+
+  if (q) query = query.ilike("title", `%${q}%`);
+
+  const { data, error, count } = await query
+    .order("published_at", { ascending: false })
+    .range(from, to);
+
+  if (error) errorMsg = error.message;
+  // Cast: hand-written Database type infers `never` on .from() (see typecheck
+  // cleanup task). Shape is guaranteed by the explicit select above.
+  else {
+    items = (data ?? []) as unknown as NewsListItem[];
+    total = count ?? 0;
+  }
+}
+
+const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+---
+
+<AdminShell
+  title="Noticias · Admin"
+  pageTitle="Noticias"
+  pageDescription="Contenido scrapeado (tabla articles)."
+>
+  <NewsList
+    items={items}
+    error={errorMsg}
+    q={q}
+    estado={estado}
+    page={page}
+    totalPages={totalPages}
+    total={total}
+  />
+</AdminShell>
