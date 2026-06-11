@@ -328,3 +328,10 @@
   height: 0;
   pointer-events: none;
 }
+
+/* Admin dialog overlay — same tint + blur as the search modal backdrop */
+.admin-dialog-overlay {
+  background: color-mix(in srgb, var(--sepia-light) 50%, transparent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}

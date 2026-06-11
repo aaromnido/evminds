@@ -2,6 +2,15 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 
@@ -62,7 +71,11 @@ export default function PostEditor({
   };
 
   return (
-    <form method="POST" className="flex max-w-3xl flex-col gap-6">
+    <form
+      method="POST"
+      id="post-editor-form"
+      className="flex max-w-3xl flex-col gap-6"
+    >
       {error && (
         <p
           role="alert"
@@ -202,27 +215,46 @@ export default function PostEditor({
           Cancelar
         </a>
         {showDelete && (
-          <button
-            type="submit"
-            name="_action"
-            value="delete"
-            formNoValidate
-            onClick={(e) => {
-              if (
-                !window.confirm(
-                  "¿Eliminar este artículo? Esta acción no se puede deshacer.",
-                )
-              ) {
-                e.preventDefault();
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <button
+                  type="button"
+                  className={cn(
+                    buttonVariants({ variant: "destructive" }),
+                    "ml-auto",
+                  )}
+                >
+                  Eliminar
+                </button>
               }
-            }}
-            className={cn(
-              buttonVariants({ variant: "destructive" }),
-              "ml-auto",
-            )}
-          >
-            Eliminar
-          </button>
+            />
+            <AlertDialogContent className="gap-6 p-8">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-lg">
+                  ¿Eliminar este artículo?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="flex justify-end gap-3">
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                {/* Submits the post form (associated by `form` id) from inside the
+                    portal, with _action=delete. formNoValidate skips field checks. */}
+                <button
+                  type="submit"
+                  form="post-editor-form"
+                  name="_action"
+                  value="delete"
+                  formNoValidate
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
     </form>
