@@ -117,18 +117,18 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
       )}
 
       {/* Left column: title, image, excerpt, IA block, buttons */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 min-w-0">
         <div className="grid gap-1.5">
           <Label htmlFor="title">Título</Label>
           <Input id="title" name="title" defaultValue={article.title ?? ""} required />
           {article.articleUrl && (
-            <div className="group -mx-2 flex items-center gap-1.5 rounded px-2 py-1 text-xs text-muted-foreground">
+            <div className="group -mx-2 flex min-w-0 items-center gap-1.5 overflow-hidden rounded px-2 py-1 text-xs text-muted-foreground">
               <ExternalLink className="size-3.5 shrink-0" />
               <a
                 href={article.articleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="truncate hover:text-foreground hover:underline"
+                className="min-w-0 truncate hover:text-foreground hover:underline"
               >
                 {article.articleUrl}
               </a>
@@ -301,7 +301,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
                 className={cn(buttonVariants({ variant: "outline" }), "w-full gap-2")}
               >
                 <ExternalLink className="size-4" />
-                Link a la noticia
+                Link a la fuente
               </a>
             </div>
           )}
