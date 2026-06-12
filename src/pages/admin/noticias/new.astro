@@ -19,7 +19,8 @@ if (supabase && Astro.request.method === "POST") {
   const slug = get("slug");
   const excerpt = get("excerpt");
   const category = get("category");
-  const contentType = get("content_type") || "news";
+  const rawType = get("content_type");
+  const contentType = ["news", "video"].includes(rawType) ? rawType : "news";
   const articleUrl = get("article_url");
   const imageUrl = get("image_url");
   const publishedAtRaw = get("published_at");
@@ -38,8 +39,17 @@ if (supabase && Astro.request.method === "POST") {
     youtube_video_id: youtubeId,
   };
 
-  if (!sourceId || !title || !slug || !excerpt || !category || !articleUrl || !publishedAtRaw) {
-    errorMsg = "Faltan campos obligatorios (medio, título, slug, extracto, categoría, URL, fecha).";
+  const missing: string[] = [];
+  if (!sourceId) missing.push("medio");
+  if (!title) missing.push("título");
+  if (!slug) missing.push("slug");
+  if (!excerpt) missing.push("extracto");
+  if (!category) missing.push("categoría");
+  if (!articleUrl) missing.push("URL");
+  if (!publishedAtRaw) missing.push("fecha");
+
+  if (missing.length) {
+    errorMsg = `Faltan campos obligatorios: ${missing.join(", ")}.`;
   } else {
     const payload = {
       source_id: sourceId,

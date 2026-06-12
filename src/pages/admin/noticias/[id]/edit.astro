@@ -35,8 +35,12 @@ if (!supabase || !id) {
     const aiSummary = get("ai_summary");
     const aiDiscussionPrompt = get("ai_discussion_prompt");
 
-    if (!title || !excerpt || !category) {
-      errorMsg = "Faltan campos obligatorios (título, extracto, categoría).";
+    const missing: string[] = [];
+    if (!title) missing.push("título");
+    if (!excerpt) missing.push("extracto");
+    if (!category) missing.push("categoría");
+    if (missing.length) {
+      errorMsg = `Faltan campos obligatorios: ${missing.join(", ")}.`;
       formValues = {
         title,
         excerpt,

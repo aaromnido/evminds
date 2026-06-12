@@ -57,13 +57,21 @@ export default function NewsCreateForm({
   const [slugEdited, setSlugEdited] = useState(Boolean(values?.slug));
   const [contentType, setContentType] = useState(values?.content_type ?? "news");
   const [imageUrl, setImageUrl] = useState(values?.image_url ?? "");
+  const [excerptError, setExcerptError] = useState("");
+
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+    const empty = !excerpt || excerpt === "<p></p>";
+    if (empty) { setExcerptError("El extracto es obligatorio."); e.preventDefault(); }
+    else setExcerptError("");
+  };
+
   const onTitleChange = (v: string) => {
     setTitle(v);
     if (!slugEdited) setSlug(slugify(v));
   };
 
   return (
-    <form method="POST" className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
+    <form method="POST" className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]" onSubmit={handleSubmit}>
       {error && (
         <p
           role="alert"
@@ -73,15 +81,10 @@ export default function NewsCreateForm({
         </p>
       )}
 
-      {/* Left column: image, main content fields, buttons */}
+      {/* Left column: title, image, main content fields, buttons */}
       <div className="flex flex-col gap-6">
         <div className="grid gap-1.5">
-          <Label>Imagen</Label>
-          <ImageDropZone value={imageUrl} onChange={setImageUrl} />
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="title">Título</Label>
+          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
           <Input
             id="title"
             name="title"
@@ -98,9 +101,15 @@ export default function NewsCreateForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Extracto</Label>
-          <RichTextEditor value={values?.excerpt ?? ""} onChange={setExcerpt} />
+          <Label>Imagen</Label>
+          <ImageDropZone value={imageUrl} onChange={setImageUrl} />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <RichTextEditor value={values?.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
+          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
         </div>
 
         <div className="grid gap-1.5">

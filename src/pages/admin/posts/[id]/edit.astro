@@ -16,7 +16,7 @@ const parseForm = (
 ): {
   values: PostFormValues;
   payload: Record<string, unknown>;
-  emptyRequired: boolean;
+  missingFields: string[];
 } => {
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
@@ -43,6 +43,11 @@ const parseForm = (
   else if (status === "published") publishedAt = new Date().toISOString();
 
   const emptyContent = !content || content === "<p></p>";
+  const missingFields: string[] = [];
+  if (!title) missingFields.push("título");
+  if (!slug) missingFields.push("slug");
+  if (!excerpt) missingFields.push("extracto");
+  if (emptyContent) missingFields.push("contenido");
 
   return {
     values: {
@@ -69,7 +74,7 @@ const parseForm = (
       status,
       published_at: publishedAt,
     },
-    emptyRequired: !title || !slug || !excerpt || emptyContent,
+    missingFields,
   };
 };
 
@@ -85,11 +90,16 @@ if (!supabase || !id) {
     if (!error) return Astro.redirect("/admin/posts");
     errorMsg = `No se pudo eliminar: ${error.message}`;
   } else {
-    const { values, payload, emptyRequired } = parseForm(form);
+    const { values, payload, missingFields } = parseForm(form);
     formValues = values;
-    if (emptyRequired) {
-      errorMsg =
-        "Faltan campos obligatorios (título, slug, extracto, contenido).";
+    const VALID_CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
+    const publishedAtRaw = String(form.get("published_at") ?? "").trim();
+    if (missingFields.length) {
+      errorMsg = `Faltan campos obligatorios: ${missingFields.join(", ")}.`;
+    } else if (payload.category && !VALID_CATEGORIES.includes(payload.category as string)) {
+      errorMsg = "Categoría no válida.";
+    } else if (publishedAtRaw && isNaN(new Date(publishedAtRaw).getTime())) {
+      errorMsg = "Fecha de publicación no válida.";
     } else {
       // Cast: hand-written Database type infers `never` on .from() (typecheck task).
       const { error } = await supabase

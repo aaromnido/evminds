@@ -42,9 +42,20 @@ if (Astro.request.method === "POST" && supabase) {
 
   // Content is HTML; an empty editor yields "<p></p>".
   const emptyContent = !content || content === "<p></p>";
+  const VALID_CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
 
-  if (!title || !slug || !excerpt || emptyContent) {
-    errorMsg = "Faltan campos obligatorios (título, slug, extracto, contenido).";
+  const missing: string[] = [];
+  if (!title) missing.push("título");
+  if (!slug) missing.push("slug");
+  if (!excerpt) missing.push("extracto");
+  if (emptyContent) missing.push("contenido");
+
+  if (missing.length) {
+    errorMsg = `Faltan campos obligatorios: ${missing.join(", ")}.`;
+  } else if (category && !VALID_CATEGORIES.includes(category)) {
+    errorMsg = "Categoría no válida.";
+  } else if (publishedAtRaw && isNaN(new Date(publishedAtRaw).getTime())) {
+    errorMsg = "Fecha de publicación no válida.";
   } else {
     const tags = tagsRaw
       ? tagsRaw

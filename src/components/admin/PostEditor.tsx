@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 import SlugField from "./SlugField";
@@ -74,6 +74,23 @@ export default function PostEditor({
     post?.tags ? post.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
   );
   const [tagInput, setTagInput] = useState("");
+  const [excerptError, setExcerptError] = useState("");
+  const [contentError, setContentError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const emptyRTE = (html: string) => !html || html === "<p></p>";
+
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    if (submitter?.value === "delete") return;
+    let valid = true;
+    if (emptyRTE(excerpt)) { setExcerptError("El extracto es obligatorio."); valid = false; }
+    else setExcerptError("");
+    if (emptyRTE(content)) { setContentError("El contenido es obligatorio."); valid = false; }
+    else setContentError("");
+    if (!valid) e.preventDefault();
+  };
+
   const onTitleChange = (v: string) => {
     setTitle(v);
     // Keep the slug in sync with the title until the user edits the slug by hand.
@@ -85,6 +102,7 @@ export default function PostEditor({
       method="POST"
       id="post-editor-form"
       className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]"
+      onSubmit={handleSubmit}
     >
       {error && (
         <p
@@ -98,7 +116,7 @@ export default function PostEditor({
       {/* Left column: title, slug, image, alt, excerpt, content, buttons */}
       <div className="flex flex-col gap-6">
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título</Label>
+          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
           <Input
             id="title"
             name="title"
@@ -129,15 +147,17 @@ export default function PostEditor({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Extracto</Label>
-          <RichTextEditor value={post?.excerpt ?? ""} onChange={setExcerpt} minHeight="200px" />
+          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <RichTextEditor value={post?.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} minHeight="200px" />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
+          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Contenido</Label>
-          <RichTextEditor value={post?.content ?? ""} onChange={setContent} minHeight="400px" />
+          <Label>Contenido <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <RichTextEditor value={post?.content ?? ""} onChange={(v) => { setContent(v); if (contentError && v && v !== "<p></p>") setContentError(""); }} minHeight="400px" />
           <input type="hidden" name="content" value={content} readOnly />
+          {contentError && <p role="alert" className="text-xs text-destructive">{contentError}</p>}
         </div>
 
         <div className="flex items-center gap-3">
@@ -158,6 +178,7 @@ export default function PostEditor({
                       "ml-auto",
                     )}
                   >
+                    <Trash2 className="h-4 w-4" />
                     Eliminar
                   </button>
                 }
@@ -181,9 +202,11 @@ export default function PostEditor({
                     name="_action"
                     value="delete"
                     formNoValidate
-                    className={buttonVariants({ variant: "destructive" })}
+                    onClick={() => setDeleting(true)}
+                    className={cn(buttonVariants({ variant: "destructive" }), deleting && "pointer-events-none opacity-75")}
                   >
-                    Eliminar
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {deleting ? "Eliminando…" : "Eliminar"}
                   </button>
                 </div>
               </AlertDialogContent>
@@ -244,6 +267,7 @@ export default function PostEditor({
             id="category"
             name="category"
             defaultValue={post?.category ?? CATEGORIES[0]}
+            required
             className={fieldClass}
           >
             {CATEGORIES.map((c) => (

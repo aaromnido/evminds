@@ -47,7 +47,16 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
   const [aiSummary, setAiSummary] = useState(article.ai_summary ?? "");
   const [imageUrl, setImageUrl] = useState(article.image_url ?? "");
 
+  const [excerptError, setExcerptError] = useState("");
   const [regenerating, setRegenerating] = useState(false);
+
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    if (submitter?.value === "archive" || submitter?.value === "unarchive") return;
+    const empty = !excerpt || excerpt === "<p></p>";
+    if (empty) { setExcerptError("El extracto es obligatorio."); e.preventDefault(); }
+    else setExcerptError("");
+  };
   const [regenMsg, setRegenMsg] = useState<{ ok: boolean; text: string } | null>(
     null,
   );
@@ -81,6 +90,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
       method="POST"
       id="news-editor-form"
       className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]"
+      onSubmit={handleSubmit}
     >
       {error && (
         <p
@@ -94,7 +104,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
       {/* Left column: title, image, excerpt, IA block, buttons */}
       <div className="flex flex-col gap-6 min-w-0">
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título</Label>
+          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
           <Input id="title" name="title" defaultValue={article.title ?? ""} required />
         </div>
 
@@ -104,9 +114,10 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Extracto</Label>
-          <RichTextEditor value={article.excerpt ?? ""} onChange={setExcerpt} />
+          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <RichTextEditor value={article.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
+          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
         </div>
 
         {/* IA (Gemini) block */}
@@ -209,7 +220,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
           <div className="flex justify-between gap-2">
             <span className="text-muted-foreground">Comentarios</span>
             <span className={article.hasComments ? "font-medium" : "text-muted-foreground italic"}>
-              {article.hasComments ? "Con comentarios" : "Sin comentarios aún"}
+              {article.hasComments ? "Con comentarios" : "Sin comentarios"}
             </span>
           </div>
           {(article.articleUrl || article.slug) && (
