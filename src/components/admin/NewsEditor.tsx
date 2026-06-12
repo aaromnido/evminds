@@ -116,31 +116,26 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </p>
       )}
 
-      {/* Read-only context — full width above both columns */}
-      <div className="col-span-full flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-        {article.sourceName && (
-          <span>
-            Medio: <span className="text-foreground">{article.sourceName}</span>
-          </span>
-        )}
-        {article.contentType && <span>Tipo: {article.contentType}</span>}
-        {article.publishedAt && (
-          <span>Publicado: {article.publishedAt.slice(0, 10)}</span>
-        )}
-        {article.articleUrl && (
-          <a
-            href={article.articleUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto inline-flex items-center gap-1 text-foreground underline underline-offset-2"
-          >
-            Original <ExternalLink className="size-3.5" />
-          </a>
-        )}
-      </div>
-
-      {/* Left column: image, main editorial fields, buttons */}
+      {/* Left column: title, image, excerpt, IA block, buttons */}
       <div className="flex flex-col gap-6">
+        <div className="grid gap-1.5">
+          <Label htmlFor="title">Título</Label>
+          <Input id="title" name="title" defaultValue={article.title ?? ""} required />
+          {article.articleUrl && (
+            <div className="group -mx-2 flex items-center gap-1.5 rounded px-2 py-1 text-xs text-muted-foreground">
+              <ExternalLink className="size-3.5 shrink-0" />
+              <a
+                href={article.articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate hover:text-foreground hover:underline"
+              >
+                {article.articleUrl}
+              </a>
+            </div>
+          )}
+        </div>
+
         <div className="grid gap-1.5">
           <Label htmlFor="image_url">Imagen</Label>
           <div className="flex gap-2">
@@ -182,63 +177,12 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título</Label>
-          <Input id="title" name="title" defaultValue={article.title ?? ""} required />
-        </div>
-
-        <div className="grid gap-1.5">
           <Label>Extracto</Label>
           <RichTextEditor value={article.excerpt ?? ""} onChange={setExcerpt} />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" name="_action" value="save">
-            Guardar cambios
-          </Button>
-          <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
-            Cancelar
-          </a>
-          {/* Soft-delete only (ADR-003): a hard delete would be re-scraped. Archiving
-              is reversible, so no confirmation modal. */}
-          <button
-            type="submit"
-            name="_action"
-            value={article.archived ? "unarchive" : "archive"}
-            formNoValidate
-            className={cn(
-              buttonVariants({
-                variant: article.archived ? "outline" : "destructive",
-              }),
-              "ml-auto",
-            )}
-          >
-            {article.archived ? "Desarchivar" : "Archivar"}
-          </button>
-        </div>
-      </div>
-
-      {/* Right column: metadata + AI section */}
-      <div className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start">
-        <div className="grid gap-1.5">
-          <Label htmlFor="category">Categoría</Label>
-          <Input
-            id="category"
-            name="category"
-            defaultValue={article.category ?? ""}
-            list="news-categories"
-            required
-          />
-          <datalist id="news-categories">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-
-        {/* AI section (Gemini). Summary + discussion prompt are editable and saved
-            with the form; warnings + generated-at are read-only. "Regenerar IA"
-            calls the regenerate-ai Edge Function via the gated proxy. */}
+        {/* IA (Gemini) block */}
         <div className="flex flex-col gap-4 rounded-md border border-border bg-muted/30 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium">IA (Gemini)</span>
@@ -300,6 +244,83 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
               ))}
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button type="submit" name="_action" value="save">
+            Guardar cambios
+          </Button>
+          <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
+            Cancelar
+          </a>
+          {/* Soft-delete only (ADR-003): a hard delete would be re-scraped. */}
+          <button
+            type="submit"
+            name="_action"
+            value={article.archived ? "unarchive" : "archive"}
+            formNoValidate
+            className={cn(
+              buttonVariants({
+                variant: article.archived ? "outline" : "destructive",
+              }),
+              "ml-auto",
+            )}
+          >
+            {article.archived ? "Desarchivar" : "Archivar"}
+          </button>
+        </div>
+      </div>
+
+      {/* Right column: original link, read-only metadata, category */}
+      <div className="flex flex-col gap-6 pt-5 lg:sticky lg:top-8 lg:self-start">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
+          {article.sourceName && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Medio</span>
+              <span className="font-medium">{article.sourceName}</span>
+            </div>
+          )}
+          {article.contentType && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Tipo</span>
+              <span className="font-medium">{article.contentType}</span>
+            </div>
+          )}
+          {article.publishedAt && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Fecha</span>
+              <span className="font-medium">{article.publishedAt.slice(0, 10)}</span>
+            </div>
+          )}
+          {article.articleUrl && (
+            <div className="border-t border-border pt-3">
+              <a
+                href={article.articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ variant: "outline" }), "w-full gap-2")}
+              >
+                <ExternalLink className="size-4" />
+                Link a la noticia
+              </a>
+            </div>
+          )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="category">Categoría</Label>
+          <Input
+            id="category"
+            name="category"
+            defaultValue={article.category ?? ""}
+            list="news-categories"
+            required
+          />
+          <datalist id="news-categories">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </div>
       </div>
     </form>
