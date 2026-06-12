@@ -73,7 +73,7 @@ A partir del título y extracto en inglés, genera:`
     : `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES).
 Dado un título y un extracto, genera:`;
 
-  const sharedBody = `1. Un "summary" de 5 párrafos (10-15 frases en total) en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo. Separa los párrafos con un doble salto de línea (\\n\\n).
+  const sharedBody = `1. Un "summary" que es un array JSON de exactamente 5 strings, un string por párrafo. Cada string es un párrafo de 2-3 frases en español de España. Es una síntesis editorial, NO un copy-paste del extracto. Tono periodístico, neutro, informativo.
 
 REGLA CRÍTICA contra alucinaciones — NO inventes datos técnicos que no estén en el extracto original (ciclo de homologación CLTC/WLTP, mercados geográficos de lanzamiento, capacidad de batería, autonomía oficial, precios, fechas, nombres de personas, plantas de fabricación, contextos comerciales). Limítate a parafrasear, sintetizar y dar contexto sobre lo que SÍ aparece en el texto. Si el extracto no menciona un dato, no lo añadas y no especules sobre él. Mejor un resumen escueto y honesto que uno rico y fabricado.
 
@@ -121,8 +121,8 @@ Ejemplos del tono buscado (referencia exacta):
     : '';
 
   const outputExample = isEnglish
-    ? `{"summary": "...", "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}`
-    : `{"summary": "...", "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}`;
+    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}`
+    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}`;
 
   const inputBlock = isEnglish
     ? `Título original (inglés): ${title}
@@ -144,7 +144,7 @@ ${inputBlock}`;
 
 function buildResponseSchema(isEnglish: boolean) {
   const properties: Record<string, unknown> = {
-    summary: { type: 'STRING' },
+    summary: { type: 'ARRAY', items: { type: 'STRING' } },
     warnings: {
       type: 'ARRAY',
       items: {
@@ -168,13 +168,44 @@ function buildResponseSchema(isEnglish: boolean) {
   return { type: 'OBJECT', properties, required };
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Converts Gemini's markdown summary (** bold **, \n\n paragraph breaks) to
+// HTML <p> tags so both the Tiptap admin editor and the public page can render
+// it without any client-side markdown parsing.
+function summaryMarkdownToHtml(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((para) => para.trim())
+    .filter((para) => para.length > 0)
+    .map((para) => {
+      const safe = escapeHtml(para).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      return `<p>${safe}</p>`;
+    })
+    .join('\n');
+}
+
 function parseAndValidate(raw: unknown): SummaryResult | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
-  if (typeof obj.summary !== 'string' || obj.summary.trim().length < 20) {
+  // summary may be an array of paragraph strings (new format) or a plain string (legacy).
+  let summaryHtml: string;
+  if (Array.isArray(obj.summary)) {
+    const paras = (obj.summary as unknown[]).filter((s) => typeof s === 'string' && (s as string).trim().length > 0) as string[];
+    if (paras.length === 0) return null;
+    summaryHtml = summaryMarkdownToHtml(paras.join('\n\n'));
+  } else if (typeof obj.summary === 'string' && obj.summary.trim().length >= 20) {
+    summaryHtml = summaryMarkdownToHtml(obj.summary.trim());
+  } else {
     return null;
   }
+
   if (!Array.isArray(obj.warnings)) return null;
 
   const warnings: SummaryWarning[] = [];
@@ -189,7 +220,7 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
     warnings.push({ type: wo.type as WarningType });
   }
 
-  const result: SummaryResult = { summary: obj.summary.trim(), warnings };
+  const result: SummaryResult = { summary: summaryHtml, warnings };
   if (typeof obj.discussion_prompt === 'string' && obj.discussion_prompt.trim()) {
     result.discussionPrompt = obj.discussion_prompt.trim();
   }

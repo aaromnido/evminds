@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { Bot, ExternalLink, ImagePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 
@@ -121,19 +122,6 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         <div className="grid gap-1.5">
           <Label htmlFor="title">Título</Label>
           <Input id="title" name="title" defaultValue={article.title ?? ""} required />
-          {article.articleUrl && (
-            <div className="group -mx-2 flex min-w-0 items-center gap-1.5 overflow-hidden rounded px-2 py-1 text-xs text-muted-foreground">
-              <ExternalLink className="size-3.5 shrink-0" />
-              <a
-                href={article.articleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-w-0 truncate hover:text-foreground hover:underline"
-              >
-                {article.articleUrl}
-              </a>
-            </div>
-          )}
         </div>
 
         <div className="grid gap-1.5">
@@ -146,14 +134,15 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://… o sube un archivo"
             />
-            <Button
+            <IconButton
               type="button"
               variant="outline"
+              icon={ImagePlus}
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
               {uploading ? "Subiendo…" : "Subir"}
-            </Button>
+            </IconButton>
             <input
               ref={fileInputRef}
               type="file"
@@ -191,16 +180,16 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
                 Generado: {article.ai_generated_at.slice(0, 16).replace("T", " ")}
               </span>
             )}
-            <Button
+            <IconButton
               type="button"
-              variant="secondary"
-              size="sm"
+              variant="outline"
+              icon={Bot}
               disabled={regenerating}
               onClick={regenerate}
               className="ml-auto"
             >
               {regenerating ? "Generando…" : "Regenerar IA"}
-            </Button>
+            </IconButton>
             {regenMsg && (
               <span
                 role="status"
@@ -294,15 +283,16 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
           )}
           {article.articleUrl && (
             <div className="border-t border-border pt-3">
-              <a
+              <IconButton
                 href={article.articleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={cn(buttonVariants({ variant: "outline" }), "w-full gap-2")}
+                variant="outline"
+                icon={ExternalLink}
+                className="w-full"
               >
-                <ExternalLink className="size-4" />
                 Link a la fuente
-              </a>
+              </IconButton>
             </div>
           )}
         </div>

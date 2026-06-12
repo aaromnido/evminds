@@ -157,9 +157,12 @@ const articleDataJson = serializeBookmarkData({
       {article.ai_summary && (
         <section class="article-detail__ai-summary" aria-labelledby="ai-summary-heading">
           <h2 id="ai-summary-heading" class="article-detail__ai-summary-heading">Resumen</h2>
-          {article.ai_summary.split("\n\n").map((para: string) => (
-            <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
-          ))}
+          {article.ai_summary.trimStart().startsWith("<p>")
+            ? <div class="article-detail__ai-summary-body" set:html={article.ai_summary} />
+            : article.ai_summary.split("\n\n").map((para: string) => (
+                <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
+              ))
+          }
           {article.ai_discussion_prompt && (
             <p class="article-detail__ai-summary-paragraph">{article.ai_discussion_prompt}</p>
           )}
@@ -368,13 +371,20 @@ const articleDataJson = serializeBookmarkData({
     border: 0;
   }
 
-  .article-detail__ai-summary-paragraph {
+  .article-detail__ai-summary-paragraph,
+  .article-detail__ai-summary-body p {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 18px;
     font-weight: 400;
     line-height: 1.7;
     color: var(--navy-2);
     margin: 0;
+  }
+
+  .article-detail__ai-summary-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .article-detail__ai-disclaimer {
