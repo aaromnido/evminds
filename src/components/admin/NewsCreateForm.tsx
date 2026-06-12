@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import SaveButton from "./SaveButton";
+import ImageDropZone from "./ImageDropZone";
 import RichTextEditor from "./RichTextEditor";
 import SlugField from "./SlugField";
 
@@ -55,36 +57,9 @@ export default function NewsCreateForm({
   const [slugEdited, setSlugEdited] = useState(Boolean(values?.slug));
   const [contentType, setContentType] = useState(values?.content_type ?? "news");
   const [imageUrl, setImageUrl] = useState(values?.image_url ?? "");
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const onTitleChange = (v: string) => {
     setTitle(v);
     if (!slugEdited) setSlug(slugify(v));
-  };
-
-  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("folder", "news");
-      const res = await fetch("/admin/posts/upload-image", { method: "POST", body });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || typeof data.url !== "string") {
-        throw new Error(data.error || "No se pudo subir la imagen.");
-      }
-      setImageUrl(data.url);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "No se pudo subir la imagen.");
-    } finally {
-      setUploading(false);
-    }
   };
 
   return (
@@ -101,43 +76,8 @@ export default function NewsCreateForm({
       {/* Left column: image, main content fields, buttons */}
       <div className="flex flex-col gap-6">
         <div className="grid gap-1.5">
-          <Label htmlFor="image_url">Imagen</Label>
-          <div className="flex gap-2">
-            <Input
-              id="image_url"
-              name="image_url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://… o sube un archivo"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploading ? "Subiendo…" : "Subir"}
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-              className="hidden"
-              onChange={onFileSelected}
-            />
-          </div>
-          {uploadError && (
-            <p role="alert" className="text-xs text-destructive">
-              {uploadError}
-            </p>
-          )}
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt="Vista previa"
-              className="mt-1 aspect-video w-full rounded-md border border-input object-cover"
-            />
-          )}
+          <Label>Imagen</Label>
+          <ImageDropZone value={imageUrl} onChange={setImageUrl} />
         </div>
 
         <div className="grid gap-1.5">
@@ -191,7 +131,7 @@ export default function NewsCreateForm({
         )}
 
         <div className="flex items-center gap-3">
-          <Button type="submit">Crear noticia</Button>
+          <SaveButton loadingText="Creando…">Crear noticia</SaveButton>
           <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
             Cancelar
           </a>

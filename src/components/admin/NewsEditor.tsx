@@ -1,11 +1,14 @@
-import { useRef, useState } from "react";
-import { Bot, ExternalLink, ImagePlus } from "lucide-react";
+import { useState } from "react";
+import { Bot, ExternalLink, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
+import ImageDropZone from "./ImageDropZone";
+import SaveButton from "./SaveButton";
+import ArchiveButton from "./ArchiveButton";
 
 export interface NewsFormValues {
   title?: string;
@@ -21,9 +24,11 @@ export interface NewsFormValues {
   ai_generated_at?: string;
   // Read-only context (scraper-managed; shown for orientation, not editable).
   sourceName?: string;
+  slug?: string;
   articleUrl?: string;
   publishedAt?: string;
   contentType?: string;
+  hasComments?: boolean;
 }
 
 interface Props {
@@ -41,9 +46,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
   const [excerpt, setExcerpt] = useState(article.excerpt ?? "");
   const [aiSummary, setAiSummary] = useState(article.ai_summary ?? "");
   const [imageUrl, setImageUrl] = useState(article.image_url ?? "");
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [regenerating, setRegenerating] = useState(false);
   const [regenMsg, setRegenMsg] = useState<{ ok: boolean; text: string } | null>(
     null,
@@ -73,35 +76,6 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
     }
   };
 
-  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("folder", "news");
-      const res = await fetch("/admin/posts/upload-image", {
-        method: "POST",
-        body,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || typeof data.url !== "string") {
-        throw new Error(data.error || "No se pudo subir la imagen.");
-      }
-      setImageUrl(data.url);
-    } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : "No se pudo subir la imagen.",
-      );
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
     <form
       method="POST"
@@ -125,44 +99,8 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="image_url">Imagen</Label>
-          <div className="flex gap-2">
-            <Input
-              id="image_url"
-              name="image_url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://… o sube un archivo"
-            />
-            <IconButton
-              type="button"
-              variant="outline"
-              icon={ImagePlus}
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploading ? "Subiendo…" : "Subir"}
-            </IconButton>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-              className="hidden"
-              onChange={onFileSelected}
-            />
-          </div>
-          {uploadError && (
-            <p role="alert" className="text-xs text-destructive">
-              {uploadError}
-            </p>
-          )}
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt="Vista previa"
-              className="mt-1 aspect-video w-full rounded-md border border-input object-cover"
-            />
-          )}
+          <Label>Imagen</Label>
+          <ImageDropZone value={imageUrl} onChange={setImageUrl} />
         </div>
 
         <div className="grid gap-1.5">
@@ -236,27 +174,14 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </div>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" name="_action" value="save">
+          <SaveButton name="_action" value="save">
             Guardar cambios
-          </Button>
+          </SaveButton>
           <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
             Cancelar
           </a>
           {/* Soft-delete only (ADR-003): a hard delete would be re-scraped. */}
-          <button
-            type="submit"
-            name="_action"
-            value={article.archived ? "unarchive" : "archive"}
-            formNoValidate
-            className={cn(
-              buttonVariants({
-                variant: article.archived ? "outline" : "destructive",
-              }),
-              "ml-auto",
-            )}
-          >
-            {article.archived ? "Desarchivar" : "Archivar"}
-          </button>
+          <ArchiveButton archived={article.archived ?? false} />
         </div>
       </div>
 
@@ -281,18 +206,38 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
               <span className="font-medium">{article.publishedAt.slice(0, 10)}</span>
             </div>
           )}
-          {article.articleUrl && (
-            <div className="border-t border-border pt-3">
-              <IconButton
-                href={article.articleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outline"
-                icon={ExternalLink}
-                className="w-full"
-              >
-                Link a la fuente
-              </IconButton>
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Comentarios</span>
+            <span className={article.hasComments ? "font-medium" : "text-muted-foreground italic"}>
+              {article.hasComments ? "Con comentarios" : "Sin comentarios aún"}
+            </span>
+          </div>
+          {(article.articleUrl || article.slug) && (
+            <div className="flex flex-col gap-2 border-t border-border pt-3">
+              {article.articleUrl && (
+                <IconButton
+                  href={article.articleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  icon={ExternalLink}
+                  className="w-full"
+                >
+                  Link a la fuente
+                </IconButton>
+              )}
+              {article.slug && (
+                <IconButton
+                  href={`/noticia/${article.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  icon={Eye}
+                  className="w-full"
+                >
+                  Ver artículo
+                </IconButton>
+              )}
             </div>
           )}
         </div>
