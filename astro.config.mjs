@@ -79,6 +79,9 @@ export default defineConfig({
   // Site URL for sitemap generation
   site: 'https://evminds.es',
 
+  // Disable the Astro dev toolbar (the floating in-page toolbar in dev).
+  devToolbar: { enabled: false },
+
   // Enable server-side rendering for Live Collections
   output: 'server',
   adapter: netlify(),

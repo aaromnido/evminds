@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 interface Props {
   value: string;
   onChange: (html: string) => void;
+  minHeight?: string;
 }
 
 function ToolbarButton({
@@ -55,7 +56,7 @@ function ToolbarButton({
  * bundles Link/Underline/lists in v3. immediatelyRender:false is required so it
  * doesn't render on the server (this lives inside a hydrated Astro island).
  */
-export default function RichTextEditor({ value, onChange }: Props) {
+export default function RichTextEditor({ value, onChange, minHeight = "280px" }: Props) {
   const editor = useEditor({
     extensions: [StarterKit],
     content: value,
@@ -63,7 +64,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: "tiptap min-h-[280px] focus:outline-none",
+        class: "tiptap focus:outline-none",
       },
     },
   });
@@ -87,8 +88,11 @@ export default function RichTextEditor({ value, onChange }: Props) {
   };
 
   return (
-    <div className="overflow-hidden rounded-md border border-input bg-background">
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/30 p-1">
+    <div
+      className="flex flex-col resize-y overflow-hidden rounded-md border border-input bg-background"
+      style={{ minHeight }}
+    >
+      <div className="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-border bg-muted/30 p-1">
         <ToolbarButton
           label="Negrita"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -168,7 +172,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
         </ToolbarButton>
       </div>
 
-      <div className="px-3 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <EditorContent editor={editor} />
       </div>
     </div>

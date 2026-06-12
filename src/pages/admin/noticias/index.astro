@@ -6,7 +6,7 @@ import NewsList, { type NewsListItem } from "@/components/admin/NewsList.tsx";
 // lets the admin read EVERY row — archived included — unlike anon public-read.
 const supabase = Astro.locals.supabase;
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 const params = Astro.url.searchParams;
 const q = (params.get("q") ?? "").trim();
 const estado = params.get("estado") ?? "activas"; // activas | archivadas | sin-ia | todas

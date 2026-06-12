@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button, buttonVariants } from "@/components/ui/button";
+import RichTextEditor from "./RichTextEditor";
+import SlugField from "./SlugField";
 
 export interface SourceOption {
   id: string;
@@ -49,6 +51,7 @@ export default function NewsCreateForm({
 }: Props) {
   const [title, setTitle] = useState(values?.title ?? "");
   const [slug, setSlug] = useState(values?.slug ?? "");
+  const [excerpt, setExcerpt] = useState(values?.excerpt ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(values?.slug));
   const [contentType, setContentType] = useState(values?.content_type ?? "news");
   const [imageUrl, setImageUrl] = useState(values?.image_url ?? "");
@@ -85,17 +88,118 @@ export default function NewsCreateForm({
   };
 
   return (
-    <form method="POST" className="flex max-w-3xl flex-col gap-6">
+    <form method="POST" className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
       {error && (
         <p
           role="alert"
-          className="rounded-md border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="col-span-full rounded-md border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
           {error}
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+      {/* Left column: image, main content fields, buttons */}
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-1.5">
+          <Label htmlFor="image_url">Imagen</Label>
+          <div className="flex gap-2">
+            <Input
+              id="image_url"
+              name="image_url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://… o sube un archivo"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? "Subiendo…" : "Subir"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              className="hidden"
+              onChange={onFileSelected}
+            />
+          </div>
+          {uploadError && (
+            <p role="alert" className="text-xs text-destructive">
+              {uploadError}
+            </p>
+          )}
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt="Vista previa"
+              className="mt-1 aspect-video w-full rounded-md border border-input object-cover"
+            />
+          )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="title">Título</Label>
+          <Input
+            id="title"
+            name="title"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            required
+          />
+          <SlugField
+            slug={slug}
+            onChange={setSlug}
+            onManualEdit={() => setSlugEdited(true)}
+            prefix={`/${contentType === "video" ? "video" : "noticia"}/`}
+          />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Extracto</Label>
+          <RichTextEditor value={values?.excerpt ?? ""} onChange={setExcerpt} />
+          <input type="hidden" name="excerpt" value={excerpt} readOnly />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="article_url">URL original</Label>
+          <Input
+            id="article_url"
+            name="article_url"
+            type="url"
+            defaultValue={values?.article_url ?? ""}
+            placeholder="https://…"
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Enlace a la fuente original. Debe ser único (el scraper lo usa para no duplicar).
+          </p>
+        </div>
+
+        {contentType === "video" && (
+          <div className="grid gap-1.5">
+            <Label htmlFor="youtube_video_id">YouTube video ID</Label>
+            <Input
+              id="youtube_video_id"
+              name="youtube_video_id"
+              defaultValue={values?.youtube_video_id ?? ""}
+              placeholder="dQw4w9WgXcQ"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <Button type="submit">Crear noticia</Button>
+          <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
+            Cancelar
+          </a>
+        </div>
+      </div>
+
+      {/* Right column: metadata fields */}
+      <div className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start">
         <div className="grid gap-1.5">
           <Label htmlFor="source_id">Medio (fuente)</Label>
           <select
@@ -115,6 +219,7 @@ export default function NewsCreateForm({
             ))}
           </select>
         </div>
+
         <div className="grid gap-1.5">
           <Label htmlFor="content_type">Tipo</Label>
           <select
@@ -128,64 +233,27 @@ export default function NewsCreateForm({
             <option value="video">Vídeo</option>
           </select>
         </div>
-      </div>
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="title">Título</Label>
-        <Input
-          id="title"
-          name="title"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="grid gap-1.5">
-        <Label htmlFor="slug">Slug</Label>
-        <Input
-          id="slug"
-          name="slug"
-          value={slug}
-          onChange={(e) => {
-            setSlug(e.target.value);
-            setSlugEdited(true);
-          }}
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          URL pública: /{contentType === "video" ? "video" : "noticia"}/{slug || "…"}
-        </p>
-      </div>
-
-      <div className="grid gap-1.5">
-        <Label htmlFor="excerpt">Extracto</Label>
-        <textarea
-          id="excerpt"
-          name="excerpt"
-          defaultValue={values?.excerpt ?? ""}
-          required
-          rows={3}
-          className={fieldClass}
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
         <div className="grid gap-1.5">
           <Label htmlFor="category">Categoría</Label>
-          <Input
+          <select
             id="category"
             name="category"
             defaultValue={values?.category ?? ""}
-            list="news-categories"
             required
-          />
-          <datalist id="news-categories">
+            className={fieldClass}
+          >
+            <option value="" disabled>
+              Selecciona una categoría…
+            </option>
             {categories.map((c) => (
-              <option key={c} value={c} />
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
+
         <div className="grid gap-1.5">
           <Label htmlFor="published_at">Fecha de publicación</Label>
           <Input
@@ -196,80 +264,6 @@ export default function NewsCreateForm({
             required
           />
         </div>
-      </div>
-
-      <div className="grid gap-1.5">
-        <Label htmlFor="article_url">URL original</Label>
-        <Input
-          id="article_url"
-          name="article_url"
-          type="url"
-          defaultValue={values?.article_url ?? ""}
-          placeholder="https://…"
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          Enlace a la fuente original. Debe ser único (el scraper lo usa para no duplicar).
-        </p>
-      </div>
-
-      {contentType === "video" && (
-        <div className="grid gap-1.5">
-          <Label htmlFor="youtube_video_id">YouTube video ID</Label>
-          <Input
-            id="youtube_video_id"
-            name="youtube_video_id"
-            defaultValue={values?.youtube_video_id ?? ""}
-            placeholder="dQw4w9WgXcQ"
-          />
-        </div>
-      )}
-
-      <div className="grid gap-1.5">
-        <Label htmlFor="image_url">Imagen</Label>
-        <div className="flex gap-2">
-          <Input
-            id="image_url"
-            name="image_url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://… o sube un archivo"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploading ? "Subiendo…" : "Subir"}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-            className="hidden"
-            onChange={onFileSelected}
-          />
-        </div>
-        {uploadError && (
-          <p role="alert" className="text-xs text-destructive">
-            {uploadError}
-          </p>
-        )}
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt="Vista previa"
-            className="mt-1 aspect-video w-full rounded-md border border-input object-cover"
-          />
-        )}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Button type="submit">Crear noticia</Button>
-        <a href="/admin/noticias" className={buttonVariants({ variant: "outline" })}>
-          Cancelar
-        </a>
       </div>
     </form>
   );

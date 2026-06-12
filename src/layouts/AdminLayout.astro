@@ -1,5 +1,6 @@
 ---
 import "@/styles/global.css";
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
   title?: string;
@@ -18,6 +19,20 @@ const { title = "Admin · evminds" } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#191B41" />
     <title>{title}</title>
+
+    <!-- Client-side navigation: lets us show a skeleton during page transitions. -->
+    <ClientRouter />
+
+    <!-- Mark list regions as "loading" while the next page is fetched (View
+         Transitions). The new DOM arrives without data-loading, so no reset is
+         needed. Registered once on document; persists across navigations. -->
+    <script is:inline>
+      document.addEventListener("astro:before-preparation", () => {
+        document
+          .querySelectorAll("[data-list-region]")
+          .forEach((el) => el.setAttribute("data-loading", ""));
+      });
+    </script>
 
     <!-- Apply dark class before first paint (FOUC prevention), same as BaseLayout -->
     <script is:inline>

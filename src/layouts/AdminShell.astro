@@ -24,6 +24,11 @@ const {
 // Set by the middleware on authenticated admin requests.
 const userEmail = Astro.locals.user?.email ?? "";
 const activePath = Astro.url.pathname;
+
+// Sidebar open/collapsed state persists in the sidebar_state cookie (see
+// ui/sidebar.tsx). Read it server-side so the state survives View Transition
+// re-hydration without a hydration mismatch. Defaults to open.
+const sidebarDefaultOpen = Astro.cookies.get("sidebar_state")?.value !== "false";
 ---
 
 <AdminLayout title={title}>
@@ -31,6 +36,7 @@ const activePath = Astro.url.pathname;
     client:load
     userEmail={userEmail}
     activePath={activePath}
+    defaultOpen={sidebarDefaultOpen}
     pageTitle={pageTitle}
     pageDescription={pageDescription}
     actionLabel={actionLabel}

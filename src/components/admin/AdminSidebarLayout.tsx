@@ -11,7 +11,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -20,7 +19,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
 
 interface NavItem {
@@ -51,6 +49,9 @@ interface Props {
   /** Optional primary action rendered on the right of the top bar. */
   actionLabel?: string;
   actionHref?: string;
+  /** Initial sidebar open state (read server-side from the sidebar_state
+   * cookie) so the collapsed state survives View Transition re-hydration. */
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }
 
@@ -67,13 +68,14 @@ export default function AdminSidebarLayout({
   pageDescription,
   actionLabel,
   actionHref,
+  defaultOpen = true,
   children,
 }: Props) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <Sidebar>
         <SidebarHeader className="px-3 py-8">
-          <a href="/admin" className="flex items-center">
+          <a href="/admin" className="flex items-center justify-center">
             <img
               src="/logo.svg"
               alt="evminds"
@@ -86,7 +88,6 @@ export default function AdminSidebarLayout({
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Contenido</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-2">
                 {NAV_ITEMS.map((item) => {
@@ -100,11 +101,11 @@ export default function AdminSidebarLayout({
                         <SidebarMenuButton
                           render={<a href={item.href} />}
                           isActive={active}
-                          // Darker tint than the default sidebar-accent so the
-                          // active item reads clearly. Must use the SAME `data-active:`
-                          // variant the component uses, so tailwind-merge replaces its
-                          // bg-sidebar-accent instead of leaving both rules.
-                          className="data-active:bg-foreground/10"
+                          // Active item uses the same background as the hover
+                          // state (bg-sidebar-accent), which the base component
+                          // already applies on both `hover:` and `data-active:`.
+                          // py-3 = 12px (4px more than the base p-2).
+                          className="py-3"
                           tooltip={item.title}
                         >
                           <item.icon />
@@ -114,7 +115,7 @@ export default function AdminSidebarLayout({
                         <SidebarMenuButton
                           disabled
                           tooltip={`${item.title} · próximamente`}
-                          className="cursor-not-allowed opacity-60"
+                          className="cursor-not-allowed py-3 opacity-60"
                         >
                           <item.icon />
                           <span>{item.title}</span>
@@ -149,14 +150,13 @@ export default function AdminSidebarLayout({
       <SidebarInset>
         <header className="flex items-center gap-3 border-b border-border px-4 py-6">
           <SidebarTrigger />
-          <Separator orientation="vertical" className="h-6" />
           <div className="flex flex-1 items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold leading-tight tracking-tight">
+              <h1 className="truncate text-2xl font-bold leading-tight tracking-tight">
                 {pageTitle}
               </h1>
               {pageDescription && (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="hidden truncate text-base text-muted-foreground sm:block">
                   {pageDescription}
                 </p>
               )}
@@ -172,7 +172,7 @@ export default function AdminSidebarLayout({
             )}
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
+        <main className="mx-auto w-full max-w-[1154px] flex-1 px-6 py-8">
           {children}
         </main>
       </SidebarInset>
