@@ -101,13 +101,88 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </p>
       )}
 
-      {/* Left column: title, image, excerpt, IA block, buttons */}
-      <div className="flex flex-col gap-6 min-w-0">
-        <div className="grid gap-1.5">
-          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <Input id="title" name="title" defaultValue={article.title ?? ""} required />
+      {/* Title — mobile: 1st; desktop: left col row 1 */}
+      <div className="grid gap-1.5">
+        <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+        <Input id="title" name="title" defaultValue={article.title ?? ""} required />
+      </div>
+
+      {/* Right sidebar — mobile: 2nd (between title and image); desktop: right col spanning both rows */}
+      <div className="flex flex-col gap-6 lg:row-span-2 lg:sticky lg:top-8 lg:self-start">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
+          {article.sourceName && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Medio</span>
+              <span className="font-medium">{article.sourceName}</span>
+            </div>
+          )}
+          {article.contentType && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Tipo</span>
+              <span className="font-medium">{article.contentType}</span>
+            </div>
+          )}
+          {article.publishedAt && (
+            <div className="flex justify-between gap-2">
+              <span className="text-muted-foreground">Fecha</span>
+              <span className="font-medium">{article.publishedAt.slice(0, 10)}</span>
+            </div>
+          )}
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">Comentarios</span>
+            <span className={article.hasComments ? "font-medium" : "text-muted-foreground italic"}>
+              {article.hasComments ? "Con comentarios" : "Sin comentarios"}
+            </span>
+          </div>
+          {(article.articleUrl || article.slug) && (
+            <div className="flex flex-col gap-2 border-t border-border pt-3">
+              {article.articleUrl && (
+                <IconButton
+                  href={article.articleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  icon={ExternalLink}
+                  className="w-full"
+                >
+                  Link a la fuente
+                </IconButton>
+              )}
+              {article.slug && (
+                <IconButton
+                  href={`/noticia/${article.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outline"
+                  icon={Eye}
+                  className="w-full"
+                >
+                  Ver artículo
+                </IconButton>
+              )}
+            </div>
+          )}
         </div>
 
+        <div className="grid gap-1.5">
+          <Label htmlFor="category">Categoría</Label>
+          <Input
+            id="category"
+            name="category"
+            defaultValue={article.category ?? ""}
+            list="news-categories"
+            required
+          />
+          <datalist id="news-categories">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </div>
+      </div>
+
+      {/* Left col rest — mobile: 3rd; desktop: left col row 2 */}
+      <div className="flex flex-col gap-6 min-w-0">
         <div className="grid gap-1.5">
           <Label>Imagen</Label>
           <ImageDropZone value={imageUrl} onChange={setImageUrl} />
@@ -193,80 +268,6 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
           </a>
           {/* Soft-delete only (ADR-003): a hard delete would be re-scraped. */}
           <ArchiveButton archived={article.archived ?? false} />
-        </div>
-      </div>
-
-      {/* Right column: original link, read-only metadata, category */}
-      <div className="flex flex-col gap-6 pt-5 lg:sticky lg:top-8 lg:self-start">
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
-          {article.sourceName && (
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">Medio</span>
-              <span className="font-medium">{article.sourceName}</span>
-            </div>
-          )}
-          {article.contentType && (
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">Tipo</span>
-              <span className="font-medium">{article.contentType}</span>
-            </div>
-          )}
-          {article.publishedAt && (
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">Fecha</span>
-              <span className="font-medium">{article.publishedAt.slice(0, 10)}</span>
-            </div>
-          )}
-          <div className="flex justify-between gap-2">
-            <span className="text-muted-foreground">Comentarios</span>
-            <span className={article.hasComments ? "font-medium" : "text-muted-foreground italic"}>
-              {article.hasComments ? "Con comentarios" : "Sin comentarios"}
-            </span>
-          </div>
-          {(article.articleUrl || article.slug) && (
-            <div className="flex flex-col gap-2 border-t border-border pt-3">
-              {article.articleUrl && (
-                <IconButton
-                  href={article.articleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="outline"
-                  icon={ExternalLink}
-                  className="w-full"
-                >
-                  Link a la fuente
-                </IconButton>
-              )}
-              {article.slug && (
-                <IconButton
-                  href={`/noticia/${article.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="outline"
-                  icon={Eye}
-                  className="w-full"
-                >
-                  Ver artículo
-                </IconButton>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="category">Categoría</Label>
-          <Input
-            id="category"
-            name="category"
-            defaultValue={article.category ?? ""}
-            list="news-categories"
-            required
-          />
-          <datalist id="news-categories">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
         </div>
       </div>
     </form>

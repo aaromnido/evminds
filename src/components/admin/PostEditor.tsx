@@ -113,25 +113,138 @@ export default function PostEditor({
         </p>
       )}
 
-      {/* Left column: title, slug, image, alt, excerpt, content, buttons */}
-      <div className="flex flex-col gap-6">
+      {/* Title + slug — mobile: 1st; desktop: left col row 1 */}
+      <div className="grid gap-1.5">
+        <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+        <Input
+          id="title"
+          name="title"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          required
+        />
+        <SlugField
+          slug={slug}
+          onChange={setSlug}
+          onManualEdit={() => setSlugEdited(true)}
+          prefix="/articulo/"
+        />
+      </div>
+
+      {/* Right sidebar — mobile: 2nd (between title and image); desktop: right col spanning both rows */}
+      <div className="flex flex-col gap-6 lg:row-span-2 lg:sticky lg:top-8 lg:self-start">
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <Input
-            id="title"
-            name="title"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            required
-          />
-          <SlugField
-            slug={slug}
-            onChange={setSlug}
-            onManualEdit={() => setSlugEdited(true)}
-            prefix="/articulo/"
-          />
+          <Label>Estado</Label>
+          <div className="inline-flex w-fit overflow-hidden rounded-md border border-input text-sm">
+            <button
+              type="button"
+              onClick={() => setStatus("draft")}
+              className={cn(
+                "px-3 py-1.5 transition-colors",
+                status === "draft"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Borrador
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("published")}
+              className={cn(
+                "border-l border-input px-3 py-1.5 transition-colors",
+                status === "published"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Publicado
+            </button>
+          </div>
+          <input type="hidden" name="status" value={status} />
         </div>
 
+        <div className="grid gap-1.5">
+          <Label htmlFor="published_at">Fecha de publicación</Label>
+          <Input
+            id="published_at"
+            name="published_at"
+            type="datetime-local"
+            defaultValue={post?.published_at ?? ""}
+          />
+          <p className="text-xs text-muted-foreground">
+            Futura = programado · vacío + publicado = ahora.
+          </p>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="category">Categoría</Label>
+          <select
+            id="category"
+            name="category"
+            defaultValue={post?.category ?? CATEGORIES[0]}
+            required
+            className={fieldClass}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="tag-input">Tags</Label>
+          <input type="hidden" name="tags" value={tags.join(",")} />
+          <div
+            className={cn(
+              fieldClass,
+              "flex min-h-9 flex-wrap gap-1.5 py-1.5",
+              tags.length > 0 && "pb-1.5",
+            )}
+            onClick={() => document.getElementById("tag-input")?.focus()}
+          >
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="h-6 gap-1 px-2 py-0.5 text-xs">
+                {tag}
+                <button
+                  type="button"
+                  aria-label={`Eliminar tag ${tag}`}
+                  onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
+                  className="ml-0.5 rounded-full opacity-60 hover:opacity-100"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            ))}
+            <input
+              id="tag-input"
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  const val = tagInput.trim().replace(/,$/, "");
+                  if (val && !tags.includes(val)) {
+                    setTags((prev) => [...prev, val]);
+                  }
+                  setTagInput("");
+                } else if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
+                  setTags((prev) => prev.slice(0, -1));
+                }
+              }}
+              placeholder={tags.length === 0 ? "Tesla, batería, …" : ""}
+              className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Pulsa Enter o coma para añadir.</p>
+        </div>
+      </div>
+
+      {/* Left col rest — mobile: 3rd; desktop: left col row 2 */}
+      <div className="flex flex-col gap-6">
         <div className="grid gap-1.5">
           <Label>Imagen</Label>
           <ImageDropZone value={imageUrl} onChange={setImageUrl} folder="posts" />
@@ -215,118 +328,6 @@ export default function PostEditor({
         </div>
       </div>
 
-      {/* Right column: metadata fields */}
-      <div className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start">
-        <div className="grid gap-1.5">
-          <Label>Estado</Label>
-          <div className="inline-flex w-fit overflow-hidden rounded-md border border-input text-sm">
-            <button
-              type="button"
-              onClick={() => setStatus("draft")}
-              className={cn(
-                "px-3 py-1.5 transition-colors",
-                status === "draft"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Borrador
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatus("published")}
-              className={cn(
-                "border-l border-input px-3 py-1.5 transition-colors",
-                status === "published"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Publicado
-            </button>
-          </div>
-          <input type="hidden" name="status" value={status} />
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="published_at">Fecha de publicación</Label>
-          <Input
-            id="published_at"
-            name="published_at"
-            type="datetime-local"
-            defaultValue={post?.published_at ?? ""}
-          />
-          <p className="text-xs text-muted-foreground">
-            Futura = programado · vacío + publicado = ahora.
-          </p>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="category">Categoría</Label>
-          <select
-            id="category"
-            name="category"
-            defaultValue={post?.category ?? CATEGORIES[0]}
-            required
-            className={fieldClass}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="tag-input">Tags</Label>
-          {/* Hidden input carries the comma-separated value on submit — no API change needed. */}
-          <input type="hidden" name="tags" value={tags.join(",")} />
-          <div
-            className={cn(
-              fieldClass,
-              "flex min-h-9 flex-wrap gap-1.5 py-1.5",
-              tags.length > 0 && "pb-1.5",
-            )}
-            onClick={() => document.getElementById("tag-input")?.focus()}
-          >
-            {tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="h-6 gap-1 px-2 py-0.5 text-xs">
-                {tag}
-                <button
-                  type="button"
-                  aria-label={`Eliminar tag ${tag}`}
-                  onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
-                  className="ml-0.5 rounded-full opacity-60 hover:opacity-100"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            ))}
-            <input
-              id="tag-input"
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter" || e.key === ",") {
-                  e.preventDefault();
-                  const val = tagInput.trim().replace(/,$/, "");
-                  if (val && !tags.includes(val)) {
-                    setTags((prev) => [...prev, val]);
-                  }
-                  setTagInput("");
-                } else if (e.key === "Backspace" && tagInput === "" && tags.length > 0) {
-                  setTags((prev) => prev.slice(0, -1));
-                }
-              }}
-              placeholder={tags.length === 0 ? "Tesla, batería, …" : ""}
-              className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Pulsa Enter o coma para añadir.</p>
-        </div>
-      </div>
     </form>
   );
 }
