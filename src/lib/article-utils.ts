@@ -72,6 +72,19 @@ export function getAvailableCategorySlugs(categoryRows: any[] | null): string[] 
   );
 }
 
+/** Minimum age (days) an archived article must have before it can be hard-deleted.
+ *  Prevents resurrection: the scraper re-inserts any URL still present in the source feed.
+ *  After 30 days URLs have rolled off their feeds, so deletion is safe. (ADR-003) */
+export const ARCHIVED_DELETE_MIN_AGE_DAYS = 30;
+
+/** Returns true if an archived article is eligible for hard-deletion (published >30 days ago). */
+export function isDeletableArchived(item: { archived: boolean; published_at: string }): boolean {
+  if (!item.archived) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - ARCHIVED_DELETE_MIN_AGE_DAYS);
+  return new Date(item.published_at) < cutoff;
+}
+
 /**
  * Serialize article data for bookmark storage.
  * Returns a JSON string matching the BookmarkEntry shape, or empty string if no id.
