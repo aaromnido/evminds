@@ -36,6 +36,21 @@ function normalize(s: string): string {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
+/**
+ * Parse a query the same way the search_articles RPC does: a fully double-quoted
+ * query ("avances en silicio") is an exact phrase; otherwise it's word tokens
+ * (matched with AND). Returns normalized (accent-folded, lowercased) values.
+ */
+function parseQuery(raw: string): { isPhrase: boolean; phrase: string; words: string[] } {
+  const trimmed = raw.trim();
+  const isPhrase =
+    trimmed.length >= 3 && trimmed.startsWith('"') && trimmed.endsWith('"');
+  const inner = isPhrase ? trimmed.slice(1, -1) : trimmed.replace(/"/g, " ");
+  const phrase = normalize(inner);
+  const words = phrase.split(/\s+/).filter((w) => w.length >= 2);
+  return { isPhrase, phrase, words };
+}
+
 interface SearchResult {
   id: string;
   title: string;
@@ -52,8 +67,9 @@ interface SearchResult {
  * is title/excerpt/category/tags (not body); ARTICLE shape/URL, id =
  * articulo-${slug}. The helper already dedups (.md wins) and orders newest-first.
  */
-async function searchOwnContent(q: string): Promise<SearchResult[]> {
-  const nq = normalize(q);
+async function searchOwnContent(
+  parsed: { isPhrase: boolean; phrase: string; words: string[] },
+): Promise<SearchResult[]> {
   const own = await getOwnArticles();
 
   return own
@@ -61,7 +77,10 @@ async function searchOwnContent(q: string): Promise<SearchResult[]> {
       const haystack = normalize(
         [a.title, a.excerpt, a.category, a.tags.join(" ")].join(" "),
       );
-      return haystack.includes(nq);
+      // Quoted query → exact phrase; otherwise every word must appear (AND).
+      return parsed.isPhrase
+        ? haystack.includes(parsed.phrase)
+        : parsed.words.every((w) => haystack.includes(w));
     })
     .map((a) => ({
       id: `articulo-${a.slug}`,
@@ -82,10 +101,16 @@ export const GET: APIRoute = async ({ url }) => {
     return json({ results: [] });
   }
 
+  // Parse once (phrase vs words); bail if there's nothing searchable (e.g. `""`).
+  const parsed = parseQuery(q);
+  if (!parsed.phrase || (!parsed.isPhrase && parsed.words.length === 0)) {
+    return json({ results: [] });
+  }
+
   try {
     // Two sources in parallel: own content (markdown + posts) + DB news/videos.
     const [ownContent, dbRes] = await Promise.all([
-      searchOwnContent(q),
+      searchOwnContent(parsed),
       supabase
         .rpc("search_articles", { search_query: q, max_results: SEARCH_LIMIT })
         .select(ARTICLE_SELECT),
