@@ -52,7 +52,7 @@ const RELATED_ARTICLES_LIMIT = 2;
 // Fetch related articles (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
-  .select("id, slug, title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)")
+  .select("id, slug, title, seo_title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)")
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
@@ -84,7 +84,7 @@ const metaDescription = article.ai_summary
 const articleDataJson = serializeBookmarkData({
   id: article.id,
   slug: article.slug,
-  title: article.title,
+  title: displayTitle,
   excerpt: article.excerpt,
   image: article.image_url || "",
   scraped_at: article.scraped_at || "",
@@ -102,7 +102,7 @@ const articleDataJson = serializeBookmarkData({
   breadcrumbs={[
     { name: "Inicio", url: "/" },
     ...(categorySlug ? [{ name: article.category, url: `/categoria/${categorySlug}` }] : []),
-    { name: article.title, url: getNewsUrl(article.slug) },
+    { name: displayTitle, url: getNewsUrl(article.slug) },
   ]}
 >
   <main class="article-detail">
@@ -218,7 +218,7 @@ const articleDataJson = serializeBookmarkData({
       </a>
 
       <!-- Share buttons -->
-      <ShareButtons url={canonicalUrl} title={article.title} />
+      <ShareButtons url={canonicalUrl} title={displayTitle} />
 
       <!-- Disqus comments -->
       <DisqusComments

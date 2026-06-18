@@ -98,7 +98,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     const dbResults = normalizeArticles(dbRes.data).map((a) => ({
       id: a.id,
-      title: a.title,
+      title: a.seo_title || a.title,
       href: getContentUrl(a.slug, a.content_type),
       source: a.source_name,
       category: a.category,

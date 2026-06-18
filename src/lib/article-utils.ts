@@ -11,7 +11,7 @@ export const API_DEFAULT_LIMIT = 12;
 
 /** Shared Supabase select fields for article listings with source join */
 export const ARTICLE_SELECT =
-  "id, slug, title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)";
+  "id, slug, title, seo_title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)";
 
 /**
  * Normalize a raw Supabase article row (with joined source) into ArticleData.
@@ -23,6 +23,7 @@ export function normalizeArticle(raw: any): ArticleData {
     id: raw.id,
     slug: raw.slug,
     title: raw.title,
+    seo_title: raw.seo_title ?? null,
     excerpt: raw.excerpt,
     image_url: raw.image_url,
     article_url: raw.article_url,
@@ -45,7 +46,8 @@ export function normalizeArticles(rawData: any[] | null): ArticleData[] {
 export function mapArticleToProps(article: ArticleData) {
   return {
     image: article.image_url || "/images/placeholder-image.webp",
-    title: article.title,
+    // Public-facing headline: SEO title when present, original title as fallback.
+    title: article.seo_title || article.title,
     date: formatDate(article.published_at.toISOString()),
     excerpt: article.excerpt,
     source: article.source_name,

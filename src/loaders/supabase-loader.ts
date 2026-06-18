@@ -9,6 +9,7 @@ export interface ArticleData {
   id: string;
   slug: string;
   title: string;
+  seo_title: string | null;
   excerpt: string;
   image_url: string | null;
   article_url: string;
@@ -55,6 +56,7 @@ export function createSupabaseArticlesLoader(
             id,
             slug,
             title,
+            seo_title,
             excerpt,
             image_url,
             article_url,
@@ -105,6 +107,7 @@ export function createSupabaseArticlesLoader(
                 id: article.id,
                 slug: article.slug,
                 title: article.title,
+                seo_title: article.seo_title ?? null,
                 excerpt: article.excerpt,
                 image_url: article.image_url,
                 article_url: article.article_url,
@@ -151,6 +154,7 @@ export function createSupabaseArticlesLoader(
             id,
             slug,
             title,
+            seo_title,
             excerpt,
             image_url,
             article_url,
@@ -191,6 +195,7 @@ export function createSupabaseArticlesLoader(
           id: data.id,
           slug: data.slug,
           title: data.title,
+          seo_title: data.seo_title ?? null,
           excerpt: data.excerpt,
           image_url: data.image_url,
           article_url: data.article_url,

@@ -51,7 +51,8 @@ function formatDate(dateString: string): string {
  */
 function renderArticleCard(article: any): HTMLElement {
   const image = article.image_url || "/images/placeholder-image.webp";
-  const title = article.title;
+  // Public-facing headline: SEO title when present, original title as fallback.
+  const title = article.seo_title || article.title;
   const date = formatDate(article.published_at);
   const source = article.source.name;
   const category = article.category;

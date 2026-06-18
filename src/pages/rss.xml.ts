@@ -9,7 +9,7 @@ const RSS_ARTICLES_LIMIT = 50;
 export async function GET(context: APIContext) {
   const { data: newsArticles } = await supabase
     .from("articles")
-    .select("title, excerpt, slug, published_at, category")
+    .select("title, seo_title, excerpt, slug, published_at, category")
     .order("scraped_at", { ascending: false })
     .limit(RSS_ARTICLES_LIMIT);
 
@@ -22,7 +22,7 @@ export async function GET(context: APIContext) {
   }));
 
   const newsItems = (newsArticles || []).map((article: any) => ({
-    title: article.title,
+    title: article.seo_title || article.title,
     description: article.excerpt,
     link: getNewsUrl(article.slug),
     pubDate: new Date(article.published_at),

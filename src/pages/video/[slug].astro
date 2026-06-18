@@ -37,12 +37,16 @@ const source = Array.isArray(video.source)
   ? video.source[0]
   : video.source;
 
+// SEO-optimized headline: feeds <title>, og:title and the visible <h1>.
+// Falls back to the source title when no seo_title was generated (old videos).
+const displayTitle = video.seo_title || video.title;
+
 const RELATED_VIDEOS_LIMIT = 2;
 
 // Fetch related videos (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
-  .select("id, slug, title, excerpt, image_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)")
+  .select("id, slug, title, seo_title, excerpt, image_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)")
   .eq("content_type", "video")
   .eq("category", video.category)
   .neq("id", video.id)
@@ -69,7 +73,7 @@ const thumbnailUrl = video.image_url || (youtubeVideoId
 const articleDataJson = serializeBookmarkData({
   id: video.id,
   slug: video.slug,
-  title: video.title,
+  title: displayTitle,
   excerpt: video.excerpt,
   image: thumbnailUrl,
   scraped_at: video.scraped_at || "",
@@ -113,7 +117,7 @@ const videoObject = {
 ---
 
 <BaseLayout
-  title={`${video.title} - EVMinds`}
+  title={`${displayTitle} - EVMinds`}
   description={video.excerpt}
   image={thumbnailUrl}
   type="article"
@@ -123,7 +127,7 @@ const videoObject = {
     { name: "Inicio", url: "/" },
     { name: "Vídeos", url: "/videos" },
     ...(categorySlug ? [{ name: video.category, url: `/categoria/${categorySlug}` }] : []),
-    { name: video.title, url: getVideoUrl(video.slug) },
+    { name: displayTitle, url: getVideoUrl(video.slug) },
   ]}
 >
   <main class="video-detail">
@@ -131,7 +135,7 @@ const videoObject = {
 
     <article class="video-detail__content">
       <!-- Title -->
-      <h1 class="video-detail__title">{video.title}</h1>
+      <h1 class="video-detail__title">{displayTitle}</h1>
 
       <!-- YouTube embed -->
       {youtubeVideoId ? (
@@ -216,7 +220,7 @@ const videoObject = {
       </a>
 
       <!-- Share buttons -->
-      <ShareButtons url={canonicalUrl} title={video.title} />
+      <ShareButtons url={canonicalUrl} title={displayTitle} />
 
       <!-- Disqus comments -->
       <DisqusComments
