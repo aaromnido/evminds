@@ -47,6 +47,7 @@ export interface Database {
           ai_warnings: { type: string }[] | null;
           ai_discussion_prompt: string | null;
           ai_generated_at: string | null;
+          seo_title: string | null;
           archived: boolean;
         };
         Insert: Omit<Database["public"]["Tables"]["articles"]["Row"], "id" | "scraped_at" | "archived">;
