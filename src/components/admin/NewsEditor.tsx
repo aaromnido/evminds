@@ -149,10 +149,10 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
             <span
               className={cn(
                 "text-xs tabular-nums",
-                seoTitle.length > 60 ? "text-destructive" : "text-muted-foreground",
+                seoTitle.length > 80 ? "text-destructive" : "text-muted-foreground",
               )}
             >
-              {seoTitle.length}/60
+              {seoTitle.length}/80
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
               name="seo_title"
               value={seoTitle}
               onChange={(e) => setSeoTitle(e.target.value)}
-              maxLength={80}
+              maxLength={90}
               placeholder="Marca + modelo + ángulo (vacío → usa el título)"
               className="flex-1"
             />
@@ -177,7 +177,8 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
           </div>
           <p className="text-xs text-muted-foreground">
             Alimenta el {"<title>"}, og:title y el H1. Si se deja vacío, se usa el
-            título. Objetivo ≤ 55 caracteres.
+            título. Máx. 75 caracteres, con lo esencial en los primeros 60 (lo
+            que Google muestra en sus resultados).
           </p>
           {seoMsg && (
             <span

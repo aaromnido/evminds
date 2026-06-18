@@ -32,7 +32,7 @@ export interface SummaryResult {
   warnings: SummaryWarning[];
   /** Soft 1-2 sentence invitation to comment, tied to the article's key debate. */
   discussionPrompt?: string;
-  /** SEO-optimized headline (brand+model first, ≤55 chars). Feeds <title>/og:title/<h1>. */
+  /** SEO-optimized headline (brand+model first, ≤75 chars). Feeds <title>/og:title/<h1>. */
   seoTitle?: string;
   /** Spanish translation of the original title — only set when source.lang !== 'es' */
   translatedTitle?: string;
@@ -66,9 +66,10 @@ function sleep(ms: number): Promise<void> {
 const SEO_TITLE_RULES = `Genera un "seo_title": un titular optimizado para SEO en español de España, pensado para el <title>, el og:title y el <h1> visible de la noticia.
 
 Reglas OBLIGATORIAS:
-- Longitud: objetivo 50 caracteres o menos, MÁXIMO ABSOLUTO 55. Una sola línea. Sin Markdown, sin comillas, sin guiones largos (—): separa con comas.
+- Longitud: MÁXIMO ABSOLUTO 75 caracteres. Coloca lo esencial (marca + modelo + ángulo principal) en los primeros 60, porque Google solo muestra ~60 en el resultado de búsqueda; usa hasta 75 cuando aporte contexto honesto que ayude al lector a decidir si la noticia le interesa. Una sola línea. Sin Markdown, sin comillas, sin guiones largos (—): separa con comas.
 - EMPIEZA por la marca + el modelo del vehículo, separados del resto por una COMA (ej. "Luxeed RX, el sedán de Huawei", "MG2 2027, el eléctrico barato"). Es lo que busca la gente. Si la noticia NO trata de un modelo concreto (una tecnología, un mercado, una empresa, una persona), empieza por el sujeto principal de búsqueda (la marca, la tecnología o el tema).
 - Al referirte al vehículo en genérico, usa el MASCULINO: "el eléctrico", "el híbrido", "el SUV" (nunca "la eléctrica" / "la híbrida").
+- Trato al lector: TUTEA, nunca uses el "usted" formal. Cuando el titular se dirija a la persona que lee, usa "tú", "tu", "te", "tuyo" (cercanía). IMPORTANTE: no confundas esto con el posesivo de tercera persona: cuando "su" se refiere a una marca o empresa (ej. "Rivian no decide cuál será su próximo eléctrico"), es correcto y se mantiene, NO lo cambies a "tu".
 - Titular HONESTO, CERO clickbait. Describe lo que el artículo dice de verdad. Nada de cebo, hype, "no te creerás", incógnitas artificiales ni promesas exageradas. Si el titular original de la fuente es cebo, recondúcelo a algo informativo conservando el ángulo real.
 - Ciclo de autonomía: si el titular incluye una cifra de autonomía 100% eléctrica, etiqueta el ciclo de homologación según el mercado: "X km WLTP" para coches de mercado europeo, "X km CLTC" para mercado chino (es la homologación legal de cada mercado, no es inventar). Si la cifra es de un híbrido enchufable (autonomía combinada, no eléctrica pura), usa "autonomía combinada" y NO pongas ciclo.
 - Coletilla de mercado — SOLO si el título o el extracto originales lo respaldan de forma LITERAL (la misma regla que los warnings: NO lo infieras por la marca, la geografía del fabricante ni el contexto general):
