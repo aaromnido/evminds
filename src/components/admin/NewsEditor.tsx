@@ -149,10 +149,10 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
             <span
               className={cn(
                 "text-xs tabular-nums",
-                seoTitle.length > 55 ? "text-destructive" : "text-muted-foreground",
+                seoTitle.length > 60 ? "text-destructive" : "text-muted-foreground",
               )}
             >
-              {seoTitle.length}/55
+              {seoTitle.length}/60
             </span>
           </div>
           <div className="flex items-center gap-2">
