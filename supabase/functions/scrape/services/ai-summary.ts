@@ -32,6 +32,8 @@ export interface SummaryResult {
   warnings: SummaryWarning[];
   /** Soft 1-2 sentence invitation to comment, tied to the article's key debate. */
   discussionPrompt?: string;
+  /** SEO-optimized headline (brand+model first, ≤55 chars). Feeds <title>/og:title/<h1>. */
+  seoTitle?: string;
   /** Spanish translation of the original title — only set when source.lang !== 'es' */
   translatedTitle?: string;
   /** Spanish translation of the original excerpt — only set when source.lang !== 'es' */
@@ -57,6 +59,32 @@ const RETRY_DELAY_MS = 500;
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Single source of truth for the SEO-title style. Used both by the bundled
+// prompt (buildPrompt) and the standalone generator (generateSeoTitle / the
+// admin "Generar con IA" button), so the editorial line stays identical.
+const SEO_TITLE_RULES = `Genera un "seo_title": un titular optimizado para SEO en español de España, pensado para el <title>, el og:title y el <h1> visible de la noticia.
+
+Reglas OBLIGATORIAS:
+- Longitud: objetivo 50 caracteres o menos, MÁXIMO ABSOLUTO 55. Una sola línea. Sin Markdown, sin comillas, sin guiones largos (—): separa con comas.
+- EMPIEZA por la marca + el modelo del vehículo, separados del resto por una COMA (ej. "Luxeed RX, el sedán de Huawei", "MG2 2027, el eléctrico barato"). Es lo que busca la gente. Si la noticia NO trata de un modelo concreto (una tecnología, un mercado, una empresa, una persona), empieza por el sujeto principal de búsqueda (la marca, la tecnología o el tema).
+- Al referirte al vehículo en genérico, usa el MASCULINO: "el eléctrico", "el híbrido", "el SUV" (nunca "la eléctrica" / "la híbrida").
+- Titular HONESTO, CERO clickbait. Describe lo que el artículo dice de verdad. Nada de cebo, hype, "no te creerás", incógnitas artificiales ni promesas exageradas. Si el titular original de la fuente es cebo, recondúcelo a algo informativo conservando el ángulo real.
+- Ciclo de autonomía: si el titular incluye una cifra de autonomía 100% eléctrica, etiqueta el ciclo de homologación según el mercado: "X km WLTP" para coches de mercado europeo, "X km CLTC" para mercado chino (es la homologación legal de cada mercado, no es inventar). Si la cifra es de un híbrido enchufable (autonomía combinada, no eléctrica pura), usa "autonomía combinada" y NO pongas ciclo.
+- Coletilla de mercado — SOLO si el título o el extracto originales lo respaldan de forma LITERAL (la misma regla que los warnings: NO lo infieras por la marca, la geografía del fabricante ni el contexto general):
+  · Si dice literalmente que llega / se vende / aún no en España o Europa → coletilla tipo "llega a España", "a la venta en España", "aún no en España".
+  · Si el lanzamiento, la venta o el precio son exclusivos de un mercado no europeo (China, USA, Hong Kong, Asia), o aplicaría el warning launch_non_european → NOMBRA el mercado real: "de momento solo en China", "solo en China", "solo en EE.UU.".
+  · Si el texto NO menciona mercado → SIN coletilla: solo marca + modelo + el ángulo real.
+- La honestidad manda sobre el patrón: si una coletilla no cabe en el límite o suena forzada, déjala fuera; nunca recortes la honestidad del ángulo para meter una coletilla.
+
+Ejemplos correctos:
+- "MG2 2027, el eléctrico barato que llega a España"
+- "BYD Da Tang, 950 km CLTC, de momento solo en China"
+- "BMW i3, 469 CV y 900 km WLTP, reservas ya"
+- "Elon Musk cobra 116.000 millones de dólares de Tesla"
+Ejemplos INCORRECTOS:
+- "No te creerás la autonomía de este coche" (clickbait)
+- "Un SUV con 640 km por 18.000 €" (oculta que es solo China)`;
 
 function buildPrompt(
   title: string,
@@ -112,17 +140,21 @@ Ejemplos del tono buscado (referencia exacta):
 - "Los ánodos de silicio prometen mejor gestión térmica, y AMG ha decidido apostar por ello junto a Sila. ¿Crees que las prestaciones reales acompañarán al anuncio? Cuéntanos qué piensas."
 - "El Gamma es la pieza grande del relanzamiento de Lancia, y compartir plataforma con Peugeot y Citroën tiene su sentido industrial. ¿Tienes una opinión sobre el rumbo que está tomando la marca? Nos interesa leerte."`;
 
+  const seoTitleSection = `
+
+4. ${SEO_TITLE_RULES}`;
+
   const translationSections = isEnglish
     ? `
 
-4. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+5. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
 
-5. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
+6. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
     : '';
 
   const outputExample = isEnglish
-    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "translated_title": "...", "translated_excerpt": "..."}`
-    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "..."}`;
+    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "seo_title": "...", "translated_title": "...", "translated_excerpt": "..."}`
+    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "...", "seo_title": "..."}`;
 
   const inputBlock = isEnglish
     ? `Título original (inglés): ${title}
@@ -134,7 +166,7 @@ URL fuente: ${articleUrl}`;
 
   return `${intro}
 
-${sharedBody}${translationSections}
+${sharedBody}${seoTitleSection}${translationSections}
 
 Formato de salida (ejemplo):
 ${outputExample}
@@ -154,8 +186,9 @@ function buildResponseSchema(isEnglish: boolean) {
       },
     },
     discussion_prompt: { type: 'STRING' },
+    seo_title: { type: 'STRING' },
   };
-  const required = ['summary', 'warnings', 'discussion_prompt'];
+  const required = ['summary', 'warnings', 'discussion_prompt', 'seo_title'];
 
   // For non-Spanish sources, also require Spanish translations of title/excerpt
   // so the article can be stored in Spanish in the database.
@@ -188,6 +221,16 @@ function summaryMarkdownToHtml(text: string): string {
       return `<p>${safe}</p>`;
     })
     .join('\n');
+}
+
+// Extracts and trims the seo_title from a parsed Gemini object. Shared by the
+// bundled path (parseAndValidate) and the standalone generateSeoTitle.
+function parseSeoTitle(raw: unknown): string | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.seo_title !== 'string') return null;
+  const trimmed = obj.seo_title.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function parseAndValidate(raw: unknown): SummaryResult | null {
@@ -224,6 +267,8 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
   if (typeof obj.discussion_prompt === 'string' && obj.discussion_prompt.trim()) {
     result.discussionPrompt = obj.discussion_prompt.trim();
   }
+  const seoTitle = parseSeoTitle(obj);
+  if (seoTitle) result.seoTitle = seoTitle;
   if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
     result.translatedTitle = obj.translated_title.trim();
   }
@@ -331,5 +376,120 @@ export async function generateSummary(
   } catch (error) {
     console.error('AI summary error:', error);
     return EMPTY;
+  }
+}
+
+function buildSeoTitlePrompt(title: string, excerpt: string, lang: string): string {
+  const isEnglish = lang.toLowerCase().startsWith('en');
+  const inputBlock = isEnglish
+    ? `Título original (inglés): ${title}
+Extracto original (inglés): ${excerpt}`
+    : `Título: ${title}
+Extracto: ${excerpt}`;
+
+  return `Eres un editor de noticias sobre vehículos eléctricos para el mercado español (ES-ES). A partir del título y el extracto de una noticia, genera ÚNICAMENTE un "seo_title" en español de España.
+
+${SEO_TITLE_RULES}
+
+Formato de salida (ejemplo):
+{"seo_title": "..."}
+
+${inputBlock}`;
+}
+
+/**
+ * Standalone SEO-title generator for the admin "Generar con IA" button.
+ * A focused, cheap Gemini call that returns ONLY the seo_title string, reusing
+ * the same shared style rules as the bundled summary path. Always outputs ES-ES.
+ * @returns the trimmed seo_title, or null on any failure.
+ */
+export async function generateSeoTitle(
+  title: string,
+  excerpt: string,
+  lang: string,
+): Promise<string | null> {
+  if (!title || !excerpt) return null;
+
+  if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY missing; skipping SEO title');
+    return null;
+  }
+
+  const requestBody = JSON.stringify({
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: buildSeoTitlePrompt(title, excerpt, lang) }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 256,
+      response_mime_type: 'application/json',
+      response_schema: {
+        type: 'OBJECT',
+        properties: { seo_title: { type: 'STRING' } },
+        required: ['seo_title'],
+      },
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  });
+
+  try {
+    let response: Response | null = null;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody,
+      });
+
+      if (response.ok) break;
+
+      if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_ATTEMPTS) {
+        console.warn(
+          `Gemini ${response.status} on attempt ${attempt}/${MAX_ATTEMPTS}; retrying in ${RETRY_DELAY_MS * attempt}ms`,
+        );
+        await sleep(RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
+      const errBody = await response.text();
+      console.error(`Gemini API error (${response.status}): ${errBody}`);
+      return null;
+    }
+
+    if (!response || !response.ok) {
+      const status = response?.status ?? 'unknown';
+      console.error(`Gemini API exhausted retries (last status: ${status})`);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (typeof text !== 'string') {
+      console.error('Gemini SEO title response missing text content:', JSON.stringify(data));
+      return null;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      console.error('Gemini SEO title response not valid JSON:', text);
+      return null;
+    }
+
+    const seoTitle = parseSeoTitle(parsed);
+    if (!seoTitle) {
+      console.error('Gemini SEO title failed validation:', text);
+      return null;
+    }
+
+    return seoTitle;
+  } catch (error) {
+    console.error('SEO title error:', error);
+    return null;
   }
 }
