@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bot, ExternalLink, Eye } from "lucide-react";
+import { Bot, ExternalLink, Eye, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buttonVariants } from "@/components/ui/button";
@@ -16,6 +16,9 @@ export interface NewsFormValues {
   category?: string;
   image_url?: string;
   archived?: boolean;
+  // SEO title (Gemini or hand-edited): feeds <title>/og:title/<h1>, falls back
+  // to `title` when empty. Has its own independent "Generar con IA" button.
+  seo_title?: string;
   // AI fields (Gemini): summary + discussion prompt are editable; warnings and
   // the generated-at timestamp are shown read-only.
   ai_summary?: string;
@@ -46,9 +49,41 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
   const [excerpt, setExcerpt] = useState(article.excerpt ?? "");
   const [aiSummary, setAiSummary] = useState(article.ai_summary ?? "");
   const [imageUrl, setImageUrl] = useState(article.image_url ?? "");
+  const [seoTitle, setSeoTitle] = useState(article.seo_title ?? "");
 
   const [excerptError, setExcerptError] = useState("");
   const [regenerating, setRegenerating] = useState(false);
+  const [seoGenerating, setSeoGenerating] = useState(false);
+  const [seoMsg, setSeoMsg] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+
+  // Independent "Generar con IA" for the SEO title: regenerates ONLY seo_title
+  // (only: 'seo_title') and fills the input, without touching the other fields.
+  const generateSeoTitle = async () => {
+    setSeoMsg(null);
+    setSeoGenerating(true);
+    try {
+      const res = await fetch(`/admin/noticias/${id}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ only: "seo_title" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok || !data.seo_title) {
+        throw new Error(data.error || "No se pudo generar el título SEO.");
+      }
+      setSeoTitle(data.seo_title);
+      setSeoMsg({ ok: true, text: "Título SEO generado. Revisa y guarda." });
+    } catch (err) {
+      setSeoMsg({
+        ok: false,
+        text: err instanceof Error ? err.message : "Error al generar.",
+      });
+    } finally {
+      setSeoGenerating(false);
+    }
+  };
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
@@ -101,10 +136,61 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </p>
       )}
 
-      {/* Title — mobile: 1st; desktop: left col row 1 */}
-      <div className="grid gap-1.5">
-        <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
-        <Input id="title" name="title" defaultValue={article.title ?? ""} required />
+      {/* Title + SEO title — mobile: 1st; desktop: left col row 1 */}
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-1.5">
+          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <Input id="title" name="title" defaultValue={article.title ?? ""} required />
+        </div>
+
+        <div className="grid gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="seo_title">Título SEO</Label>
+            <span
+              className={cn(
+                "text-xs tabular-nums",
+                seoTitle.length > 55 ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {seoTitle.length}/55
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              id="seo_title"
+              name="seo_title"
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+              maxLength={80}
+              placeholder="Marca + modelo + ángulo (vacío → usa el título)"
+              className="flex-1"
+            />
+            <IconButton
+              type="button"
+              variant="outline"
+              icon={Sparkles}
+              disabled={seoGenerating}
+              onClick={generateSeoTitle}
+            >
+              {seoGenerating ? "Generando…" : "Generar con IA"}
+            </IconButton>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Alimenta el {"<title>"}, og:title y el H1. Si se deja vacío, se usa el
+            título. Objetivo ≤ 55 caracteres.
+          </p>
+          {seoMsg && (
+            <span
+              role="status"
+              className={cn(
+                "text-sm",
+                seoMsg.ok ? "text-foreground" : "text-destructive",
+              )}
+            >
+              {seoMsg.text}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Right sidebar — mobile: 2nd (between title and image); desktop: right col spanning both rows */}
