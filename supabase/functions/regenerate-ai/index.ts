@@ -16,7 +16,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-import { generateSummary } from '../scrape/services/ai-summary.ts';
+import { generateSummary, generateSeoTitle } from '../scrape/services/ai-summary.ts';
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -34,10 +34,13 @@ serve(async (req) => {
       return json({ error: 'Unauthorized' }, 401);
     }
 
-    const { id } = await req.json().catch(() => ({ id: undefined }));
+    const { id, only } = await req.json().catch(() => ({ id: undefined }));
     if (!id || typeof id !== 'string') {
       return json({ error: 'Missing article id' }, 400);
     }
+    // `only: 'seo_title'` regenerates ONLY the seo_title column (admin button),
+    // leaving summary/warnings/discussion/title/excerpt untouched.
+    const seoTitleOnly = only === 'seo_title';
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -61,6 +64,22 @@ serve(async (req) => {
     const src = Array.isArray(data.source) ? data.source[0] : data.source;
     const lang: string = src?.lang ?? 'es';
 
+    // Isolated mode: regenerate only the seo_title (admin "Generar con IA" button).
+    if (seoTitleOnly) {
+      const seoTitle = await generateSeoTitle(data.title, data.excerpt, lang);
+      if (!seoTitle) {
+        return json({ error: 'AI generation failed (no seo_title returned)' }, 502);
+      }
+      const { error: seoUpdErr } = await supabase
+        .from('articles')
+        .update({ seo_title: seoTitle })
+        .eq('id', id);
+      if (seoUpdErr) {
+        return json({ error: `Update failed: ${seoUpdErr.message}` }, 500);
+      }
+      return json({ ok: true, seo_title: seoTitle });
+    }
+
     const result = await generateSummary(
       data.title,
       data.excerpt,
@@ -80,6 +99,7 @@ serve(async (req) => {
       ai_warnings: result.warnings.length > 0 ? result.warnings : null,
       ai_discussion_prompt: result.discussionPrompt ?? null,
       ai_generated_at: new Date().toISOString(),
+      seo_title: result.seoTitle ?? null,
     };
     // Replace title/excerpt with the Spanish translation when the source isn't 'es'.
     if (result.translatedTitle) update.title = result.translatedTitle;
@@ -98,6 +118,7 @@ serve(async (req) => {
       ok: true,
       summary: result.summary,
       warnings: result.warnings.map((w) => w.type),
+      seo_title: result.seoTitle ?? null,
       translated: Boolean(result.translatedTitle || result.translatedExcerpt),
     });
   } catch (err) {

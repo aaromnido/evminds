@@ -7,7 +7,7 @@ import type { APIRoute } from "astro";
  * the middleware protects it; holds SCRAPE_SECRET server-side (never shipped to
  * the browser) and forwards the article id to the function.
  */
-export const POST: APIRoute = async ({ params }) => {
+export const POST: APIRoute = async ({ params, request }) => {
   const id = params.id;
   if (!id) return json({ error: "Falta el id." }, 400);
 
@@ -17,6 +17,11 @@ export const POST: APIRoute = async ({ params }) => {
     return json({ error: "Configuración del servidor incompleta." }, 500);
   }
 
+  // Optional `only` ('seo_title') selects the Edge Function's isolated mode that
+  // regenerates just that field; absent → full redo (current behaviour).
+  const body = await request.json().catch(() => ({}));
+  const only = body?.only === "seo_title" ? "seo_title" : undefined;
+
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/regenerate-ai`, {
       method: "POST",
@@ -24,7 +29,7 @@ export const POST: APIRoute = async ({ params }) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${secret}`,
       },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify(only ? { id, only } : { id }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {

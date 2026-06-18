@@ -180,6 +180,7 @@ serve(async (req) => {
               summary: aiSummary,
               warnings: aiWarnings,
               discussionPrompt: aiDiscussionPrompt,
+              seoTitle,
               translatedTitle,
               translatedExcerpt,
             } = await generateSummary(
@@ -231,6 +232,7 @@ serve(async (req) => {
               ai_warnings: aiWarnings.length > 0 ? aiWarnings : null,
               ai_discussion_prompt: aiDiscussionPrompt ?? null,
               ai_generated_at: aiSummary ? new Date().toISOString() : null,
+              seo_title: seoTitle ?? null,
             };
 
             if (youtubeVideoId) {
