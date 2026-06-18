@@ -38,6 +38,7 @@ export interface NewsListItem {
   id: string;
   slug: string;
   title: string;
+  seo_title: string | null;
   category: string;
   content_type: string;
   published_at: string;
@@ -359,8 +360,8 @@ export default function NewsList({
                             )}
                           </TableCell>
                           <TableCell className="max-w-0 min-w-[60vw] font-medium md:min-w-0">
-                            <span className="block truncate" title={a.title}>
-                              {a.title}
+                            <span className="block truncate" title={a.seo_title || a.title}>
+                              {a.seo_title || a.title}
                             </span>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
@@ -376,6 +377,7 @@ export default function NewsList({
                               )}
                               {a.archived && <Badge variant="secondary" className="h-6 px-3 py-1">Archivada</Badge>}
                               {!a.ai_summary && <Badge variant="default" className="h-6 px-3 py-1">Sin IA</Badge>}
+                              {!a.seo_title && <Badge variant="default" className="h-6 px-3 py-1">Sin SEO</Badge>}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">

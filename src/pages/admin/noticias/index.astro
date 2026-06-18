@@ -22,7 +22,7 @@ if (supabase) {
   let query = supabase
     .from("articles")
     .select(
-      "id, slug, title, category, content_type, published_at, archived, ai_summary, source:sources!inner(name)",
+      "id, slug, title, seo_title, category, content_type, published_at, archived, ai_summary, source:sources!inner(name)",
       { count: "exact" },
     );
 
