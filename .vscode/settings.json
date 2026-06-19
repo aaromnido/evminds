@@ -1,0 +1,10 @@
+{
+  // The repo is an Astro/Node project, so the Deno language server is OFF by
+  // default. The Supabase edge functions, however, run on Deno (they use the
+  // `Deno` global and remote `https://` imports). We scope the Deno LSP to that
+  // folder only, so Astro/Node and Deno coexist without false errors.
+  // Requires the `denoland.vscode-deno` extension (recommended in extensions.json).
+  "deno.enable": false,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.importMap": "supabase/functions/scrape/import_map.json"
+}

@@ -5,7 +5,9 @@
     "**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "supabase/functions",
+    "scripts"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",
