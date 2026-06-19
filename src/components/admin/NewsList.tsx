@@ -377,7 +377,6 @@ export default function NewsList({
                               )}
                               {a.archived && <Badge variant="secondary" className="h-6 px-3 py-1">Archivada</Badge>}
                               {!a.ai_summary && <Badge variant="default" className="h-6 px-3 py-1">Sin IA</Badge>}
-                              {!a.seo_title && <Badge variant="default" className="h-6 px-3 py-1">Sin SEO</Badge>}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
