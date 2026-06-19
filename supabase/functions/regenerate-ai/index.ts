@@ -100,6 +100,7 @@ serve(async (req) => {
       ai_discussion_prompt: result.discussionPrompt ?? null,
       ai_generated_at: new Date().toISOString(),
       seo_title: result.seoTitle ?? null,
+      headline_tone: result.headlineTone ?? null,
     };
     // Replace title/excerpt with the Spanish translation when the source isn't 'es'.
     if (result.translatedTitle) update.title = result.translatedTitle;

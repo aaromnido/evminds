@@ -9,6 +9,8 @@ import RichTextEditor from "./RichTextEditor";
 import ImageDropZone from "./ImageDropZone";
 import SaveButton from "./SaveButton";
 import ArchiveButton from "./ArchiveButton";
+import ToneSelect from "./ToneSelect";
+import { type HeadlineTone } from "@/lib/headline-tone";
 
 export interface NewsFormValues {
   title?: string;
@@ -19,6 +21,9 @@ export interface NewsFormValues {
   // SEO title (Gemini or hand-edited): feeds <title>/og:title/<h1>, falls back
   // to `title` when empty. Has its own independent "Generar con IA" button.
   seo_title?: string;
+  // Headline tone (A12 "Medios de Confianza"): manual override of the AI
+  // traffic-light classification. Empty <select> value ("Sin clasificar") → null.
+  headline_tone?: HeadlineTone | null;
   // AI fields (Gemini): summary + discussion prompt are editable; warnings and
   // the generated-at timestamp are shown read-only.
   ai_summary?: string;
@@ -191,6 +196,15 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
               {seoMsg.text}
             </span>
           )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Tono del titular</Label>
+          <ToneSelect name="headline_tone" defaultValue={article.headline_tone ?? ""} />
+          <p className="text-xs text-muted-foreground">
+            Semáforo de honestidad del titular ("Medios de Confianza"). La IA lo
+            asigna al scrapear; corrígelo aquí si hace falta.
+          </p>
         </div>
       </div>
 
