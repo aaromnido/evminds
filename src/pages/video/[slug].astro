@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/date-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
+import { stripHtml } from "@/lib/html-utils";
 
 const { slug } = Astro.params;
 
@@ -118,7 +119,7 @@ const videoObject = {
 
 <BaseLayout
   title={`${displayTitle} - EVMinds`}
-  description={video.excerpt}
+  description={stripHtml(video.excerpt)}
   image={thumbnailUrl}
   type="article"
   publishedAt={video.published_at}
@@ -191,7 +192,7 @@ const videoObject = {
 
       <!-- Description -->
       {video.excerpt && (
-        <p class="video-detail__excerpt">{video.excerpt}</p>
+        <div class="video-detail__excerpt" set:html={video.excerpt} />
       )}
 
       <!-- CTA: watch on YouTube -->
@@ -359,6 +360,15 @@ const videoObject = {
     line-height: 1.7;
     color: var(--navy-2);
     letter-spacing: -0.01em;
+  }
+
+  /* Excerpt is rendered HTML (rich-text editor output); reset paragraph margins. */
+  .video-detail__excerpt :global(p) {
+    margin: 0;
+  }
+
+  .video-detail__excerpt :global(p + p) {
+    margin-top: 0.75em;
   }
 
   /* CTA button */

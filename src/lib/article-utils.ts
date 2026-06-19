@@ -1,6 +1,7 @@
 import { formatDate } from "@/lib/date-utils";
 import { getContentUrl } from "@/lib/article-url";
 import { getCategorySlugByName } from "@/lib/categories";
+import { stripHtml } from "@/lib/html-utils";
 
 /** Normalized article shape used across listings, cards and detail pages. */
 export interface ArticleData {
@@ -124,7 +125,7 @@ export function serializeBookmarkData(props: {
     id: props.id,
     slug: props.slug || "",
     title: props.title,
-    excerpt: props.excerpt,
+    excerpt: stripHtml(props.excerpt),
     image_url: props.image,
     scraped_at: props.scraped_at || "",
     source_name: props.source,

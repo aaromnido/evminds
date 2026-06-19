@@ -5,6 +5,7 @@ import { getContentUrl } from "@/lib/article-url";
 import { formatShortDate } from "@/lib/date-utils";
 import { CONTENT_TYPES } from "@/lib/content-types";
 import { getOwnArticles } from "@/lib/own-articles";
+import { stripHtml } from "@/lib/html-utils";
 
 /**
  * GET /api/search
@@ -75,7 +76,7 @@ async function searchOwnContent(
   return own
     .filter((a) => {
       const haystack = normalize(
-        [a.title, a.excerpt, a.category, a.tags.join(" ")].join(" "),
+        [a.title, stripHtml(a.excerpt), a.category, a.tags.join(" ")].join(" "),
       );
       // Quoted query → exact phrase; otherwise every word must appear (AND).
       return parsed.isPhrase

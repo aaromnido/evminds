@@ -16,6 +16,7 @@ import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
 import { formatSummaryParagraph, summaryToMetaDescription } from "@/lib/format-summary";
+import { stripHtml } from "@/lib/html-utils";
 import FlagEN from "@/components/FlagEN.astro";
 
 const { slug } = Astro.params;
@@ -81,7 +82,7 @@ const canonicalUrl = new URL(
 // truncated to ~160ch over the source's excerpt (short, often duplicated).
 const metaDescription = article.ai_summary
   ? summaryToMetaDescription(article.ai_summary)
-  : article.excerpt;
+  : stripHtml(article.excerpt);
 
 const articleDataJson = serializeBookmarkData({
   id: article.id,
@@ -157,7 +158,7 @@ const articleDataJson = serializeBookmarkData({
       <!-- Meta: date + source -->
 
       <!-- Excerpt -->
-      <p class="article-detail__excerpt">{article.excerpt}</p>
+      <div class="article-detail__excerpt" set:html={article.excerpt} />
 
       <!-- AI summary -->
       {article.ai_summary && (
@@ -355,6 +356,15 @@ const articleDataJson = serializeBookmarkData({
     line-height: 1.7;
     color: var(--navy-2);
     letter-spacing: -0.01em;
+  }
+
+  /* Excerpt is rendered HTML (rich-text editor output); reset paragraph margins. */
+  .article-detail__excerpt :global(p) {
+    margin: 0;
+  }
+
+  .article-detail__excerpt :global(p + p) {
+    margin-top: 0.75em;
   }
 
   /* AI summary */

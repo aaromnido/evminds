@@ -3,6 +3,7 @@ import type { APIContext } from "astro";
 import { supabase } from "@/lib/supabase";
 import { getNewsUrl, getArticleUrl } from "@/lib/article-url";
 import { getOwnArticles } from "@/lib/own-articles";
+import { stripHtml } from "@/lib/html-utils";
 
 const RSS_ARTICLES_LIMIT = 50;
 
@@ -15,7 +16,7 @@ export async function GET(context: APIContext) {
 
   const ownArticles = (await getOwnArticles()).map((a) => ({
     title: a.title,
-    description: a.excerpt,
+    description: stripHtml(a.excerpt),
     link: getArticleUrl(a.slug),
     pubDate: a.date,
     categories: [a.category],
@@ -23,7 +24,7 @@ export async function GET(context: APIContext) {
 
   const newsItems = (newsArticles || []).map((article: any) => ({
     title: article.seo_title || article.title,
-    description: article.excerpt,
+    description: stripHtml(article.excerpt),
     link: getNewsUrl(article.slug),
     pubDate: new Date(article.published_at),
     categories: article.category ? [article.category] : [],
