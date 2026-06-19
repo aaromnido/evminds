@@ -42,7 +42,7 @@ const DISPLAY_NAMES: Record<string, string> = {
   "cocheselectricos.org": "Coches Eléctricos Org",
 };
 
-function toDisplayName(name: string): string {
+export function toDisplayName(name: string): string {
   return DISPLAY_NAMES[name] || name.replace(/\.(com|co|org|net|io|es)$/i, "");
 }
 

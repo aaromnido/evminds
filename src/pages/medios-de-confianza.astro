@@ -1,0 +1,455 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Subheader from "@/components/Subheader.astro";
+import Badge from "@/components/Badge.astro";
+import { supabase } from "@/lib/supabase";
+import {
+  parseWindow,
+  windowToSince,
+  rankSources,
+  TIME_WINDOWS,
+  TONE_DEFINITIONS,
+  MIN_SAMPLE,
+  type SourceToneCounts,
+} from "@/lib/headline-tone";
+import { toDisplayName } from "@/lib/sources";
+
+const periodo = parseWindow(Astro.url.searchParams.get("periodo"));
+const since = windowToSince(periodo);
+const periodoLabel =
+  TIME_WINDOWS.find((w) => w.key === periodo)?.label ?? "Anual";
+const year = new Date().getFullYear();
+
+// RPC aggregates tone counts per source in Postgres; the score/color/award are
+// computed here. The hand-maintained types lack a Functions block, so cast.
+const { data, error } = await (supabase as any).rpc("source_headline_ranking", {
+  p_since: since,
+});
+if (error) console.error("source_headline_ranking RPC failed:", error.message);
+const rows = (error ? [] : ((data ?? []) as SourceToneCounts[]));
+const ranked = rankSources(rows);
+const evaluated = ranked.filter((r) => r.enoughSample);
+const pending = ranked.filter((r) => !r.enoughSample);
+const podium = evaluated.slice(0, 3);
+const rest = evaluated.slice(3);
+
+const MEDALS = [
+  { key: "gold", icon: "🥇", label: "Oro" },
+  { key: "silver", icon: "🥈", label: "Plata" },
+  { key: "bronze", icon: "🥉", label: "Bronce" },
+] as const;
+
+function pct(part: number, total: number): number {
+  return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+---
+
+<BaseLayout
+  title={`Medios de Confianza — EVMinds | El semáforo de honestidad de los titulares`}
+  description="Clasificamos cada titular en honesto, hot o clickbait y reconocemos a los medios que informan sin cebo. Esta es nuestra apuesta editorial: sin clickbait, nunca."
+>
+  <PageLayout>
+    <Header />
+
+    <Subheader
+      subtitle="Clasificamos el titular original de cada noticia (honesto, hot o clickbait) y reconocemos a quien informa sin cebo. La IA solo etiqueta; la nota de cada medio la calculamos nosotros."
+    >
+      <span slot="title">
+        <strong>Medios de Confianza</strong>, el semáforo de la honestidad
+      </span>
+    </Subheader>
+
+    <!-- Time filter -->
+    <nav class="mdc__filter" aria-label="Periodo del ranking">
+      {
+        TIME_WINDOWS.map((w) => (
+          <a
+            href={`/medios-de-confianza?periodo=${w.key}`}
+            class:list={["mdc__filter-item", { "mdc__filter-item--active": w.key === periodo }]}
+            aria-current={w.key === periodo ? "true" : undefined}
+          >
+            {w.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    {
+      podium.length > 0 ? (
+        <section class="mdc__podium" aria-label="Medios más fiables del periodo">
+          <p class="mdc__podium-kicker">
+            🏆 Medios más fiables {periodo === "year" ? year : `· ${periodoLabel}`}
+          </p>
+          <ol class="mdc__podium-grid">
+            {podium.map((s, i) => (
+              <li class:list={["mdc__medal", `mdc__medal--${MEDALS[i].key}`]}>
+                <span class="mdc__medal-icon" aria-hidden="true">{MEDALS[i].icon}</span>
+                <span class="mdc__medal-label">{MEDALS[i].label}</span>
+                <p class="mdc__medal-name">{toDisplayName(s.sourceName)}</p>
+                <div class="mdc__medal-badge">
+                  <Badge
+                    label={s.color ? TONE_DEFINITIONS[s.color].label.es : "Titular honesto"}
+                    variant={s.color ?? "green"}
+                  />
+                </div>
+                <p class="mdc__medal-stat">
+                  {pct(s.counts.green, s.counts.total)}% honestos
+                  <span class="mdc__medal-stat-sub"> · {s.counts.total} titulares</span>
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : (
+        <section class="mdc__empty">
+          <p class="mdc__empty-title">Aún estamos recopilando datos</p>
+          <p class="mdc__empty-text">
+            Clasificamos los titulares según se publican. En cuanto cada medio
+            acumule al menos {MIN_SAMPLE} titulares en este periodo, aparecerá aquí su nota y
+            entregaremos el reconocimiento a los más fiables.
+          </p>
+        </section>
+      )
+    }
+
+    <!-- Ranking -->
+    {
+      rest.length > 0 && (
+        <section class="mdc__ranking" aria-label="Ranking de medios">
+          <h2 class="mdc__section-title">Resto del ranking</h2>
+          <ol class="mdc__list">
+            {rest.map((s, i) => (
+              <li class="mdc__row">
+                <span class="mdc__rank">{i + 4}</span>
+                <span class:list={["mdc__dot", `mdc__dot--${s.color}`]} aria-hidden="true" />
+                <span class="mdc__name">{toDisplayName(s.sourceName)}</span>
+                <span class="mdc__bar" role="img"
+                  aria-label={`${s.counts.green} honestos, ${s.counts.amber} hot, ${s.counts.red} clickbait`}>
+                  <span class="mdc__bar-seg mdc__bar-seg--green" style={`width:${pct(s.counts.green, s.counts.total)}%`} />
+                  <span class="mdc__bar-seg mdc__bar-seg--amber" style={`width:${pct(s.counts.amber, s.counts.total)}%`} />
+                  <span class="mdc__bar-seg mdc__bar-seg--red" style={`width:${pct(s.counts.red, s.counts.total)}%`} />
+                </span>
+                <span class="mdc__count">{s.counts.total}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
+    {
+      pending.length > 0 && (
+        <section class="mdc__pending" aria-label="Medios sin datos suficientes">
+          <h2 class="mdc__section-title mdc__section-title--muted">Aún sin datos suficientes</h2>
+          <ul class="mdc__pending-list">
+            {pending.map((s) => (
+              <li class="mdc__pending-item">
+                <span class="mdc__dot mdc__dot--empty" aria-hidden="true" />
+                {toDisplayName(s.sourceName)}
+                <span class="mdc__pending-count">({s.counts.total}/{MIN_SAMPLE})</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <!-- Legend / methodology -->
+    <section class="mdc__legend" aria-label="Cómo funciona">
+      <h2 class="mdc__section-title">Cómo lo medimos</h2>
+      <ul class="mdc__legend-list">
+        <li><span class="mdc__dot mdc__dot--green" aria-hidden="true" /> <strong>Titular honesto.</strong> {TONE_DEFINITIONS.green.description.es}</li>
+        <li><span class="mdc__dot mdc__dot--amber" aria-hidden="true" /> <strong>Titular hot.</strong> {TONE_DEFINITIONS.amber.description.es}</li>
+        <li><span class="mdc__dot mdc__dot--red" aria-hidden="true" /> <strong>Titular clickbait.</strong> {TONE_DEFINITIONS.red.description.es}</li>
+      </ul>
+      <p class="mdc__legend-note">
+        Evaluamos el titular original de cada fuente. Mostramos color solo a
+        partir de {MIN_SAMPLE} titulares en el periodo, para que nadie quede señalado por azar.
+        El ranking se reinicia cada año: borrón y cuenta nueva.
+      </p>
+    </section>
+
+    <Footer />
+  </PageLayout>
+</BaseLayout>
+
+<style>
+  /* Time filter */
+  .mdc__filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 28px;
+  }
+  .mdc__filter-item {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 75px;
+    border: 1.5px solid var(--navy-2);
+    color: var(--navy-2);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .mdc__filter-item--active,
+  .mdc__filter-item:hover {
+    background-color: var(--navy-2);
+    color: var(--ev-text-on-image);
+  }
+
+  /* Podium (top 3) */
+  .mdc__podium {
+    margin-bottom: 40px;
+  }
+  .mdc__podium-kicker {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--navy-2);
+    opacity: 0.85;
+    margin: 0 0 16px;
+    text-align: center;
+  }
+  .mdc__podium-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+  .mdc__medal {
+    text-align: center;
+    background-color: var(--sepia-light);
+    border: 2px solid var(--ev-border-subtle);
+    border-radius: 18px;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .mdc__medal--gold { border-color: #d4af37; }
+  .mdc__medal--silver { border-color: #a8adb4; }
+  .mdc__medal--bronze { border-color: #b08147; }
+  .mdc__medal-icon { font-size: 34px; line-height: 1; }
+  .mdc__medal-label {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    color: var(--navy-2);
+  }
+  .mdc__medal-name {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.1;
+    color: var(--navy-light);
+    margin: 0;
+  }
+  .mdc__medal-badge { margin: 2px 0; }
+  .mdc__medal-stat {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy-2);
+    margin: 0;
+  }
+  .mdc__medal-stat-sub {
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  /* Empty state */
+  .mdc__empty {
+    text-align: center;
+    border: 1.5px dashed var(--ev-border-subtle);
+    border-radius: 20px;
+    padding: 40px 24px;
+    margin-bottom: 40px;
+  }
+  .mdc__empty-title {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-size: 26px;
+    color: var(--navy-light);
+    margin: 0 0 10px;
+  }
+  .mdc__empty-text {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--navy-2);
+    max-width: 540px;
+    margin: 0 auto;
+    opacity: 0.85;
+  }
+
+  /* Sections */
+  .mdc__section-title {
+    font-family: "Playfair Display", serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--navy-light);
+    margin: 0 0 16px;
+  }
+  .mdc__section-title--muted {
+    font-size: 18px;
+    opacity: 0.7;
+  }
+
+  /* Ranking list */
+  .mdc__ranking { margin-bottom: 40px; }
+  .mdc__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mdc__row {
+    display: grid;
+    grid-template-columns: 28px 16px 1fr minmax(120px, 200px) 44px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--ev-border-subtle);
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+  .mdc__rank {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--navy-2);
+    opacity: 0.6;
+    text-align: center;
+  }
+  .mdc__name {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--navy-2);
+  }
+  .mdc__count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy-2);
+    opacity: 0.7;
+    text-align: right;
+  }
+
+  /* Tone dot */
+  .mdc__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--navy-2);
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    display: inline-block;
+  }
+  .mdc__dot--green { background-color: var(--ev-tone-green); }
+  .mdc__dot--amber { background-color: var(--ev-tone-amber); }
+  .mdc__dot--red { background-color: var(--ev-tone-red); }
+  .mdc__dot--empty { background-color: var(--ev-tone-empty); }
+
+  /* Stacked breakdown bar */
+  .mdc__bar {
+    display: flex;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: var(--ev-border-subtle);
+  }
+  .mdc__bar-seg { height: 100%; }
+  .mdc__bar-seg--green { background-color: var(--ev-tone-green); }
+  .mdc__bar-seg--amber { background-color: var(--ev-tone-amber); }
+  .mdc__bar-seg--red { background-color: var(--ev-tone-red); }
+
+  /* Pending */
+  .mdc__pending { margin-bottom: 40px; }
+  .mdc__pending-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+  }
+  .mdc__pending-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    color: var(--navy-2);
+    opacity: 0.8;
+  }
+  .mdc__pending-count {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  /* Legend */
+  .mdc__legend {
+    background-color: var(--ev-bg-accent);
+    border-radius: 20px;
+    padding: 28px 28px 30px;
+    color: var(--ev-text-on-image);
+  }
+  .mdc__legend .mdc__section-title { color: var(--ev-text-on-image); }
+  .mdc__legend-list {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .mdc__legend-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .mdc__legend-list .mdc__dot { border-color: var(--ev-text-on-image); align-self: center; }
+  .mdc__legend-note {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 13.5px;
+    line-height: 1.6;
+    opacity: 0.85;
+    margin: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .mdc__row {
+      grid-template-columns: 24px 14px 1fr 44px;
+    }
+    .mdc__bar { display: none; }
+    .mdc__podium-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .mdc__medal {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px 12px;
+    }
+    .mdc__medal-name { font-size: 22px; flex-basis: 100%; }
+  }
+</style>
