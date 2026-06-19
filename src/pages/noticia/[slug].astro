@@ -37,12 +37,14 @@ if (error || !data) {
   return new Response(null, { status: 404, statusText: "Not Found" });
 }
 
-// Redirect videos to their correct URL
-if (data.content_type === "video") {
-  return Astro.redirect(getVideoUrl(data.slug), 301);
-}
-
+// Hand-maintained Database types lack join Relationships, so the typed client
+// collapses this joined row to `never`; cast to access the fields.
 const article = data as any;
+
+// Redirect videos to their correct URL
+if (article.content_type === "video") {
+  return Astro.redirect(getVideoUrl(article.slug), 301);
+}
 const source = Array.isArray(article.source)
   ? article.source[0]
   : article.source;

@@ -18,6 +18,11 @@ const SITE = 'https://evminds.es';
 const articlesDir = path.resolve('./src/content/articulos');
 const now = new Date();
 
+/**
+ * @param {string} raw - Raw frontmatter block text.
+ * @param {string} field - Field name to extract.
+ * @returns {string | undefined}
+ */
 const readFrontmatterField = (raw, field) => {
   const match = raw.match(new RegExp(`^${field}:\\s*(.+?)$`, 'm'));
   if (!match) return undefined;
@@ -82,7 +87,7 @@ export default defineConfig({
   // Disable the Astro dev toolbar (the floating in-page toolbar in dev).
   devToolbar: { enabled: false },
 
-  // Enable server-side rendering for Live Collections
+  // Server-side rendering (SSR) on Netlify
   output: 'server',
   adapter: netlify(),
 
