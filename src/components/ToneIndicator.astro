@@ -1,0 +1,41 @@
+---
+/**
+ * Per-article headline-tone badge (A12, "Medios de Confianza").
+ *
+ * Thin wrapper that maps an article's `headline_tone` to the extended Badge
+ * component: green "Titular honesto", amber "Titular hot", red "Titular
+ * clickbait". Shown in the meta/badges row of the news and video detail pages
+ * (NOT on own articles). Renders NOTHING when the headline isn't classified
+ * yet. Links to the explainer page and exposes its meaning via title + aria.
+ */
+import Badge from "@/components/Badge.astro";
+import {
+  resolveToneLabel,
+  resolveToneDescription,
+  type HeadlineTone,
+} from "@/lib/headline-tone";
+
+interface Props {
+  tone: HeadlineTone | null;
+  lang?: string;
+  /** Explainer link; pass null for a non-interactive badge. */
+  href?: string | null;
+}
+
+const { tone, lang = "es", href = "/medios-de-confianza" } = Astro.props;
+
+const label = tone ? resolveToneLabel(tone, lang) : "";
+const description = tone ? resolveToneDescription(tone, lang) : "";
+---
+
+{
+  tone && (
+    <Badge
+      label={label}
+      variant={tone}
+      href={href ?? undefined}
+      title={`${label} — ${description}`}
+      ariaLabel={`Tono del titular: ${label}. ${description}`}
+    />
+  )
+}

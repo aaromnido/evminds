@@ -1,13 +1,27 @@
 ---
 interface Props {
   label: string;
-  variant?: 'filled' | 'outlined' | 'light' | 'green';
+  variant?: 'filled' | 'outlined' | 'light' | 'green' | 'amber' | 'red';
+  /** When set, the badge renders as a link. */
+  href?: string;
+  title?: string;
+  ariaLabel?: string;
 }
 
-const { label, variant = 'outlined' } = Astro.props;
+const { label, variant = 'outlined', href, title, ariaLabel } = Astro.props;
 ---
 
-<span class:list={['badge', `badge--${variant}`]}>{label}</span>
+{
+  href ? (
+    <a class:list={['badge', `badge--${variant}`]} href={href} title={title} aria-label={ariaLabel}>
+      {label}
+    </a>
+  ) : (
+    <span class:list={['badge', `badge--${variant}`]} title={title} aria-label={ariaLabel}>
+      {label}
+    </span>
+  )
+}
 
 <style is:global>
   .badge {
@@ -22,6 +36,15 @@ const { label, variant = 'outlined' } = Astro.props;
     letter-spacing: -0.117px;
     white-space: nowrap;
     line-height: 1;
+  }
+
+  a.badge {
+    text-decoration: none;
+    transition: filter 0.15s ease;
+  }
+  a.badge:hover,
+  a.badge:focus-visible {
+    filter: brightness(0.96);
   }
 
   .badge--filled {
@@ -47,8 +70,22 @@ const { label, variant = 'outlined' } = Astro.props;
     color: var(--navy-2);
   }
 
+  /* Headline-tone fills (A12). Same pill shape/typography as --outlined; only
+     the color changes. Fixed inks (not theme tokens) so contrast holds in light
+     and dark, since the fills stay vivid in both. */
   .badge--green {
-    background-color: var(--ev-primary-green);
-    color: var(--navy-2);
+    background-color: var(--ev-tone-green);
+    border: 1.5px solid var(--ev-tone-green);
+    color: #faf7f0;
+  }
+  .badge--amber {
+    background-color: var(--ev-tone-amber);
+    border: 1.5px solid var(--ev-tone-amber);
+    color: #191b41;
+  }
+  .badge--red {
+    background-color: var(--ev-tone-red);
+    border: 1.5px solid var(--ev-tone-red);
+    color: #faf7f0;
   }
 </style>

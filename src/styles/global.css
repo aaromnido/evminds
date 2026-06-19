@@ -89,6 +89,12 @@
   --ev-text-on-image: #faf7f0;
   --ev-border-subtle: #e2ded6;
   --ev-skeleton: #E2DED6;
+  /* Headline-tone traffic light (A12). Tunable hex. Darker green so the ivory
+     text reads with enough contrast (decoupled from the brand green). */
+  --ev-tone-green: #00946a;
+  --ev-tone-amber: #e0a32e;
+  --ev-tone-red: #d8503f;
+  --ev-tone-empty: #ffffff;
 }
 
 .dark {
@@ -101,6 +107,10 @@
   --ev-primary-blue: #5ba3ff;
   --ev-primary-green: #3eeaaa;
   --ev-teal: #40d6d6;
+  /* Brighter tones for dark bg; empty reads as a hollow ring. */
+  --ev-tone-amber: #f0b84a;
+  --ev-tone-red: #f0705f;
+  --ev-tone-empty: transparent;
 }
 
 @theme inline {

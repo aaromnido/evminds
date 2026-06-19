@@ -15,6 +15,7 @@ import { getCategorySlugByName } from "@/lib/categories";
 import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
+import ToneIndicator from "@/components/ToneIndicator.astro";
 import { formatSummaryParagraph, summaryToMetaDescription } from "@/lib/format-summary";
 import { stripHtml } from "@/lib/html-utils";
 import FlagEN from "@/components/FlagEN.astro";
@@ -29,7 +30,7 @@ if (!slug) {
 const { data, error } = await supabase
   .from("articles")
   .select(
-    "id, slug, title, seo_title, excerpt, image_url, article_url, category, content_type, published_at, scraped_at, ai_summary, ai_warnings, ai_discussion_prompt, source:sources!inner(name, lang)",
+    "id, slug, title, seo_title, excerpt, image_url, article_url, category, content_type, published_at, scraped_at, ai_summary, ai_warnings, ai_discussion_prompt, headline_tone, source:sources!inner(name, lang)",
   )
   .eq("slug", slug)
   .single();
@@ -154,6 +155,7 @@ const articleDataJson = serializeBookmarkData({
           <DisqusCommentCount identifier={article.id} />
           <BookmarkButton articleId={article.id} articleData={articleDataJson} />
         </div>
+        <ToneIndicator tone={article.headline_tone} />
       </div>
       <!-- Meta: date + source -->
 
@@ -280,6 +282,12 @@ const articleDataJson = serializeBookmarkData({
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
+  }
+
+  /* Tone badge sits at the far right of the header row. Rendered by the Badge
+     child component, so it needs :global() to escape page-scoped styles. */
+  .article-detail__header > :global(.badge) {
+    margin-left: auto;
   }
 
   /* Badges */

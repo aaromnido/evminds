@@ -14,6 +14,7 @@ import { getCategorySlugByName } from "@/lib/categories";
 import { getVideoUrl } from "@/lib/article-url";
 import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
 import { stripHtml } from "@/lib/html-utils";
+import ToneIndicator from "@/components/ToneIndicator.astro";
 
 const { slug } = Astro.params;
 
@@ -188,6 +189,7 @@ const videoObject = {
           <DisqusCommentCount identifier={video.id} />
           <BookmarkButton articleId={video.id} articleData={articleDataJson} />
         </div>
+        <ToneIndicator tone={video.headline_tone} />
       </div>
 
       <!-- Description -->
@@ -314,6 +316,12 @@ const videoObject = {
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
+  }
+
+  /* Tone badge sits at the far right of the header row. Rendered by the Badge
+     child component, so it needs :global() to escape page-scoped styles. */
+  .video-detail__header > :global(.badge) {
+    margin-left: auto;
   }
 
   .video-detail__badges {
