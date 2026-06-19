@@ -27,6 +27,12 @@ export interface SummaryWarning {
   type: WarningType;
 }
 
+// Headline sensationalism, traffic-light style. Mirror of the canonical type in
+// src/lib/headline-tone.ts (the Edge Function can't import the frontend tree).
+// The AI only CLASSIFIES into one bucket; the per-source score is computed in
+// the app, never by the model.
+export type HeadlineTone = 'green' | 'amber' | 'red';
+
 export interface SummaryResult {
   summary: string | null;
   warnings: SummaryWarning[];
@@ -38,6 +44,8 @@ export interface SummaryResult {
   translatedTitle?: string;
   /** Spanish translation of the original excerpt — only set when source.lang !== 'es' */
   translatedExcerpt?: string;
+  /** Traffic-light sensationalism of the ORIGINAL headline (green/amber/red). */
+  headlineTone?: HeadlineTone;
 }
 
 const VALID_WARNING_TYPES: ReadonlySet<WarningType> = new Set<WarningType>([
@@ -47,6 +55,12 @@ const VALID_WARNING_TYPES: ReadonlySet<WarningType> = new Set<WarningType>([
   'autonomy_wltp_no_real',
   'launch_non_european',
   'prototype_as_product',
+]);
+
+const VALID_HEADLINE_TONES: ReadonlySet<HeadlineTone> = new Set<HeadlineTone>([
+  'green',
+  'amber',
+  'red',
 ]);
 
 const EMPTY: SummaryResult = { summary: null, warnings: [] };
@@ -148,17 +162,29 @@ Ejemplos del tono buscado (referencia exacta):
 
 4. ${SEO_TITLE_RULES}`;
 
+  const headlineToneSection = `
+
+5. Un "headline_tone": clasifica el TITULAR ORIGINAL de la fuente (el título de arriba, ${isEnglish ? 'en inglés, tal cual, ANTES de traducirlo' : 'tal cual'}) en uno de tres niveles según el HUECO entre lo que el titular PROMETE y lo que el contenido (extracto/resumen) ENTREGA de verdad. Devuelve SOLO una de estas tres cadenas exactas:
+- "green": titular sobrio y honesto. Describe el hecho real sin cebo; titular y contenido coinciden. Ej.: "El Volkswagen ID.3 recibe una actualización que mejora la velocidad de carga".
+- "amber": gancho leve. Hay algo de intriga, un adjetivo llamativo o una pregunta retórica, pero NO engaña ni oculta el dato clave. Ej.: "El nuevo MG llega para poner en jaque a los eléctricos baratos".
+- "red": clickbait. Promete más de lo que cuenta, oculta el dato esencial para forzar el clic, exagera, usa incógnitas artificiales, o titula con algo que el contenido no sostiene. Ej.: "No te vas a creer la autonomía de este coche", "Este eléctrico va a cambiar el mercado para siempre".
+
+Reglas del headline_tone:
+- Clasifica el titular ORIGINAL, NO el seo_title que tú generas ni una versión mejorada.
+- Juzga SOLO el sensacionalismo (honestidad titular-vs-contenido), no si la noticia es importante ni si el coche es bueno.
+- En la duda entre dos niveles, elige el MENOS severo: nadie debe acabar en rojo por azar.`;
+
   const translationSections = isEnglish
     ? `
 
-5. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+6. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
 
-6. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
+7. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
     : '';
 
   const outputExample = isEnglish
-    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "seo_title": "...", "translated_title": "...", "translated_excerpt": "..."}`
-    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "...", "seo_title": "..."}`;
+    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "amber", "translated_title": "...", "translated_excerpt": "..."}`
+    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "green"}`;
 
   const inputBlock = isEnglish
     ? `Título original (inglés): ${title}
@@ -170,7 +196,7 @@ URL fuente: ${articleUrl}`;
 
   return `${intro}
 
-${sharedBody}${seoTitleSection}${translationSections}
+${sharedBody}${seoTitleSection}${headlineToneSection}${translationSections}
 
 Formato de salida (ejemplo):
 ${outputExample}
@@ -191,8 +217,9 @@ function buildResponseSchema(isEnglish: boolean) {
     },
     discussion_prompt: { type: 'STRING' },
     seo_title: { type: 'STRING' },
+    headline_tone: { type: 'STRING', enum: ['green', 'amber', 'red'] },
   };
-  const required = ['summary', 'warnings', 'discussion_prompt', 'seo_title'];
+  const required = ['summary', 'warnings', 'discussion_prompt', 'seo_title', 'headline_tone'];
 
   // For non-Spanish sources, also require Spanish translations of title/excerpt
   // so the article can be stored in Spanish in the database.
@@ -285,6 +312,9 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
   }
   const seoTitle = parseSeoTitle(obj);
   if (seoTitle) result.seoTitle = seoTitle;
+  if (typeof obj.headline_tone === 'string' && VALID_HEADLINE_TONES.has(obj.headline_tone as HeadlineTone)) {
+    result.headlineTone = obj.headline_tone as HeadlineTone;
+  }
   if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
     result.translatedTitle = normalizeCurrency(obj.translated_title.trim());
   }

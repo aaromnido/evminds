@@ -3,8 +3,13 @@
   // default. The Supabase edge functions, however, run on Deno (they use the
   // `Deno` global and remote `https://` imports). We scope the Deno LSP to that
   // folder only, so Astro/Node and Deno coexist without false errors.
-  // Requires the `denoland.vscode-deno` extension (recommended in extensions.json).
+  // Requires the `denoland.vscode-deno` extension (recommended in extensions.json)
+  // AND the Deno CLI. The extension needs the binary to start its LSP; without
+  // it, the file falls back to the Node/Astro TS server and shows false
+  // `Cannot find name 'Deno'` errors. We pin the absolute Homebrew path here so
+  // it works regardless of the shell PATH (installed via `brew install deno`).
   "deno.enable": false,
   "deno.enablePaths": ["supabase/functions"],
-  "deno.importMap": "supabase/functions/scrape/import_map.json"
+  "deno.importMap": "supabase/functions/scrape/import_map.json",
+  "deno.path": "/opt/homebrew/bin/deno"
 }
