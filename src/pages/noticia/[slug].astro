@@ -47,7 +47,7 @@ const source = Array.isArray(article.source)
   ? article.source[0]
   : article.source;
 
-const RELATED_ARTICLES_LIMIT = 2;
+const RELATED_ARTICLES_LIMIT = 3;
 
 // Fetch related articles (same category, excluding current)
 const { data: relatedData } = await supabase
@@ -220,22 +220,15 @@ const articleDataJson = serializeBookmarkData({
       <!-- Share buttons -->
       <ShareButtons url={canonicalUrl} title={displayTitle} />
 
-      <!-- Disqus comments -->
-      <DisqusComments
-        identifier={article.id}
-        url={canonicalUrl}
-        title={article.title}
-      />
-
       <!-- Related articles -->
       {
         relatedArticles.length > 0 && (
           <section
             class="article-detail__related"
-            aria-label="Artículos relacionados"
+            aria-label="Noticias relacionadas"
           >
             <h2 class="article-detail__related-title">
-              Artículos relacionados
+              Noticias relacionadas
             </h2>
             <div class="article-detail__related-grid">
               {relatedArticles.map((props) => (
@@ -245,6 +238,13 @@ const articleDataJson = serializeBookmarkData({
           </section>
         )
       }
+
+      <!-- Disqus comments -->
+      <DisqusComments
+        identifier={article.id}
+        url={canonicalUrl}
+        title={article.title}
+      />
     </article>
 
     <Footer />
@@ -499,8 +499,12 @@ const articleDataJson = serializeBookmarkData({
 
   .article-detail__related-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+  }
+
+  .article-detail__related-grid :global(.article-card__photo) {
+    height: 200px;
   }
 
   /* Tablet */

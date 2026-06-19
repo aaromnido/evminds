@@ -41,7 +41,7 @@ const source = Array.isArray(video.source)
 // Falls back to the source title when no seo_title was generated (old videos).
 const displayTitle = video.seo_title || video.title;
 
-const RELATED_VIDEOS_LIMIT = 2;
+const RELATED_VIDEOS_LIMIT = 3;
 
 // Fetch related videos (same category, excluding current)
 const { data: relatedData } = await supabase
@@ -222,13 +222,6 @@ const videoObject = {
       <!-- Share buttons -->
       <ShareButtons url={canonicalUrl} title={displayTitle} />
 
-      <!-- Disqus comments -->
-      <DisqusComments
-        identifier={video.id}
-        url={canonicalUrl}
-        title={video.title}
-      />
-
       <!-- Related videos -->
       {
         relatedVideos.length > 0 && (
@@ -247,6 +240,13 @@ const videoObject = {
           </section>
         )
       }
+
+      <!-- Disqus comments -->
+      <DisqusComments
+        identifier={video.id}
+        url={canonicalUrl}
+        title={video.title}
+      />
     </article>
 
     <Footer />
@@ -407,8 +407,12 @@ const videoObject = {
 
   .video-detail__related-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+  }
+
+  .video-detail__related-grid :global(.article-card__photo) {
+    height: 200px;
   }
 
   /* Tablet */
@@ -419,6 +423,10 @@ const videoObject = {
 
     .video-detail__excerpt {
       font-size: 18px;
+    }
+
+    .video-detail__related-grid {
+      grid-template-columns: 1fr 1fr;
     }
   }
 

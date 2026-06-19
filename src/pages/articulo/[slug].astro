@@ -130,7 +130,7 @@ const relatedArticles = ownArticles
     if (b.score !== a.score) return b.score - a.score;
     return b.article.date.getTime() - a.article.date.getTime();
   })
-  .slice(0, 2)
+  .slice(0, 3)
   .map((x) => x.article);
 ---
 
@@ -196,14 +196,6 @@ const relatedArticles = ownArticles
       <!-- Share buttons -->
       <ShareButtons url={canonicalUrl} title={v.title} />
 
-      <!-- Disqus comments. Identifier is articulo-${slug} (NOT a UUID) so threads
-           stay linked when .md articles migrate to posts in Fase 5. -->
-      <DisqusComments
-        identifier={`articulo-${v.slug}`}
-        url={canonicalUrl}
-        title={v.title}
-      />
-
       <!-- Related articles -->
       {relatedArticles.length > 0 && (
         <section class="article-detail__related" aria-label="Artículos relacionados">
@@ -226,6 +218,14 @@ const relatedArticles = ownArticles
           </div>
         </section>
       )}
+
+      <!-- Disqus comments. Identifier is articulo-${slug} (NOT a UUID) so threads
+           stay linked when .md articles migrate to posts in Fase 5. -->
+      <DisqusComments
+        identifier={`articulo-${v.slug}`}
+        url={canonicalUrl}
+        title={v.title}
+      />
     </article>
 
     <Footer />
@@ -503,13 +503,21 @@ const relatedArticles = ownArticles
 
   .article-detail__related-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+  }
+
+  .article-detail__related-grid :global(.article-card__photo) {
+    height: 200px;
   }
 
   @media (max-width: 1024px) {
     .article-detail__title {
       font-size: 42px;
+    }
+
+    .article-detail__related-grid {
+      grid-template-columns: 1fr 1fr;
     }
 
     .article-prose {
