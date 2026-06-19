@@ -1,7 +1,24 @@
 import { formatDate } from "@/lib/date-utils";
 import { getContentUrl } from "@/lib/article-url";
 import { getCategorySlugByName } from "@/lib/categories";
-import type { ArticleData } from "@/loaders/supabase-loader";
+
+/** Normalized article shape used across listings, cards and detail pages. */
+export interface ArticleData {
+  id: string;
+  slug: string;
+  title: string;
+  seo_title: string | null;
+  excerpt: string;
+  image_url: string | null;
+  article_url: string;
+  category: string;
+  content_type: "news" | "video" | "article";
+  youtube_video_id?: string | null;
+  published_at: Date;
+  scraped_at: Date;
+  source_name: string;
+  source_url: string;
+}
 
 /** Number of articles loaded on initial page render (index + category pages) */
 export const INITIAL_ARTICLES_LIMIT = 24;
