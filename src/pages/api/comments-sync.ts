@@ -13,7 +13,16 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const { ids } = await request.json();
 
-    if (!Array.isArray(ids) || ids.length === 0) {
+    // Keep only real article UUIDs. News/videos use the article UUID as their
+    // Disqus identifier, but own articles use `articulo-<slug>` (markdown posts
+    // with no DB row), which would crash the uuid `.in("id", …)` cast (22P02).
+    const UUID_RE =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const articleIds = Array.isArray(ids)
+      ? ids.filter((id) => typeof id === "string" && UUID_RE.test(id))
+      : [];
+
+    if (articleIds.length === 0) {
       return new Response(JSON.stringify({ ok: true, updated: 0 }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -34,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { count, error } = await supabase
       .from("articles")
       .update({ has_comments: true })
-      .in("id", ids)
+      .in("id", articleIds)
       .eq("has_comments", false);
 
     if (error) {
