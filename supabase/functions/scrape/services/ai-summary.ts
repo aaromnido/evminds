@@ -79,6 +79,7 @@ Reglas OBLIGATORIAS:
   · Si el lanzamiento, la venta o el precio son exclusivos de un mercado no europeo (China, USA, Hong Kong, Asia), o aplicaría el warning launch_non_european → NOMBRA el mercado real: "de momento solo en China", "solo en China", "solo en EE.UU.".
   · Si el texto NO menciona mercado → SIN coletilla: solo marca + modelo + el ángulo real.
 - La honestidad manda sobre el patrón: si una coletilla no cabe en el límite o suena forzada, déjala fuera; nunca recortes la honestidad del ángulo para meter una coletilla.
+- Moneda: usa SIEMPRE el símbolo real (€, $), nunca la palabra ni una entidad. Dólares con el símbolo DELANTE y pegado a la cifra ("$600"); euros con el símbolo DETRÁS y pegado, sin espacio ("50.000€").
 
 Ejemplos correctos:
 - "MG2 2027, el eléctrico barato que llega a España"
@@ -226,13 +227,25 @@ function summaryMarkdownToHtml(text: string): string {
     .join('\n');
 }
 
+// Normalizes currency notation to the evminds house style, deterministically
+// (the model honors this only intermittently via the prompt):
+//   USD → symbol BEFORE, glued: "600 $" / "$ 600" → "$600"
+//   EUR → symbol AFTER, glued:  "€600" / "600 €"  → "600€"
+export function normalizeCurrency(s: string): string {
+  return s
+    .replace(/(\d[\d.,]*)\s*\$/g, '$$$1') // "600 $" / "600$" → "$600"
+    .replace(/\$\s+(?=\d)/g, '$$')        // "$ 600" → "$600"
+    .replace(/€\s*(\d[\d.,]*)/g, '$1€')   // "€600" / "€ 600" → "600€"
+    .replace(/(\d[\d.,]*)\s+€/g, '$1€');  // "600 €" → "600€"
+}
+
 // Extracts and trims the seo_title from a parsed Gemini object. Shared by the
 // bundled path (parseAndValidate) and the standalone generateSeoTitle.
 function parseSeoTitle(raw: unknown): string | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
   if (typeof obj.seo_title !== 'string') return null;
-  const trimmed = obj.seo_title.trim();
+  const trimmed = normalizeCurrency(obj.seo_title).trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
@@ -245,9 +258,9 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
   if (Array.isArray(obj.summary)) {
     const paras = (obj.summary as unknown[]).filter((s) => typeof s === 'string' && (s as string).trim().length > 0) as string[];
     if (paras.length === 0) return null;
-    summaryHtml = summaryMarkdownToHtml(paras.join('\n\n'));
+    summaryHtml = summaryMarkdownToHtml(paras.map(normalizeCurrency).join('\n\n'));
   } else if (typeof obj.summary === 'string' && obj.summary.trim().length >= 20) {
-    summaryHtml = summaryMarkdownToHtml(obj.summary.trim());
+    summaryHtml = summaryMarkdownToHtml(normalizeCurrency(obj.summary.trim()));
   } else {
     return null;
   }
@@ -268,15 +281,15 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
 
   const result: SummaryResult = { summary: summaryHtml, warnings };
   if (typeof obj.discussion_prompt === 'string' && obj.discussion_prompt.trim()) {
-    result.discussionPrompt = obj.discussion_prompt.trim();
+    result.discussionPrompt = normalizeCurrency(obj.discussion_prompt.trim());
   }
   const seoTitle = parseSeoTitle(obj);
   if (seoTitle) result.seoTitle = seoTitle;
   if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
-    result.translatedTitle = obj.translated_title.trim();
+    result.translatedTitle = normalizeCurrency(obj.translated_title.trim());
   }
   if (typeof obj.translated_excerpt === 'string' && obj.translated_excerpt.trim()) {
-    result.translatedExcerpt = obj.translated_excerpt.trim();
+    result.translatedExcerpt = normalizeCurrency(obj.translated_excerpt.trim());
   }
   return result;
 }
