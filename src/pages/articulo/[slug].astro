@@ -6,7 +6,6 @@ import Badge from "@/components/Badge.astro";
 import NewsCard from "@/components/NewsCard.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
-import { getCollection, render } from "astro:content";
 import { formatDate } from "@/lib/date-utils";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { getArticleUrl, getNewsUrl } from "@/lib/article-url";
@@ -17,15 +16,8 @@ const { slug } = Astro.params;
 
 const now = new Date();
 
-// --- Dual content source during the .md → posts transition (Fase 4) ---
-// Try the own markdown collection first (unchanged behaviour for the 5 existing
-// articles), then the `posts` table. RLS (posts_public_read) returns only
+// Own articles live in the `posts` table. RLS (posts_public_read) returns only
 // published & due rows, so drafts/scheduled never leak.
-const allArticles = await getCollection("articulos");
-const mdArticle = allArticles.find(
-  (a) => a.id === slug && !a.data.draft && a.data.date <= now,
-);
-
 interface ArticleView {
   title: string;
   excerpt: string;
@@ -40,24 +32,9 @@ interface ArticleView {
 }
 
 let view: ArticleView | null = null;
-let Content: Awaited<ReturnType<typeof render>>["Content"] | null = null;
 let bodyHtml: string | null = null;
 
-if (mdArticle) {
-  Content = (await render(mdArticle)).Content;
-  view = {
-    title: mdArticle.data.title,
-    excerpt: mdArticle.data.excerpt,
-    image: mdArticle.data.image,
-    imageAlt: mdArticle.data.imageAlt,
-    date: mdArticle.data.date,
-    author: mdArticle.data.author,
-    category: mdArticle.data.category,
-    tags: mdArticle.data.tags,
-    slug: mdArticle.id,
-    bodyText: mdArticle.body ?? "",
-  };
-} else if (slug) {
+if (slug) {
   const { data: post } = await supabase
     .from("posts")
     .select("*")
@@ -188,9 +165,9 @@ const relatedArticles = ownArticles
         </div>
       </div>
 
-      <!-- Full article body: .md renders via <Content/>, posts via raw HTML -->
+      <!-- Full article body: posts render their stored HTML -->
       <div class="article-prose">
-        {Content ? <Content /> : <Fragment set:html={bodyHtml} />}
+        <Fragment set:html={bodyHtml} />
       </div>
 
       <!-- Share buttons -->
