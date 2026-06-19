@@ -266,6 +266,12 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
             ))}
           </datalist>
         </div>
+
+        {/* Convenience "save" mirroring the one at the bottom: lets you save from the
+            sticky sidebar without scrolling down after editing the title. */}
+        <SaveButton name="_action" value="save" className="w-full">
+          Guardar cambios
+        </SaveButton>
       </div>
 
       {/* Left col rest — mobile: 3rd; desktop: left col row 2 */}
