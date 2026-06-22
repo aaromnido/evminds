@@ -36,13 +36,14 @@ const datasets = await Promise.all(
     }
     const rows = error ? [] : ((data ?? []) as SourceToneCounts[]);
     const ranked = rankSources(rows);
-    const evaluated = ranked.filter((r) => r.enoughSample);
+    const podium = ranked.filter((r) => r.enoughSample).slice(0, 3);
     return {
       key: w.key,
       label: w.label,
-      pending: ranked.filter((r) => !r.enoughSample),
-      podium: evaluated.slice(0, 3),
-      rest: evaluated.slice(3),
+      podium,
+      // Full ranking, from #1: the podium sources are celebrated above as medals
+      // but also appear here so the list reads as a complete classification.
+      ranking: ranked,
     };
   }),
 );
@@ -135,14 +136,14 @@ function pct(part: number, total: number): number {
             </section>
           )}
 
-          {d.rest.length > 0 && (
+          {d.ranking.length > 0 && (
             <section class="mdc__ranking" aria-label="Ranking de medios">
-              <h2 class="mdc__section-title">Resto del ranking</h2>
+              <h2 class="mdc__section-title">Ranking completo</h2>
               <ol class="mdc__list">
-                {d.rest.map((s, i) => (
+                {d.ranking.map((s, i) => (
                   <li class="mdc__row">
-                    <span class="mdc__rank">{i + 4}</span>
-                    <span class:list={["mdc__dot", `mdc__dot--${s.color}`]} aria-hidden="true" />
+                    <span class="mdc__rank">{i + 1}</span>
+                    <span class:list={["mdc__dot", `mdc__dot--${s.color ?? "empty"}`]} aria-hidden="true" />
                     <span class="mdc__name">{toDisplayName(s.sourceName)}</span>
                     <span class="mdc__bar" role="img"
                       aria-label={`${s.counts.green} honestos, ${s.counts.amber} hot, ${s.counts.red} clickbait`}>
@@ -154,21 +155,6 @@ function pct(part: number, total: number): number {
                   </li>
                 ))}
               </ol>
-            </section>
-          )}
-
-          {d.pending.length > 0 && (
-            <section class="mdc__pending" aria-label="Medios sin datos suficientes">
-              <h2 class="mdc__section-title mdc__section-title--muted">Aún sin datos suficientes</h2>
-              <ul class="mdc__pending-list">
-                {d.pending.map((s) => (
-                  <li class="mdc__pending-item">
-                    <span class="mdc__dot mdc__dot--empty" aria-hidden="true" />
-                    {toDisplayName(s.sourceName)}
-                    <span class="mdc__pending-count">({s.counts.total}/{MIN_SAMPLE})</span>
-                  </li>
-                ))}
-              </ul>
             </section>
           )}
         </div>

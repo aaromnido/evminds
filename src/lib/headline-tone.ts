@@ -167,9 +167,14 @@ export function colorFromScore(score: number): HeadlineTone {
 
 /**
  * Turns raw RPC counts into ranked sources, most trustworthy first.
- * Sources below MIN_SAMPLE keep a null score/color (⚪) and sort last (by volume).
+ * Sources with enough sample rank first (by mean score). Those below MIN_SAMPLE
+ * follow (null score/color, ⚪) but are still ordered by their raw mean honesty,
+ * so a source with a clickbait never sits above one with none. Volume breaks ties.
  */
 export function rankSources(rows: SourceToneCounts[]): RankedSource[] {
+  const rawMean = (c: RankedSource["counts"]): number =>
+    c.total > 0 ? (c.amber * 1 + c.red * 2) / c.total : 0;
+
   return rows
     .map((r): RankedSource => {
       const total = Number(r.n_total) || 0;
@@ -190,10 +195,13 @@ export function rankSources(rows: SourceToneCounts[]): RankedSource[] {
       };
     })
     .sort((a, b) => {
-      if (a.score === null && b.score === null) return b.counts.total - a.counts.total;
-      if (a.score === null) return 1;
-      if (b.score === null) return -1;
-      return a.score - b.score;
+      // Qualified sources (≥ MIN_SAMPLE) always rank above unqualified ones.
+      if ((a.score === null) !== (b.score === null)) return a.score === null ? 1 : -1;
+      // Within each group, lower mean (more honest) first; volume breaks ties.
+      const meanA = a.score ?? rawMean(a.counts);
+      const meanB = b.score ?? rawMean(b.counts);
+      if (meanA !== meanB) return meanA - meanB;
+      return b.counts.total - a.counts.total;
     });
 }
 
