@@ -1,22 +1,81 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
+import DashboardHome, {
+  type RecentNewsItem,
+  type RecentPostItem,
+} from "@/components/admin/DashboardHome.tsx";
 
-// Sections of the admin. Routes land in later phases (3: posts, 6: news);
-// shown here as the planned map. `ready: false` renders them as disabled.
-const sections = [
-  {
-    href: "/admin/posts",
-    title: "Artículos propios",
-    desc: "Crear y editar el contenido original (tabla posts).",
-    ready: false,
-  },
-  {
-    href: "/admin/noticias",
-    title: "Noticias",
-    desc: "Editar, archivar y regenerar la IA de las noticias agregadas.",
-    ready: false,
-  },
-];
+const supabase = Astro.locals.supabase;
+
+// Dashboard metrics. All counts use head:true (no rows transferred) and the
+// recent lists are tiny LIMIT 5 reads — cheap, and faster now that the perf
+// indexes exist. Casts follow the house style (hand-maintained Database types).
+let newsTotal = 0;
+// "Sin IA" surfaces only RECENTLY-scraped news still missing an AI summary — a
+// pipeline-health signal. The full ai_summary IS NULL count (~3.6k) is mostly
+// legacy news + videos (videos get no summary by design), so showing it would be
+// alarming and useless. 7-day window over content_type='news' is the actionable
+// "did the Gemini pipeline fail lately?" number.
+let newsNoAiRecent = 0;
+let newsArchived = 0;
+let postsTotal = 0;
+let postsDrafts = 0;
+let lastScrapeIso: string | null = null;
+let recentNews: RecentNewsItem[] = [];
+let recentPosts: RecentPostItem[] = [];
+
+if (supabase) {
+  const articles = () => supabase.from("articles");
+  const posts = () => supabase.from("posts");
+  const sevenDaysAgo = new Date(
+    Date.now() - 7 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const [
+    newsTotalRes,
+    newsNoAiRes,
+    newsArchivedRes,
+    postsTotalRes,
+    postsDraftsRes,
+    lastScrapeRes,
+    recentNewsRes,
+    recentPostsRes,
+  ] = await Promise.all([
+    articles().select("*", { count: "exact", head: true }),
+    articles()
+      .select("*", { count: "exact", head: true })
+      .is("ai_summary", null)
+      .eq("content_type", "news")
+      .gte("scraped_at", sevenDaysAgo),
+    articles().select("*", { count: "exact", head: true }).eq("archived", true),
+    posts().select("*", { count: "exact", head: true }),
+    posts().select("*", { count: "exact", head: true }).eq("status", "draft"),
+    articles()
+      .select("scraped_at")
+      .order("scraped_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    articles()
+      .select("id, slug, title, content_type, scraped_at")
+      .order("scraped_at", { ascending: false })
+      .limit(5),
+    posts()
+      .select("id, title, status, published_at, updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  newsTotal = newsTotalRes.count ?? 0;
+  newsNoAiRecent = newsNoAiRes.count ?? 0;
+  newsArchived = newsArchivedRes.count ?? 0;
+  postsTotal = postsTotalRes.count ?? 0;
+  postsDrafts = postsDraftsRes.count ?? 0;
+  lastScrapeIso =
+    (lastScrapeRes.data as unknown as { scraped_at: string } | null)
+      ?.scraped_at ?? null;
+  recentNews = (recentNewsRes.data ?? []) as unknown as RecentNewsItem[];
+  recentPosts = (recentPostsRes.data ?? []) as unknown as RecentPostItem[];
+}
 ---
 
 <AdminShell
@@ -24,29 +83,15 @@ const sections = [
   pageTitle="Panel de administración"
   pageDescription="Gestiona el contenido de evminds desde aquí."
 >
-  <div class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
-    {
-      sections.map((s) =>
-        s.ready ? (
-          <a
-            href={s.href}
-            class="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-card-foreground transition-all hover:-translate-y-0.5 hover:border-ring"
-          >
-            <span class="font-bold">{s.title}</span>
-            <span class="text-sm text-muted-foreground">{s.desc}</span>
-          </a>
-        ) : (
-          <div class="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-card-foreground opacity-60">
-            <span class="flex items-center gap-2 font-bold">
-              {s.title}
-              <span class="rounded-full bg-secondary px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-secondary-foreground uppercase">
-                Próximamente
-              </span>
-            </span>
-            <span class="text-sm text-muted-foreground">{s.desc}</span>
-          </div>
-        ),
-      )
-    }
-  </div>
+  <DashboardHome
+    newsTotal={newsTotal}
+    newsNoAiRecent={newsNoAiRecent}
+    newsArchived={newsArchived}
+    postsTotal={postsTotal}
+    postsDrafts={postsDrafts}
+    lastScrapeIso={lastScrapeIso}
+    recentNews={recentNews}
+    recentPosts={recentPosts}
+    nowIso={new Date().toISOString()}
+  />
 </AdminShell>
