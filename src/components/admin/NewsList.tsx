@@ -61,6 +61,28 @@ const FILTERS = [
   { key: "todas", label: "Todas" },
 ] as const;
 
+/**
+ * Headline-tone filter options. Values map to `articles.headline_tone`
+ * ("" = all, "none" = not yet classified); each shows a colored dot mirroring
+ * the news editor's ToneSelect. "Todos" uses the dark-blue brand color.
+ */
+const TONE_FILTERS = [
+  { value: "", label: "Todos", colorVar: "--ev-bg-accent" },
+  { value: "green", label: "Honesto", colorVar: "--ev-tone-green" },
+  { value: "amber", label: "Hot", colorVar: "--ev-tone-amber" },
+  { value: "red", label: "Clickbait", colorVar: "--ev-tone-red" },
+  { value: "none", label: "Sin calificar", colorVar: "--ev-tone-empty" },
+] as const;
+
+function ToneDot({ colorVar }: { colorVar: string }) {
+  return (
+    <span
+      className="inline-block size-2.5 shrink-0 rounded-full border border-muted-foreground/30"
+      style={{ backgroundColor: `var(${colorVar})` }}
+    />
+  );
+}
+
 interface Props {
   items: NewsListItem[];
   sources: SourceOption[];
@@ -68,17 +90,25 @@ interface Props {
   q: string;
   estado: string;
   sourceId: string;
+  tone: string;
   page: number;
   totalPages: number;
   total: number;
 }
 
 /** Build a /admin/noticias URL preserving the other params. */
-function buildUrl(params: { estado?: string; q?: string; sourceId?: string; page?: number }) {
+function buildUrl(params: {
+  estado?: string;
+  q?: string;
+  sourceId?: string;
+  tone?: string;
+  page?: number;
+}) {
   const sp = new URLSearchParams();
   if (params.estado && params.estado !== "activas") sp.set("estado", params.estado);
   if (params.q) sp.set("q", params.q);
   if (params.sourceId) sp.set("source_id", params.sourceId);
+  if (params.tone) sp.set("tone", params.tone);
   if (params.page && params.page > 1) sp.set("page", String(params.page));
   const qs = sp.toString();
   return qs ? `/admin/noticias?${qs}` : "/admin/noticias";
@@ -91,6 +121,7 @@ export default function NewsList({
   q,
   estado,
   sourceId,
+  tone,
   page,
   totalPages,
   total,
@@ -159,7 +190,7 @@ export default function NewsList({
             {FILTERS.map((f, i) => (
               <a
                 key={f.key}
-                href={buildUrl({ estado: f.key, q, sourceId })}
+                href={buildUrl({ estado: f.key, q, sourceId, tone })}
                 aria-current={estado === f.key ? "true" : undefined}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
@@ -181,7 +212,7 @@ export default function NewsList({
             <Select.Root
               value={sourceId}
               onValueChange={(value: string | null) =>
-                (window.location.href = buildUrl({ estado, q, sourceId: value ?? "" }))
+                (window.location.href = buildUrl({ estado, q, sourceId: value ?? "", tone }))
               }
             >
               <Select.Trigger
@@ -240,6 +271,64 @@ export default function NewsList({
               </Select.Portal>
             </Select.Root>
 
+            {/* Tono del titular filter: navigates on change, resetting to page 1. */}
+            <Select.Root
+              value={tone}
+              onValueChange={(value: string | null) =>
+                (window.location.href = buildUrl({ estado, q, sourceId, tone: value ?? "" }))
+              }
+            >
+              <Select.Trigger
+                aria-label="Filtrar por tono del titular"
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none sm:w-48",
+                  "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:border-ring",
+                )}
+              >
+                <Select.Value>
+                  {(value: string) => {
+                    const opt = TONE_FILTERS.find((t) => t.value === value) ?? TONE_FILTERS[0];
+                    return (
+                      <span className="flex items-center gap-2">
+                        <ToneDot colorVar={opt.colorVar} />
+                        {opt.label}
+                      </span>
+                    );
+                  }}
+                </Select.Value>
+                <Select.Icon className="ml-auto">
+                  <ChevronsUpDown className="size-4 opacity-50" />
+                </Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Positioner className="z-50" sideOffset={4}>
+                  <Select.Popup
+                    className={cn(
+                      "max-h-[var(--available-height)] min-w-[var(--anchor-width)] overflow-y-auto",
+                      "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-lg outline-none",
+                    )}
+                  >
+                    {TONE_FILTERS.map((opt) => (
+                      <Select.Item
+                        key={opt.value || "all"}
+                        value={opt.value}
+                        className={cn(
+                          "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+                          "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+                        )}
+                      >
+                        <ToneDot colorVar={opt.colorVar} />
+                        <Select.ItemText>{opt.label}</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-4" />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            </Select.Root>
+
             <form method="GET" className="flex flex-1 items-center gap-2">
               {estado !== "activas" && (
                 <input type="hidden" name="estado" value={estado} />
@@ -247,6 +336,7 @@ export default function NewsList({
               {sourceId && (
                 <input type="hidden" name="source_id" value={sourceId} />
               )}
+              {tone && <input type="hidden" name="tone" value={tone} />}
               <div className="relative w-full">
                 <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -258,7 +348,7 @@ export default function NewsList({
                 />
                 {q && (
                   <a
-                    href={buildUrl({ estado, sourceId })}
+                    href={buildUrl({ estado, sourceId, tone })}
                     aria-label="Limpiar búsqueda"
                     title="Limpiar búsqueda"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -481,7 +571,7 @@ export default function NewsList({
               {/* Pagination */}
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-nowrap">
                 <a
-                  href={buildUrl({ estado, q, sourceId, page: page - 1 })}
+                  href={buildUrl({ estado, q, sourceId, tone, page: page - 1 })}
                   aria-disabled={page <= 1}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
@@ -496,7 +586,7 @@ export default function NewsList({
                   {total} noticia{total === 1 ? "" : "s"} · página {page} de {totalPages}
                 </span>
                 <a
-                  href={buildUrl({ estado, q, sourceId, page: page + 1 })}
+                  href={buildUrl({ estado, q, sourceId, tone, page: page + 1 })}
                   aria-disabled={page >= totalPages}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),

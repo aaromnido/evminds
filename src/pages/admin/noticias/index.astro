@@ -11,6 +11,7 @@ const params = Astro.url.searchParams;
 const q = (params.get("q") ?? "").trim();
 const estado = params.get("estado") ?? "activas"; // activas | archivadas | sin-ia | todas
 const sourceId = (params.get("source_id") ?? "").trim();
+const tone = (params.get("tone") ?? "").trim(); // "" | green | amber | red | none
 const page = Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1);
 const from = (page - 1) * PAGE_SIZE;
 const to = from + PAGE_SIZE - 1;
@@ -40,6 +41,8 @@ if (supabase) {
   // "todas" → no archived filter
 
   if (sourceId) query = query.eq("source_id", sourceId);
+  if (tone === "none") query = query.is("headline_tone", null);
+  else if (tone) query = query.eq("headline_tone", tone);
   if (q) query = query.ilike("title", `%${q}%`);
 
   const { data, error, count } = await query
@@ -73,6 +76,7 @@ const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     q={q}
     estado={estado}
     sourceId={sourceId}
+    tone={tone}
     page={page}
     totalPages={totalPages}
     total={total}
