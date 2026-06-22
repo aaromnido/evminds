@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Edit, Loader2, Newspaper, Search, Trash2, X } from "lucide-react";
+import { Select } from "@base-ui/react/select";
+import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, Edit, Loader2, Newspaper, Search, Trash2, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -47,6 +48,11 @@ export interface NewsListItem {
   source: { name: string } | null;
 }
 
+export interface SourceOption {
+  id: string;
+  name: string;
+}
+
 /** The four list views; kept in sync with the .astro server-side filter. */
 const FILTERS = [
   { key: "activas", label: "Activas" },
@@ -57,19 +63,22 @@ const FILTERS = [
 
 interface Props {
   items: NewsListItem[];
+  sources: SourceOption[];
   error?: string;
   q: string;
   estado: string;
+  sourceId: string;
   page: number;
   totalPages: number;
   total: number;
 }
 
 /** Build a /admin/noticias URL preserving the other params. */
-function buildUrl(params: { estado?: string; q?: string; page?: number }) {
+function buildUrl(params: { estado?: string; q?: string; sourceId?: string; page?: number }) {
   const sp = new URLSearchParams();
   if (params.estado && params.estado !== "activas") sp.set("estado", params.estado);
   if (params.q) sp.set("q", params.q);
+  if (params.sourceId) sp.set("source_id", params.sourceId);
   if (params.page && params.page > 1) sp.set("page", String(params.page));
   const qs = sp.toString();
   return qs ? `/admin/noticias?${qs}` : "/admin/noticias";
@@ -77,9 +86,11 @@ function buildUrl(params: { estado?: string; q?: string; page?: number }) {
 
 export default function NewsList({
   items,
+  sources,
   error,
   q,
   estado,
+  sourceId,
   page,
   totalPages,
   total,
@@ -148,7 +159,7 @@ export default function NewsList({
             {FILTERS.map((f, i) => (
               <a
                 key={f.key}
-                href={buildUrl({ estado: f.key, q })}
+                href={buildUrl({ estado: f.key, q, sourceId })}
                 aria-current={estado === f.key ? "true" : undefined}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
@@ -165,31 +176,99 @@ export default function NewsList({
             ))}
           </div>
 
-          <form method="GET" className="order-first flex flex-1 items-center gap-2 sm:order-none">
-            {estado !== "activas" && (
-              <input type="hidden" name="estado" value={estado} />
-            )}
-            <div className="relative w-full">
-              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder="Buscar por título…"
-                className="w-full pl-9 pr-9"
-              />
-              {q && (
-                <a
-                  href={buildUrl({ estado })}
-                  aria-label="Limpiar búsqueda"
-                  title="Limpiar búsqueda"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </a>
+          <div className="order-first flex flex-1 flex-col gap-2 sm:order-none sm:flex-row sm:items-center">
+            {/* Medio filter: navigates on change, resetting to page 1. */}
+            <Select.Root
+              value={sourceId}
+              onValueChange={(value: string | null) =>
+                (window.location.href = buildUrl({ estado, q, sourceId: value ?? "" }))
+              }
+            >
+              <Select.Trigger
+                aria-label="Filtrar por medio"
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none sm:w-56",
+                  "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:border-ring",
+                )}
+              >
+                <Select.Value>
+                  {(value: string) =>
+                    sources.find((s) => s.id === value)?.name ?? "Todos los medios"
+                  }
+                </Select.Value>
+                <Select.Icon className="ml-auto">
+                  <ChevronsUpDown className="size-4 opacity-50" />
+                </Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Positioner className="z-50" sideOffset={4}>
+                  <Select.Popup
+                    className={cn(
+                      "max-h-[var(--available-height)] min-w-[var(--anchor-width)] overflow-y-auto",
+                      "rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-lg outline-none",
+                    )}
+                  >
+                    <Select.Item
+                      value=""
+                      className={cn(
+                        "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+                        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+                      )}
+                    >
+                      <Select.ItemText>Todos los medios</Select.ItemText>
+                      <Select.ItemIndicator className="ml-auto">
+                        <Check className="size-4" />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                    {sources.map((s) => (
+                      <Select.Item
+                        key={s.id}
+                        value={s.id}
+                        className={cn(
+                          "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+                          "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+                        )}
+                      >
+                        <Select.ItemText>{s.name}</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-4" />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    ))}
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            </Select.Root>
+
+            <form method="GET" className="flex flex-1 items-center gap-2">
+              {estado !== "activas" && (
+                <input type="hidden" name="estado" value={estado} />
               )}
-            </div>
-          </form>
+              {sourceId && (
+                <input type="hidden" name="source_id" value={sourceId} />
+              )}
+              <div className="relative w-full">
+                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Buscar por título…"
+                  className="w-full pl-9 pr-9"
+                />
+                {q && (
+                  <a
+                    href={buildUrl({ estado, sourceId })}
+                    aria-label="Limpiar búsqueda"
+                    title="Limpiar búsqueda"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </a>
+                )}
+              </div>
+            </form>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4" data-list-content>
@@ -402,7 +481,7 @@ export default function NewsList({
               {/* Pagination */}
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-nowrap">
                 <a
-                  href={buildUrl({ estado, q, page: page - 1 })}
+                  href={buildUrl({ estado, q, sourceId, page: page - 1 })}
                   aria-disabled={page <= 1}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
@@ -417,7 +496,7 @@ export default function NewsList({
                   {total} noticia{total === 1 ? "" : "s"} · página {page} de {totalPages}
                 </span>
                 <a
-                  href={buildUrl({ estado, q, page: page + 1 })}
+                  href={buildUrl({ estado, q, sourceId, page: page + 1 })}
                   aria-disabled={page >= totalPages}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
