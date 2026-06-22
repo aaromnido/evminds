@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatShortDate } from "@/lib/date-utils";
+import { getPostStatusBadge } from "@/lib/post-status";
 
 export interface PostListItem {
   id: string;
@@ -43,36 +44,6 @@ function pageUrl(p: number, q: string) {
   return qs ? `/admin/posts?${qs}` : "/admin/posts";
 }
 
-type StatusVariant = "default" | "secondary" | "outline";
-
-interface StatusBadge {
-  label: string;
-  variant: StatusVariant;
-  /** Tailwind color class for the leading dot. */
-  dotClass: string;
-  /** Extra classes appended to the badge (e.g. a custom border). */
-  className?: string;
-}
-
-function statusBadge(
-  status: string,
-  publishedAt: string | null,
-  now: number,
-): StatusBadge {
-  if (status === "draft") {
-    return {
-      label: "Borrador",
-      variant: "secondary",
-      dotClass: "bg-orange-500",
-      // Darker gray border so the badge stands out from its light background.
-      className: "border-muted-foreground/35",
-    };
-  }
-  if (publishedAt && new Date(publishedAt).getTime() > now) {
-    return { label: "Programado", variant: "outline", dotClass: "bg-blue-500" };
-  }
-  return { label: "Publicado", variant: "default", dotClass: "bg-green-500" };
-}
 
 export default function PostsList({
   posts,
@@ -152,7 +123,11 @@ export default function PostsList({
                   </TableHeader>
                   <TableBody>
                     {posts.map((p) => {
-                      const s = statusBadge(p.status, p.published_at, now);
+                      const s = getPostStatusBadge(
+                        p.status,
+                        p.published_at,
+                        now,
+                      );
                       return (
                         <TableRow key={p.id}>
                           <TableCell className="max-w-0 min-w-[60vw] font-medium md:min-w-0">
