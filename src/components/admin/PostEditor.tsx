@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import SaveButton from "./SaveButton";
 import ImageDropZone from "./ImageDropZone";
 import {
@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { X, Trash2, Loader2 } from "lucide-react";
+import { X, Trash2, Loader2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 import SlugField from "./SlugField";
@@ -135,31 +135,54 @@ export default function PostEditor({
       <div className="flex flex-col gap-6 lg:row-span-2 lg:sticky lg:top-8 lg:self-start">
         <div className="grid gap-1.5">
           <Label>Estado</Label>
-          <div className="inline-flex w-fit overflow-hidden rounded-md border border-input text-sm">
-            <button
-              type="button"
-              onClick={() => setStatus("draft")}
-              className={cn(
-                "px-3 py-1.5 transition-colors",
-                status === "draft"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Borrador
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatus("published")}
-              className={cn(
-                "border-l border-input px-3 py-1.5 transition-colors",
-                status === "published"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Publicado
-            </button>
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full overflow-hidden rounded-md border border-input text-sm sm:inline-flex sm:w-fit">
+              <button
+                type="button"
+                onClick={() => setStatus("draft")}
+                className={cn(
+                  "flex-1 px-3 py-1.5 transition-colors sm:flex-none",
+                  status === "draft"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Borrador
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatus("published")}
+                className={cn(
+                  "flex-1 border-l border-input px-3 py-1.5 transition-colors sm:flex-none",
+                  status === "published"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Publicado
+              </button>
+            </div>
+            {/* Preview only works for a saved post (reads from DB), so it shows
+                in edit mode and points at the saved slug, opening in a new tab.
+                Full width on mobile, right-aligned on desktop. */}
+            {showDelete && post?.slug && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                render={
+                  <a
+                    href={`/articulo/${post.slug}?preview`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Abre la última versión guardada en una pestaña nueva"
+                  />
+                }
+              >
+                <Eye className="h-4 w-4" />
+                Ver artículo
+              </Button>
+            )}
           </div>
           <input type="hidden" name="status" value={status} />
         </div>
