@@ -5,6 +5,9 @@ interface Props {
   dataLang?: string;
   dataSourceName?: string;
   dataCategoryName?: string;
+  /** Accessible name: the visible text label lives in a sibling element, so the
+   * checkbox needs its own name for screen readers. */
+  ariaLabel: string;
 }
 
 const {
@@ -13,6 +16,7 @@ const {
   dataLang,
   dataSourceName,
   dataCategoryName,
+  ariaLabel,
 } = Astro.props;
 ---
 
@@ -20,6 +24,7 @@ const {
   <input
     type="checkbox"
     checked={checked}
+    aria-label={ariaLabel}
     data-pref={dataPref}
     data-lang={dataLang}
     data-source-name={dataSourceName}

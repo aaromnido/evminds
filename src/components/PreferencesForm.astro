@@ -13,7 +13,7 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
   <h3 class="prefs__section-title">Contenido</h3>
   <div class="prefs__option">
     <span class="prefs__option-label">Solo con comentarios</span>
-    <Switch dataPref="only-with-comments" checked={false} />
+    <Switch dataPref="only-with-comments" checked={false} ariaLabel="Solo con comentarios" />
   </div>
 </section>
 
@@ -22,7 +22,7 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
   <h3 class="prefs__section-title">Idioma</h3>
   <div class="prefs__option">
     <span class="prefs__option-label">Contenido en inglés</span>
-    <Switch dataPref="lang-en" />
+    <Switch dataPref="lang-en" ariaLabel="Contenido en inglés" />
   </div>
 </section>
 
@@ -40,6 +40,7 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
           dataPref={`source-${source.slug}`}
           dataLang={source.lang}
           dataSourceName={source.name}
+          ariaLabel={source.lang === 'en' ? `${source.displayName} (EN)` : source.displayName}
         />
       </div>
     ))}
@@ -60,6 +61,7 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
           dataPref={`source-${source.slug}`}
           dataLang={source.lang}
           dataSourceName={source.name}
+          ariaLabel={source.lang === 'en' ? `${source.displayName} (EN)` : source.displayName}
         />
       </div>
     ))}
@@ -76,6 +78,7 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
         <Switch
           dataPref={`category-${cat.slug}`}
           dataCategoryName={cat.name}
+          ariaLabel={cat.name}
         />
       </div>
     ))}
