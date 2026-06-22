@@ -41,7 +41,27 @@ const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
         }
       }
 
-      loadDisqus();
+      // Lazy-load: Disqus (and its ~1 MB of ad/tracking JS) only loads when the
+      // reader scrolls near the comments, not on first paint. The 600px margin
+      // gives it a head start so the thread is ready by the time they arrive.
+      (function () {
+        var thread = document.getElementById('disqus_thread');
+        if (!thread) return;
+
+        if (!('IntersectionObserver' in window)) {
+          loadDisqus();
+          return;
+        }
+
+        var observer = new IntersectionObserver(function (entries) {
+          if (entries.some(function (e) { return e.isIntersecting; })) {
+            observer.disconnect();
+            loadDisqus();
+          }
+        }, { rootMargin: '600px 0px' });
+
+        observer.observe(thread);
+      })();
     </script>
   </section>
 )}
