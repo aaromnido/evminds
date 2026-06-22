@@ -138,6 +138,10 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <!-- Preconnect hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Cloudinary hosts the LCP hero image: open the connection early to cut the
+         resource-load delay (the browser otherwise waits ~1.5s before fetching). -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
     <link rel="dns-prefetch" href="https://cloud.umami.is" />
     <link rel="dns-prefetch" href="https://evminds-es.disqus.com" />
 
