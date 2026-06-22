@@ -80,18 +80,15 @@ if (supabase && Astro.request.method === "POST") {
 let sources: SourceOption[] = [];
 let categories: string[] = [];
 if (supabase) {
+  // Categories come from a DISTINCT RPC (get_article_categories) instead of
+  // fetching the `category` column of every article — see migration 43. Hand-
+  // maintained types lack a Functions block, so the rpc call is cast (house style).
   const [{ data: srcRows }, { data: catRows }] = await Promise.all([
     supabase.from("sources").select("id, name").order("name"),
-    supabase.from("articles").select("category"),
+    (supabase as any).rpc("get_article_categories"),
   ]);
   sources = (srcRows ?? []) as unknown as SourceOption[];
-  categories = Array.from(
-    new Set(
-      ((catRows ?? []) as unknown as { category: string }[])
-        .map((r) => r.category)
-        .filter(Boolean),
-    ),
-  ).sort();
+  categories = (catRows ?? []) as unknown as string[];
 }
 ---
 

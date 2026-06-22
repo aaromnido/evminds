@@ -82,6 +82,9 @@ if (!supabase || !id) {
 // GET (or failed POST): fetch the row + source name to prefill, plus the
 // distinct categories already in use for the datalist suggestions.
 if (!notFound && supabase && id) {
+  // Categories come from a DISTINCT RPC (get_article_categories) instead of
+  // fetching the `category` column of every article — see migration 43. Hand-
+  // maintained types lack a Functions block, so the rpc is cast (house style).
   const [{ data, error }, { data: catRows }] = await Promise.all([
     supabase
       .from("articles")
@@ -90,7 +93,7 @@ if (!notFound && supabase && id) {
       )
       .eq("id", id)
       .single(),
-    supabase.from("articles").select("category"),
+    (supabase as any).rpc("get_article_categories"),
   ]);
 
   if (error || !data) {
@@ -138,13 +141,7 @@ if (!notFound && supabase && id) {
       contentType: row.content_type,
       hasComments: row.has_comments,
     };
-    categories = Array.from(
-      new Set(
-        ((catRows ?? []) as unknown as { category: string }[])
-          .map((r) => r.category)
-          .filter(Boolean),
-      ),
-    ).sort();
+    categories = (catRows ?? []) as unknown as string[];
   }
 }
 
