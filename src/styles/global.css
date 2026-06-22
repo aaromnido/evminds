@@ -331,6 +331,16 @@
   color: var(--ev-primary-blue, #0076f4);
   text-decoration: underline;
 }
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid var(--ev-primary-blue, #0076f4);
+  outline-offset: 2px;
+}
 .tiptap:focus {
   outline: none;
 }

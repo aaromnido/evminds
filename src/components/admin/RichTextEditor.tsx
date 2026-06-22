@@ -1,5 +1,8 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import { useState } from "react";
+import ImageUploadDialog from "./ImageUploadDialog";
 import {
   Bold,
   Italic,
@@ -9,6 +12,7 @@ import {
   ListOrdered,
   Quote,
   Link2,
+  ImagePlus,
   Undo2,
   Redo2,
 } from "lucide-react";
@@ -18,6 +22,7 @@ interface Props {
   value: string;
   onChange: (html: string) => void;
   minHeight?: string;
+  maxHeight?: string;
 }
 
 function ToolbarButton({
@@ -56,9 +61,19 @@ function ToolbarButton({
  * bundles Link/Underline/lists in v3. immediatelyRender:false is required so it
  * doesn't render on the server (this lives inside a hydrated Astro island).
  */
-export default function RichTextEditor({ value, onChange, minHeight = "280px" }: Props) {
+export default function RichTextEditor({
+  value,
+  onChange,
+  minHeight = "280px",
+  maxHeight = "500px",
+}: Props) {
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Image.configure({ HTMLAttributes: { loading: "lazy" } }),
+    ],
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -70,6 +85,10 @@ export default function RichTextEditor({ value, onChange, minHeight = "280px" }:
   });
 
   if (!editor) return null;
+
+  const insertImage = (src: string, alt: string) => {
+    editor.chain().focus().setImage({ src, alt }).run();
+  };
 
   const setLink = () => {
     const prev = editor.getAttributes("link").href as string | undefined;
@@ -90,7 +109,7 @@ export default function RichTextEditor({ value, onChange, minHeight = "280px" }:
   return (
     <div
       className="flex flex-col resize-y overflow-hidden rounded-md border border-input bg-background"
-      style={{ minHeight }}
+      style={{ minHeight, maxHeight }}
     >
       <div className="flex shrink-0 flex-wrap items-center gap-0.5 border-b border-border bg-muted/30 p-1">
         <ToolbarButton
@@ -153,6 +172,12 @@ export default function RichTextEditor({ value, onChange, minHeight = "280px" }:
         >
           <Link2 />
         </ToolbarButton>
+        <ToolbarButton
+          label="Imagen"
+          onClick={() => setImageDialogOpen(true)}
+        >
+          <ImagePlus />
+        </ToolbarButton>
 
         <span className="mx-1 h-5 w-px bg-border" />
 
@@ -175,6 +200,12 @@ export default function RichTextEditor({ value, onChange, minHeight = "280px" }:
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <EditorContent editor={editor} />
       </div>
+
+      <ImageUploadDialog
+        open={imageDialogOpen}
+        onOpenChange={setImageDialogOpen}
+        onInsert={insertImage}
+      />
     </div>
   );
 }
