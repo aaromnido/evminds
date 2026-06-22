@@ -136,24 +136,28 @@ const articleDataJson = serializeBookmarkData({
 
         <!-- Badges + Bookmark -->
         <div class="article-detail__badges">
-          <Badge label={source.name} variant="filled" />
-          {
-            categorySlug && (
-              <a
-                href={`/categoria/${categorySlug}`}
-                class="article-detail__category-link"
-              >
+          <div class="article-detail__tags">
+            <Badge label={source.name} variant="filled" />
+            {
+              categorySlug && (
+                <a
+                  href={`/categoria/${categorySlug}`}
+                  class="article-detail__category-link"
+                >
+                  <Badge label={article.category} variant="outlined" />
+                </a>
+              )
+            }
+            {
+              !categorySlug && (
                 <Badge label={article.category} variant="outlined" />
-              </a>
-            )
-          }
-          {
-            !categorySlug && (
-              <Badge label={article.category} variant="outlined" />
-            )
-          }
-          <DisqusCommentCount identifier={article.id} />
-          <BookmarkButton articleId={article.id} articleData={articleDataJson} />
+              )
+            }
+          </div>
+          <div class="article-detail__actions">
+            <DisqusCommentCount identifier={article.id} />
+            <BookmarkButton articleId={article.id} articleData={articleDataJson} />
+          </div>
         </div>
         <ToneIndicator tone={article.headline_tone} />
       </div>
@@ -296,6 +300,14 @@ const articleDataJson = serializeBookmarkData({
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+  }
+
+  /* On desktop the tags/actions wrappers are transparent, so the badges row
+     flows exactly as before (source, category, comment count, bookmark).
+     They become real flex groups only on mobile to rearrange the header. */
+  .article-detail__tags,
+  .article-detail__actions {
+    display: contents;
   }
 
   .article-detail__category-link {
@@ -551,6 +563,42 @@ const articleDataJson = serializeBookmarkData({
 
     .article-detail__hero {
       border-radius: 12px;
+    }
+
+    /* Header: date on the left, tone + comments + bookmark on the right,
+       source/category tags centered on their own row below. */
+    .article-detail__header {
+      column-gap: 10px;
+      row-gap: 16px;
+    }
+
+    .article-detail__badges {
+      display: contents;
+    }
+
+    .article-detail__tags,
+    .article-detail__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .article-detail__meta {
+      order: 1;
+    }
+
+    .article-detail__header > :global(.badge) {
+      order: 2;
+    }
+
+    .article-detail__actions {
+      order: 3;
+    }
+
+    .article-detail__tags {
+      order: 4;
+      flex-basis: 100%;
+      justify-content: center;
     }
 
     .article-detail__title {
