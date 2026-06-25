@@ -127,7 +127,12 @@ export function windowToSince(window: TimeWindow, now: Date = new Date()): strin
   return since.toISOString();
 }
 
-/** One row returned by the `source_headline_ranking` RPC. */
+/**
+ * One row returned by the `source_headline_ranking` RPC. The `n_*` columns are
+ * the full totals (all content types → the "Todos" view, backward compatible);
+ * the `n_*_video` columns isolate videos so the page can derive the per-type
+ * views in TS without extra DB round-trips (see `countsForFilter`).
+ */
 export interface SourceToneCounts {
   source_id: string;
   source_name: string;
@@ -135,6 +140,70 @@ export interface SourceToneCounts {
   n_amber: number;
   n_red: number;
   n_total: number;
+  n_green_video: number;
+  n_amber_video: number;
+  n_red_video: number;
+  n_total_video: number;
+}
+
+/** Selectable content-type filter for the public ranking. */
+export type ContentFilter = "all" | "news" | "video";
+
+export const CONTENT_FILTERS: { key: ContentFilter; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "news", label: "Noticias" },
+  { key: "video", label: "Vídeos" },
+];
+
+/** Default content-type view. */
+export const DEFAULT_CONTENT_FILTER: ContentFilter = "all";
+
+/** Validates a raw query-string value into a ContentFilter, falling back to default. */
+export function parseContentFilter(value: string | null | undefined): ContentFilter {
+  return CONTENT_FILTERS.some((f) => f.key === value)
+    ? (value as ContentFilter)
+    : DEFAULT_CONTENT_FILTER;
+}
+
+/**
+ * Projects a full RPC row onto the tone counts for one content-type view:
+ *   all   → the totals as-is,
+ *   video → the per-video columns,
+ *   news  → totals minus video (everything that isn't a video).
+ * The result is the plain 4-count shape `rankSources` consumes.
+ */
+export function countsForFilter(
+  row: SourceToneCounts,
+  filter: ContentFilter,
+): SourceToneCounts {
+  const base = { source_id: row.source_id, source_name: row.source_name };
+  if (filter === "video") {
+    return {
+      ...base,
+      n_green: Number(row.n_green_video) || 0,
+      n_amber: Number(row.n_amber_video) || 0,
+      n_red: Number(row.n_red_video) || 0,
+      n_total: Number(row.n_total_video) || 0,
+      n_green_video: 0,
+      n_amber_video: 0,
+      n_red_video: 0,
+      n_total_video: 0,
+    };
+  }
+  if (filter === "news") {
+    return {
+      ...base,
+      n_green: (Number(row.n_green) || 0) - (Number(row.n_green_video) || 0),
+      n_amber: (Number(row.n_amber) || 0) - (Number(row.n_amber_video) || 0),
+      n_red: (Number(row.n_red) || 0) - (Number(row.n_red_video) || 0),
+      n_total: (Number(row.n_total) || 0) - (Number(row.n_total_video) || 0),
+      n_green_video: 0,
+      n_amber_video: 0,
+      n_red_video: 0,
+      n_total_video: 0,
+    };
+  }
+  return row;
 }
 
 export interface RankedSource {

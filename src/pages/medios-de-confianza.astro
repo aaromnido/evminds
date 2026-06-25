@@ -8,9 +8,12 @@ import Badge from "@/components/Badge.astro";
 import { supabase } from "@/lib/supabase";
 import {
   parseWindow,
+  parseContentFilter,
+  countsForFilter,
   windowToSince,
   rankSources,
   TIME_WINDOWS,
+  CONTENT_FILTERS,
   TONE_DEFINITIONS,
   MIN_SAMPLE,
   type SourceToneCounts,
@@ -18,13 +21,16 @@ import {
 import { toDisplayName } from "@/lib/sources";
 
 const periodo = parseWindow(Astro.url.searchParams.get("periodo"));
+const tipo = parseContentFilter(Astro.url.searchParams.get("tipo"));
 const year = new Date().getFullYear();
 
-// Precompute all four windows server-side so the client filter can swap data
-// instantly (no reload): each window is rendered into its own panel, hidden
-// except the active one. The RPC aggregates tone counts per source in Postgres;
-// score/color/award are computed here. Hand-maintained types lack a Functions
-// block, so the rpc call is cast (house style).
+// Precompute every (window × content-type) view server-side so both client
+// filters swap data instantly (no reload): each combination is rendered into its
+// own panel, hidden except the active one. The RPC returns tone counts per source
+// broken down by content type, so the three type-views are derived here from the
+// same four window queries (no extra DB round-trips). Score/color/award are
+// computed here. Hand-maintained types lack a Functions block, so the rpc call is
+// cast (house style).
 const datasets = await Promise.all(
   TIME_WINDOWS.map(async (w) => {
     const { data, error } = await (supabase as any).rpc(
@@ -35,16 +41,21 @@ const datasets = await Promise.all(
       console.error("source_headline_ranking RPC failed:", error.message);
     }
     const rows = error ? [] : ((data ?? []) as SourceToneCounts[]);
-    const ranked = rankSources(rows);
-    const podium = ranked.filter((r) => r.enoughSample).slice(0, 3);
-    return {
-      key: w.key,
-      label: w.label,
-      podium,
-      // Full ranking, from #1: the podium sources are celebrated above as medals
-      // but also appear here so the list reads as a complete classification.
-      ranking: ranked,
-    };
+    const views = CONTENT_FILTERS.map((f) => {
+      // Project each source onto this content-type view, dropping sources with no
+      // articles in it (e.g. video channels under the "Noticias" filter).
+      const ranked = rankSources(
+        rows.map((r) => countsForFilter(r, f.key)).filter((r) => r.n_total > 0),
+      );
+      return {
+        filter: f.key,
+        podium: ranked.filter((r) => r.enoughSample).slice(0, 3),
+        // Full ranking, from #1: the podium sources are celebrated above as medals
+        // but also appear here so the list reads as a complete classification.
+        ranking: ranked,
+      };
+    });
+    return { key: w.key, label: w.label, views };
   }),
 );
 
@@ -81,32 +92,56 @@ function pct(part: number, total: number): number {
       </Subheader>
     </div>
 
-    <!-- Time filter (segmented button group; JS swaps panels without reload) -->
-    <nav class="mdc__filter" aria-label="Periodo del ranking">
-      {
-        TIME_WINDOWS.map((w) => (
-          <a
-            href={`/medios-de-confianza?periodo=${w.key}`}
-            data-window={w.key}
-            class:list={["mdc__filter-item", { "mdc__filter-item--active": w.key === periodo }]}
-            aria-current={w.key === periodo ? "true" : undefined}
-          >
-            {w.label}
-          </a>
-        ))
-      }
-    </nav>
+    <!-- Filters (segmented button groups; JS swaps panels without reload) -->
+    <div class="mdc__filters">
+      <nav class="mdc__filter" data-mdc-group="periodo" aria-label="Periodo del ranking">
+        {
+          TIME_WINDOWS.map((w) => (
+            <a
+              href={`/medios-de-confianza?periodo=${w.key}&tipo=${tipo}`}
+              data-value={w.key}
+              class:list={["mdc__filter-item", { "mdc__filter-item--active": w.key === periodo }]}
+              aria-current={w.key === periodo ? "true" : undefined}
+            >
+              {w.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <nav class="mdc__filter" data-mdc-group="tipo" aria-label="Tipo de contenido">
+        {
+          CONTENT_FILTERS.map((f) => (
+            <a
+              href={`/medios-de-confianza?periodo=${periodo}&tipo=${f.key}`}
+              data-value={f.key}
+              class:list={["mdc__filter-item", { "mdc__filter-item--active": f.key === tipo }]}
+              aria-current={f.key === tipo ? "true" : undefined}
+            >
+              {f.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
 
     {
-      datasets.map((d) => (
-        <div class="mdc__panel" data-mdc-panel={d.key} hidden={d.key !== periodo}>
-          {d.podium.length > 0 ? (
-            <section class="mdc__podium" aria-label="Medios más fiables del periodo">
+      datasets.flatMap((d) =>
+        d.views.map((v) => {
+          const noun = v.filter === "video" ? "Canales" : "Medios";
+          return (
+        <div
+          class="mdc__panel"
+          data-mdc-panel={`${d.key}__${v.filter}`}
+          hidden={!(d.key === periodo && v.filter === tipo)}
+        >
+          {v.podium.length > 0 ? (
+            <section class="mdc__podium" aria-label={`${noun} más fiables del periodo`}>
               <p class="mdc__podium-kicker">
-                🏆 Medios más fiables {d.key === "year" ? year : `· ${d.label}`}
+                🏆 {noun} más fiables {d.key === "year" ? year : `· ${d.label}`}
               </p>
               <ol class="mdc__podium-grid">
-                {d.podium.map((s, i) => (
+                {v.podium.map((s, i) => (
                   <li class:list={["mdc__medal", `mdc__medal--${MEDALS[i].key}`]}>
                     <span class="mdc__medal-icon" aria-hidden="true">{MEDALS[i].icon}</span>
                     <span class="mdc__medal-label">{MEDALS[i].label}</span>
@@ -136,11 +171,11 @@ function pct(part: number, total: number): number {
             </section>
           )}
 
-          {d.ranking.length > 0 && (
+          {v.ranking.length > 0 && (
             <section class="mdc__ranking" aria-label="Ranking de medios">
               <h2 class="mdc__section-title">Ranking completo</h2>
               <ol class="mdc__list">
-                {d.ranking.map((s, i) => (
+                {v.ranking.map((s, i) => (
                   <li class="mdc__row">
                     <span class="mdc__rank">{i + 1}</span>
                     <span class:list={["mdc__dot", `mdc__dot--${s.color ?? "empty"}`]} aria-hidden="true" />
@@ -158,7 +193,9 @@ function pct(part: number, total: number): number {
             </section>
           )}
         </div>
-      ))
+          );
+        }),
+      )
     }
 
     <!-- Legend / methodology -->
@@ -196,12 +233,19 @@ function pct(part: number, total: number): number {
     text-align: center;
   }
 
-  /* Time filter — segmented button group */
+  /* Filters — stacked segmented button groups (period + content type) */
+  .mdc__filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 16px;
+    margin: 0 auto 28px;
+  }
   .mdc__filter {
     display: flex;
     width: fit-content;
     align-self: center;
-    margin: 0 auto 28px;
     border: 1.5px solid var(--navy-2);
     border-radius: 75px;
     overflow: hidden;
@@ -475,6 +519,9 @@ function pct(part: number, total: number): number {
 
   /* Responsive */
   @media (max-width: 768px) {
+    .mdc__filters {
+      flex-direction: column;
+    }
     .mdc__row {
       grid-template-columns: 24px 14px 1fr 44px;
     }
@@ -494,33 +541,54 @@ function pct(part: number, total: number): number {
 </style>
 
 <script is:inline>
-  // Client-side period filter: all four windows are pre-rendered as hidden
-  // panels, so switching is instant (no reload, no network). Anchors keep their
-  // href as a no-JS fallback. Re-binds on every View Transitions navigation.
+  // Client-side filters: every (period × content-type) combination is pre-rendered
+  // as a hidden panel keyed "<periodo>__<tipo>", so switching either group is
+  // instant (no reload, no network). Both navs feed a shared {periodo, tipo} state
+  // and the matching panel is shown. Anchors keep their href as a no-JS fallback.
+  // Re-binds on every View Transitions navigation.
   (function () {
     function initMdcFilters() {
-      const nav = document.querySelector(".mdc__filter");
-      if (!nav || nav.dataset.bound) return;
-      nav.dataset.bound = "1";
-      const buttons = Array.from(nav.querySelectorAll(".mdc__filter-item"));
+      const navs = Array.from(
+        document.querySelectorAll(".mdc__filter[data-mdc-group]"),
+      );
+      if (!navs.length || navs[0].dataset.bound) return;
       const panels = Array.from(document.querySelectorAll("[data-mdc-panel]"));
-      nav.addEventListener("click", function (e) {
-        const link = e.target.closest(".mdc__filter-item");
-        if (!link) return;
-        e.preventDefault();
-        const win = link.dataset.window;
-        buttons.forEach(function (b) {
-          const on = b.dataset.window === win;
-          b.classList.toggle("mdc__filter-item--active", on);
-          if (on) b.setAttribute("aria-current", "true");
-          else b.removeAttribute("aria-current");
-        });
+
+      // Seed state from whichever item starts active in each group.
+      const state = {};
+      navs.forEach(function (nav) {
+        const active = nav.querySelector(".mdc__filter-item--active");
+        if (active) state[nav.dataset.mdcGroup] = active.dataset.value;
+      });
+
+      function apply() {
+        const key = state.periodo + "__" + state.tipo;
         panels.forEach(function (p) {
-          p.hidden = p.dataset.mdcPanel !== win;
+          p.hidden = p.dataset.mdcPanel !== key;
         });
-        const url = new URL(window.location.href);
-        url.searchParams.set("periodo", win);
-        window.history.replaceState(null, "", url);
+      }
+
+      navs.forEach(function (nav) {
+        nav.dataset.bound = "1";
+        const buttons = Array.from(nav.querySelectorAll(".mdc__filter-item"));
+        const group = nav.dataset.mdcGroup;
+        nav.addEventListener("click", function (e) {
+          const link = e.target.closest(".mdc__filter-item");
+          if (!link) return;
+          e.preventDefault();
+          const value = link.dataset.value;
+          state[group] = value;
+          buttons.forEach(function (b) {
+            const on = b.dataset.value === value;
+            b.classList.toggle("mdc__filter-item--active", on);
+            if (on) b.setAttribute("aria-current", "true");
+            else b.removeAttribute("aria-current");
+          });
+          apply();
+          const url = new URL(window.location.href);
+          url.searchParams.set(group, value);
+          window.history.replaceState(null, "", url);
+        });
       });
     }
     document.addEventListener("astro:page-load", initMdcFilters);
