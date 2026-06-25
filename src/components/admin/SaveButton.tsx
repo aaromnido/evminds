@@ -17,18 +17,36 @@ export default function SaveButton({
   ...props
 }: Props) {
   const [saving, setSaving] = useState(false);
-  // Flag set on click; consumed by the document-level submit listener that fires
-  // AFTER React's root handler — so defaultPrevented already reflects validation.
+  // Armed on click; consumed once the submit this button triggered actually
+  // starts navigating.
   const pendingRef = useRef(false);
 
   useEffect(() => {
+    // Native (non-intercepted) submit: the browser will POST + reload, so show
+    // the spinner now. Under <ClientRouter/> (View Transitions, active in admin)
+    // Astro preventDefaults the submit to drive it as a client navigation, so
+    // defaultPrevented is always true here — we can't gate on it; we wait for the
+    // navigation lifecycle below instead. A validation-blocked submit is also
+    // defaultPrevented but starts no navigation, so no spinner — exactly right.
     const onSubmit = (e: Event) => {
+      if (!pendingRef.current || e.defaultPrevented) return;
+      pendingRef.current = false;
+      setSaving(true);
+    };
+    // ClientRouter path: fires only when the intercepted submit actually begins
+    // navigating (i.e. it passed validation). The DOM swap on success remounts
+    // this button fresh, so saving resets on its own.
+    const onPrep = () => {
       if (!pendingRef.current) return;
       pendingRef.current = false;
-      if (!e.defaultPrevented) setSaving(true);
+      setSaving(true);
     };
     document.addEventListener("submit", onSubmit);
-    return () => document.removeEventListener("submit", onSubmit);
+    document.addEventListener("astro:before-preparation", onPrep);
+    return () => {
+      document.removeEventListener("submit", onSubmit);
+      document.removeEventListener("astro:before-preparation", onPrep);
+    };
   }, []);
 
   return (
