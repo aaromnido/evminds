@@ -17,7 +17,7 @@ import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/li
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
 import ToneIndicator from "@/components/ToneIndicator.astro";
 import { formatSummaryParagraph, summaryToMetaDescription } from "@/lib/format-summary";
-import { stripHtml } from "@/lib/html-utils";
+import { stripHtml, sanitizeExcerpt } from "@/lib/html-utils";
 import FlagEN from "@/components/FlagEN.astro";
 
 const { slug } = Astro.params;
@@ -84,6 +84,10 @@ const canonicalUrl = new URL(
 const metaDescription = article.ai_summary
   ? summaryToMetaDescription(article.ai_summary)
   : stripHtml(article.excerpt);
+
+// Excerpt is rendered with set:html — sanitize server-side so no executable
+// markup can reach the page even if a scraper or admin edit slips through.
+const safeExcerpt = sanitizeExcerpt(article.excerpt);
 
 const articleDataJson = serializeBookmarkData({
   id: article.id,
@@ -164,7 +168,7 @@ const articleDataJson = serializeBookmarkData({
       <!-- Meta: date + source -->
 
       <!-- Excerpt -->
-      <div class="article-detail__excerpt" set:html={article.excerpt} />
+      <div class="article-detail__excerpt" set:html={safeExcerpt} />
 
       <!-- AI summary -->
       {article.ai_summary && (

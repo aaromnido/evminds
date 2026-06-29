@@ -24,7 +24,12 @@ const YOUTUBE_API_BATCH_SIZE = 50;
 function cleanDescription(description: string): string {
   if (!description) return '';
 
-  const lines = description.split('\n');
+  // Strip HTML tags (defense in depth — symmetric with rss-parser.ts, which
+  // strips tags at line 98). YouTube descriptions are usually plain text, but
+  // the feed could carry markup, and tags must never reach the rendered excerpt.
+  const stripped = description.replace(/<[^>]*>/g, '');
+
+  const lines = stripped.split('\n');
   const cleanLines: string[] = [];
 
   for (const line of lines) {

@@ -39,8 +39,10 @@ lighthouse*.html
 
 # local context and planning docs
 CLAUDE.md
+AGENTS.md
 context/
 .claude/
+SECURITY.md
 
 # Local Netlify folder
 .netlify
