@@ -46,7 +46,7 @@ export function normalizeArticle(raw: any): ArticleData {
     image_url: raw.image_url,
     article_url: raw.article_url,
     category: raw.category,
-    content_type: raw.content_type || 'news',
+    content_type: raw.content_type || "news",
     youtube_video_id: raw.youtube_video_id || null,
     published_at: new Date(raw.published_at),
     scraped_at: new Date(raw.scraped_at),
@@ -87,8 +87,8 @@ export function getAvailableCategorySlugs(categoryRows: any[] | null): string[] 
         .map((r: any) => r.category)
         .filter(Boolean)
         .map((name: string) => getCategorySlugByName(name))
-        .filter((slug: string | undefined) => slug !== undefined) as string[]
-    )
+        .filter((slug: string | undefined) => slug !== undefined) as string[],
+    ),
   );
 }
 

@@ -12,10 +12,7 @@ const API_KEY = import.meta.env.CLOUDINARY_API_KEY;
 const API_SECRET = import.meta.env.CLOUDINARY_API_SECRET;
 
 async function sha1Hex(input: string): Promise<string> {
-  const buffer = await crypto.subtle.digest(
-    "SHA-1",
-    new TextEncoder().encode(input),
-  );
+  const buffer = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(input));
   return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -63,10 +60,10 @@ export async function uploadImage(file: Blob, folder = "posts"): Promise<string>
     formData.append(k, v);
   }
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,
-    { method: "POST", body: formData },
-  );
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
 
   if (!res.ok) {
     const errBody = await res.text();

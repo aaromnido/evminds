@@ -70,10 +70,7 @@ export default function RichTextEditor({
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image.configure({ HTMLAttributes: { loading: "lazy" } }),
-    ],
+    extensions: [StarterKit, Image.configure({ HTMLAttributes: { loading: "lazy" } })],
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -98,12 +95,7 @@ export default function RichTextEditor({
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor
-      .chain()
-      .focus()
-      .extendMarkRange("link")
-      .setLink({ href: url.trim() })
-      .run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
   };
 
   return (
@@ -128,18 +120,14 @@ export default function RichTextEditor({
         </ToolbarButton>
         <ToolbarButton
           label="Título H2"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           active={editor.isActive("heading", { level: 2 })}
         >
           <Heading2 />
         </ToolbarButton>
         <ToolbarButton
           label="Título H3"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           active={editor.isActive("heading", { level: 3 })}
         >
           <Heading3 />
@@ -165,17 +153,10 @@ export default function RichTextEditor({
         >
           <Quote />
         </ToolbarButton>
-        <ToolbarButton
-          label="Enlace"
-          onClick={setLink}
-          active={editor.isActive("link")}
-        >
+        <ToolbarButton label="Enlace" onClick={setLink} active={editor.isActive("link")}>
           <Link2 />
         </ToolbarButton>
-        <ToolbarButton
-          label="Imagen"
-          onClick={() => setImageDialogOpen(true)}
-        >
+        <ToolbarButton label="Imagen" onClick={() => setImageDialogOpen(true)}>
           <ImagePlus />
         </ToolbarButton>
 

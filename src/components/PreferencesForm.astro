@@ -4,8 +4,8 @@ import { loadSources } from "@/lib/sources";
 import Switch from "./Switch.astro";
 
 const sources = await loadSources();
-const mediaSources = sources.filter((s) => s.feedType !== 'youtube');
-const videoSources = sources.filter((s) => s.feedType === 'youtube');
+const mediaSources = sources.filter((s) => s.feedType !== "youtube");
+const videoSources = sources.filter((s) => s.feedType === "youtube");
 ---
 
 <!-- Content -->
@@ -30,20 +30,22 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
 <section class="prefs__section">
   <h3 class="prefs__section-title">Medios</h3>
   <div class="prefs__grid">
-    {mediaSources.map((source) => (
-      <div class="prefs__option">
-        <span class="prefs__option-label">
-          {source.displayName}
-          {source.lang === 'en' && <span class="prefs__badge">EN</span>}
-        </span>
-        <Switch
-          dataPref={`source-${source.slug}`}
-          dataLang={source.lang}
-          dataSourceName={source.name}
-          ariaLabel={source.lang === 'en' ? `${source.displayName} (EN)` : source.displayName}
-        />
-      </div>
-    ))}
+    {
+      mediaSources.map((source) => (
+        <div class="prefs__option">
+          <span class="prefs__option-label">
+            {source.displayName}
+            {source.lang === "en" && <span class="prefs__badge">EN</span>}
+          </span>
+          <Switch
+            dataPref={`source-${source.slug}`}
+            dataLang={source.lang}
+            dataSourceName={source.name}
+            ariaLabel={source.lang === "en" ? `${source.displayName} (EN)` : source.displayName}
+          />
+        </div>
+      ))
+    }
   </div>
 </section>
 
@@ -51,20 +53,22 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
 <section class="prefs__section">
   <h3 class="prefs__section-title">Vídeos</h3>
   <div class="prefs__grid">
-    {videoSources.map((source) => (
-      <div class="prefs__option">
-        <span class="prefs__option-label">
-          {source.displayName}
-          {source.lang === 'en' && <span class="prefs__badge">EN</span>}
-        </span>
-        <Switch
-          dataPref={`source-${source.slug}`}
-          dataLang={source.lang}
-          dataSourceName={source.name}
-          ariaLabel={source.lang === 'en' ? `${source.displayName} (EN)` : source.displayName}
-        />
-      </div>
-    ))}
+    {
+      videoSources.map((source) => (
+        <div class="prefs__option">
+          <span class="prefs__option-label">
+            {source.displayName}
+            {source.lang === "en" && <span class="prefs__badge">EN</span>}
+          </span>
+          <Switch
+            dataPref={`source-${source.slug}`}
+            dataLang={source.lang}
+            dataSourceName={source.name}
+            ariaLabel={source.lang === "en" ? `${source.displayName} (EN)` : source.displayName}
+          />
+        </div>
+      ))
+    }
   </div>
 </section>
 
@@ -72,16 +76,18 @@ const videoSources = sources.filter((s) => s.feedType === 'youtube');
 <section class="prefs__section">
   <h3 class="prefs__section-title">Categorías</h3>
   <div class="prefs__grid">
-    {CATEGORIES.map((cat) => (
-      <div class="prefs__option">
-        <span class="prefs__option-label">{cat.name}</span>
-        <Switch
-          dataPref={`category-${cat.slug}`}
-          dataCategoryName={cat.name}
-          ariaLabel={cat.name}
-        />
-      </div>
-    ))}
+    {
+      CATEGORIES.map((cat) => (
+        <div class="prefs__option">
+          <span class="prefs__option-label">{cat.name}</span>
+          <Switch
+            dataPref={`category-${cat.slug}`}
+            dataCategoryName={cat.name}
+            ariaLabel={cat.name}
+          />
+        </div>
+      ))
+    }
   </div>
 </section>
 

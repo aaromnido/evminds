@@ -16,13 +16,7 @@ import { uploadImage } from "@/lib/cloudinary";
  */
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 // Whitelisted Cloudinary folders — never pass a client value straight through.
 const ALLOWED_FOLDERS = ["posts", "news"] as const;
 
@@ -31,18 +25,13 @@ export const POST: APIRoute = async ({ request }) => {
     const form = await request.formData();
     const file = form.get("file");
     const folderRaw = String(form.get("folder") ?? "posts");
-    const folder = (ALLOWED_FOLDERS as readonly string[]).includes(folderRaw)
-      ? folderRaw
-      : "posts";
+    const folder = (ALLOWED_FOLDERS as readonly string[]).includes(folderRaw) ? folderRaw : "posts";
 
     if (!(file instanceof File) || file.size === 0) {
       return json({ error: "No se recibió ningún archivo." }, 400);
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return json(
-        { error: "Formato no permitido (usa JPG, PNG, WebP, GIF o AVIF)." },
-        415,
-      );
+      return json({ error: "Formato no permitido (usa JPG, PNG, WebP, GIF o AVIF)." }, 415);
     }
     if (file.size > MAX_BYTES) {
       return json({ error: "La imagen supera el máximo de 10 MB." }, 413);

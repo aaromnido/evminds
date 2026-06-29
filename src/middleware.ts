@@ -34,11 +34,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Authenticated: verify the admin role. Reading the own profile row is
   // allowed by the profiles_self_read RLS policy (id = auth.uid()).
-  const { data } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   const isAdmin = data?.role === "admin";
 
   // On the login page: admins go straight to the dashboard; a logged-in

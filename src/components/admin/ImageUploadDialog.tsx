@@ -52,12 +52,7 @@ export default function ImageUploadDialog({ open, onOpenChange, onInsert }: Prop
         <div className="grid gap-4">
           <div className="grid gap-1.5">
             <Label>Imagen</Label>
-            <ImageDropZone
-              value={url}
-              onChange={setUrl}
-              folder="posts"
-              name="body-image-url"
-            />
+            <ImageDropZone value={url} onChange={setUrl} folder="posts" name="body-image-url" />
           </div>
 
           <div className="grid gap-1.5">

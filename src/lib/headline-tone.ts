@@ -172,10 +172,7 @@ export function parseContentFilter(value: string | null | undefined): ContentFil
  *   news  → totals minus video (everything that isn't a video).
  * The result is the plain 4-count shape `rankSources` consumes.
  */
-export function countsForFilter(
-  row: SourceToneCounts,
-  filter: ContentFilter,
-): SourceToneCounts {
+export function countsForFilter(row: SourceToneCounts, filter: ContentFilter): SourceToneCounts {
   const base = { source_id: row.source_id, source_name: row.source_name };
   if (filter === "video") {
     return {

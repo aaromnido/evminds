@@ -20,11 +20,7 @@ export default function ArchiveButton({ archived, className, ...props }: Props) 
       variant={archived ? "outline" : "destructive"}
       className={cn("ml-auto", className)}
     >
-      {archived ? (
-        <ArchiveRestore className="h-4 w-4" />
-      ) : (
-        <Trash2 className="h-4 w-4" />
-      )}
+      {archived ? <ArchiveRestore className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
       {archived ? "Desarchivar" : "Archivar"}
     </Button>
   );

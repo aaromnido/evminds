@@ -41,12 +41,8 @@ jobs:
       - name: Lint (biome)
         run: pnpm lint
 
-      # Format check (prettier) is intentionally absent from CI until 2B-ii
-      # (repo-wide `prettier --write`) lands. Running --check now would fail on
-      # every legacy file that hasn't been formatted yet, and the reformat is
-      # deliberately split into its own reviewable lote. Enable this step in 2B-ii:
-      #   - name: Format check (prettier)
-      #     run: pnpm format:check
+      - name: Format check (prettier)
+        run: pnpm format:check
 
       - name: Unit tests (vitest)
         run: pnpm test

@@ -45,9 +45,7 @@ const { title = "Admin · evminds" } = Astro.props;
     <script is:inline>
       (function () {
         var stored = localStorage.getItem("evminds-theme");
-        var prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)",
-        ).matches;
+        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         if (stored === "dark" || (!stored && prefersDark)) {
           document.documentElement.classList.add("dark");
         }

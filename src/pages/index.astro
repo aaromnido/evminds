@@ -76,11 +76,8 @@ const featuredVideos = normalizeArticles(videoData);
 
 // Featured primary — exclude hibridosyelectricos (small images)
 const EXCLUDED_FROM_PRIMARY = "hibridosyelectricos.com";
-const primaryIndex = articles.findIndex(
-  (a) => a.source_name !== EXCLUDED_FROM_PRIMARY,
-);
-const featuredPrimary =
-  primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
+const primaryIndex = articles.findIndex((a) => a.source_name !== EXCLUDED_FROM_PRIMARY);
+const featuredPrimary = primaryIndex >= 0 ? articles[primaryIndex] : articles[0];
 
 // Secondary: most recent video (top) + latest own article or 2nd news (bottom)
 const remaining = articles.filter((_, i) => i !== primaryIndex);
@@ -112,9 +109,7 @@ const gridArticles = latestArticle ? remaining : remaining.slice(1);
 
 // Calculate initial cursor for pagination (scraped_at of last article)
 const initialCursor =
-  articles.length > 0
-    ? articles[articles.length - 1].scraped_at.toISOString()
-    : null;
+  articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
 
 const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategories.length > 0;
 ---
@@ -131,66 +126,71 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
       subtitle="Aquí encontrarás noticias, análisis, recursos, y una comunidad en torno a la movilidad eléctrica y las energías renovables"
     >
       <Fragment slot="title">
-        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong
-          >eléctricas</strong
-        >
+        Un punto de encuentro para <strong>mentes inquietas</strong> y <strong>eléctricas</strong>
       </Fragment>
-      <CategoryFilter
-        availableCategorySlugs={availableCategorySlugs}
-        activeSource={activeSource}
-      />
+      <CategoryFilter availableCategorySlugs={availableCategorySlugs} activeSource={activeSource} />
     </Subheader>
 
-    {articles.length === 0 && hasActivePrefs ? (
-      <EmptyState ctaLabel="Restablecer filtros" ctaHref="/">
-        Sin resultados para tus preferencias.<br /><strong>Ajusta tus filtros</strong> para ver contenido.
-      </EmptyState>
-      <script is:inline>
-        document.querySelector('.empty-state__cta')?.addEventListener('click', function (e) {
-          e.preventDefault();
-          localStorage.removeItem('evminds-prefs');
-          document.cookie = 'evminds-prefs=;path=/;max-age=0';
-          window.location.href = '/';
-        });
-      </script>
-    ) : (
-      <>
-        {/* Featured news */}
-        {featuredPrimary && (
-          <section class="featured" aria-label="Noticias destacadas">
-            <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
+    {
+      articles.length === 0 && hasActivePrefs ? (
+        <EmptyState ctaLabel="Restablecer filtros" ctaHref="/">
+          Sin resultados para tus preferencias.
+          <>
+            <br />
+            <strong>Ajusta tus filtros</strong>
+          </>{" "}
+          para ver contenido.
+        </EmptyState>
+      ) : (
+        <>
+          {/* Featured news */}
+          {featuredPrimary && (
+            <section class="featured" aria-label="Noticias destacadas">
+              <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
 
-            <div class="featured__right">
-              {featuredSecondary2 && (
-                <FeaturedSecondary {...featuredSecondary2} badge="New" />
-              )}
-              {featuredSecondary1 && (
-                <FeaturedSecondary {...{...mapArticleToProps(featuredSecondary1), category: "Vídeo"}} />
-              )}
-            </div>
-          </section>
-        )}
+              <div class="featured__right">
+                {featuredSecondary2 && <FeaturedSecondary {...featuredSecondary2} badge="New" />}
+                {featuredSecondary1 && (
+                  <FeaturedSecondary
+                    {...{ ...mapArticleToProps(featuredSecondary1), category: "Vídeo" }}
+                  />
+                )}
+              </div>
+            </section>
+          )}
 
-        {/* News grid */}
-        {gridArticles.length > 0 && (
-          <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
-            {gridArticles.map((article) => (
-              <NewsCard {...mapArticleToProps(article)} />
-            ))}
-          </NewsGrid>
-        )}
-      </>
-    )}
+          {/* News grid */}
+          {gridArticles.length > 0 && (
+            <NewsGrid ariaLabel="Últimas noticias" showSkeletons>
+              {gridArticles.map((article) => (
+                <NewsCard {...mapArticleToProps(article)} />
+              ))}
+            </NewsGrid>
+          )}
+        </>
+      )
+    }
+
+    {
+      /* Resets preferences when the "empty state" CTA is clicked. Lives outside the
+        ternary because the listener is safe to register unconditionally: it uses
+        optional chaining and no-ops when .empty-state__cta isn't in the DOM. */
+    }
+    <script is:inline>
+      document.querySelector(".empty-state__cta")?.addEventListener("click", function (e) {
+        e.preventDefault();
+        localStorage.removeItem("evminds-prefs");
+        document.cookie = "evminds-prefs=;path=/;max-age=0";
+        window.location.href = "/";
+      });
+    </script>
 
     <!-- Footer -->
     <Footer availableCategorySlugs={availableCategorySlugs} />
   </PageLayout>
 </BaseLayout>
 
-<InfiniteScrollConfig
-  cursor={initialCursor || ""}
-  source={activeSource || ""}
-/>
+<InfiniteScrollConfig cursor={initialCursor || ""} source={activeSource || ""} />
 
 <style>
   /* Featured section */

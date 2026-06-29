@@ -33,10 +33,7 @@ export function formatSummaryParagraph(text: string): string {
  * fields with content that is unique per article (vs. the source's
  * excerpt, which is often short and repeated across articles).
  */
-export function summaryToMetaDescription(
-  summary: string,
-  maxLength = 160,
-): string {
+export function summaryToMetaDescription(summary: string, maxLength = 160): string {
   const plain = summary
     .replace(/\*\*([^*\n]+)\*\*/g, "$1")
     .replace(/\s+/g, " ")

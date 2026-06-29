@@ -45,24 +45,22 @@ const article = data;
 if (article.content_type === "video") {
   return Astro.redirect(getVideoUrl(article.slug), 301);
 }
-const source = Array.isArray(article.source)
-  ? article.source[0]
-  : article.source;
+const source = Array.isArray(article.source) ? article.source[0] : article.source;
 
 const RELATED_ARTICLES_LIMIT = 3;
 
 // Fetch related articles (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
-  .select("id, slug, title, seo_title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)")
+  .select(
+    "id, slug, title, seo_title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)",
+  )
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
   .limit(RELATED_ARTICLES_LIMIT);
 
-const relatedArticles = (relatedData || []).map((a) =>
-  mapArticleToProps(normalizeArticle(a))
-);
+const relatedArticles = (relatedData || []).map((a) => mapArticleToProps(normalizeArticle(a)));
 
 // SEO-optimized headline: feeds <title>, og:title and the visible <h1>.
 // Falls back to the source title when no seo_title was generated (old articles).
@@ -72,10 +70,7 @@ const displayTitle = article.seo_title || article.title;
 const heroImage = article.image_url || "/images/placeholder-image.webp";
 const formattedDate = formatDate(article.published_at);
 const categorySlug = getCategorySlugByName(article.category);
-const canonicalUrl = new URL(
-  getNewsUrl(article.slug),
-  Astro.site,
-).toString();
+const canonicalUrl = new URL(getNewsUrl(article.slug), Astro.site).toString();
 
 // Meta description: prefer the AI summary (1500ch unique editorial content)
 // truncated to ~160ch over the source's excerpt (short, often duplicated).
@@ -142,19 +137,12 @@ const articleDataJson = serializeBookmarkData({
             <Badge label={source.name} variant="filled" />
             {
               categorySlug && (
-                <a
-                  href={`/categoria/${categorySlug}`}
-                  class="article-detail__category-link"
-                >
+                <a href={`/categoria/${categorySlug}`} class="article-detail__category-link">
                   <Badge label={article.category} variant="outlined" />
                 </a>
               )
             }
-            {
-              !categorySlug && (
-                <Badge label={article.category} variant="outlined" />
-              )
-            }
+            {!categorySlug && <Badge label={article.category} variant="outlined" />}
           </div>
           <div class="article-detail__actions">
             <DisqusCommentCount identifier={article.id} />
@@ -169,37 +157,51 @@ const articleDataJson = serializeBookmarkData({
       <div class="article-detail__excerpt" set:html={safeExcerpt} />
 
       <!-- AI summary -->
-      {article.ai_summary && (
-        <section class="article-detail__ai-summary" aria-labelledby="ai-summary-heading">
-          <h2 id="ai-summary-heading" class="article-detail__ai-summary-heading">Resumen</h2>
-          {article.ai_summary.trimStart().startsWith("<p>")
-            ? <div class="article-detail__ai-summary-body" set:html={article.ai_summary} />
-            : article.ai_summary.split("\n\n").map((para: string) => (
-                <p class="article-detail__ai-summary-paragraph" set:html={formatSummaryParagraph(para)} />
-              ))
-          }
-          {article.ai_discussion_prompt && (
-            <p class="article-detail__ai-summary-paragraph">{article.ai_discussion_prompt}</p>
-          )}
-          <p class="article-detail__ai-disclaimer">
-            Síntesis editorial de EVMinds a partir de la noticia original.
-          </p>
-        </section>
-      )}
+      {
+        article.ai_summary && (
+          <section class="article-detail__ai-summary" aria-labelledby="ai-summary-heading">
+            <h2 id="ai-summary-heading" class="article-detail__ai-summary-heading">
+              Resumen
+            </h2>
+            {article.ai_summary.trimStart().startsWith("<p>") ? (
+              <div class="article-detail__ai-summary-body" set:html={article.ai_summary} />
+            ) : (
+              article.ai_summary
+                .split("\n\n")
+                .map((para: string) => (
+                  <p
+                    class="article-detail__ai-summary-paragraph"
+                    set:html={formatSummaryParagraph(para)}
+                  />
+                ))
+            )}
+            {article.ai_discussion_prompt && (
+              <p class="article-detail__ai-summary-paragraph">{article.ai_discussion_prompt}</p>
+            )}
+            <p class="article-detail__ai-disclaimer">
+              Síntesis editorial de EVMinds a partir de la noticia original.
+            </p>
+          </section>
+        )
+      }
 
       <!-- AI transparency notes -->
-      {article.ai_warnings && article.ai_warnings.length > 0 && (
-        <aside class="article-detail__ai-warnings" aria-labelledby="ai-warnings-heading">
-          <h2 id="ai-warnings-heading" class="article-detail__ai-warnings-title">Conviene saber:</h2>
-          <ul class="article-detail__ai-warnings-list">
-            {(article.ai_warnings as AiWarning[]).map((w) => (
-              <li class={`article-detail__ai-warning article-detail__ai-warning--${w.type}`}>
-                {resolveWarningText(w, "es")}
-              </li>
-            ))}
-          </ul>
-        </aside>
-      )}
+      {
+        article.ai_warnings && article.ai_warnings.length > 0 && (
+          <aside class="article-detail__ai-warnings" aria-labelledby="ai-warnings-heading">
+            <h2 id="ai-warnings-heading" class="article-detail__ai-warnings-title">
+              Conviene saber:
+            </h2>
+            <ul class="article-detail__ai-warnings-list">
+              {(article.ai_warnings as AiWarning[]).map((w) => (
+                <li class={`article-detail__ai-warning article-detail__ai-warning--${w.type}`}>
+                  {resolveWarningText(w, "es")}
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )
+      }
 
       <!-- CTA: read full article -->
       <a
@@ -221,8 +223,7 @@ const articleDataJson = serializeBookmarkData({
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-          ></path>
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
           <polyline points="15 3 21 3 21 9"></polyline>
           <line x1="10" y1="14" x2="21" y2="3"></line>
         </svg>
@@ -234,13 +235,8 @@ const articleDataJson = serializeBookmarkData({
       <!-- Related articles -->
       {
         relatedArticles.length > 0 && (
-          <section
-            class="article-detail__related"
-            aria-label="Noticias relacionadas"
-          >
-            <h2 class="article-detail__related-title">
-              Noticias relacionadas
-            </h2>
+          <section class="article-detail__related" aria-label="Noticias relacionadas">
+            <h2 class="article-detail__related-title">Noticias relacionadas</h2>
             <div class="article-detail__related-grid">
               {relatedArticles.map((props) => (
                 <NewsCard {...props} />
@@ -251,11 +247,7 @@ const articleDataJson = serializeBookmarkData({
       }
 
       <!-- Disqus comments -->
-      <DisqusComments
-        identifier={article.id}
-        url={canonicalUrl}
-        title={article.title}
-      />
+      <DisqusComments identifier={article.id} url={canonicalUrl} title={article.title} />
     </article>
 
     <Footer />

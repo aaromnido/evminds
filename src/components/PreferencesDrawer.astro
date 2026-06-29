@@ -9,19 +9,21 @@ import PreferencesForm from "./PreferencesForm.astro";
 
 <script is:inline>
   (function () {
-    var STORAGE_KEY = 'evminds-prefs';
-    var COOKIE_NAME = 'evminds-prefs';
+    var STORAGE_KEY = "evminds-prefs";
+    var COOKIE_NAME = "evminds-prefs";
 
     function readPrefs() {
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch { return {}; }
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
     }
 
     function savePrefs(prefs) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
       var encoded = encodeURIComponent(JSON.stringify(prefs));
-      document.cookie = COOKIE_NAME + '=' + encoded + ';path=/;max-age=31536000;SameSite=Lax';
+      document.cookie = COOKIE_NAME + "=" + encoded + ";path=/;max-age=31536000;SameSite=Lax";
       window.__evminds_prefs = prefs;
     }
 
@@ -29,17 +31,21 @@ import PreferencesForm from "./PreferencesForm.astro";
       var excludedSources = [];
       var excludedCategories = [];
 
-      drawer.querySelectorAll('[data-source-name]').forEach(function (input) {
-        if (!input.checked) excludedSources.push(input.getAttribute('data-source-name'));
+      drawer.querySelectorAll("[data-source-name]").forEach(function (input) {
+        if (!input.checked) excludedSources.push(input.getAttribute("data-source-name"));
       });
-      drawer.querySelectorAll('[data-category-name]').forEach(function (input) {
-        if (!input.checked) excludedCategories.push(input.getAttribute('data-category-name'));
+      drawer.querySelectorAll("[data-category-name]").forEach(function (input) {
+        if (!input.checked) excludedCategories.push(input.getAttribute("data-category-name"));
       });
 
       var commentsSwitch = drawer.querySelector('[data-pref="only-with-comments"]');
       var onlyWithComments = commentsSwitch ? commentsSwitch.checked : false;
 
-      return { excludedSources: excludedSources, excludedCategories: excludedCategories, onlyWithComments: onlyWithComments };
+      return {
+        excludedSources: excludedSources,
+        excludedCategories: excludedCategories,
+        onlyWithComments: onlyWithComments,
+      };
     }
 
     function restoreSwitches(drawer, prefs) {
@@ -59,15 +65,17 @@ import PreferencesForm from "./PreferencesForm.astro";
       var langSwitch = drawer.querySelector('[data-pref="lang-en"]');
       var enSources = drawer.querySelectorAll('[data-lang="en"]');
       if (langSwitch && enSources.length) {
-        var allEnOff = Array.prototype.every.call(enSources, function (s) { return !s.checked; });
+        var allEnOff = Array.prototype.every.call(enSources, function (s) {
+          return !s.checked;
+        });
         langSwitch.checked = !allEnOff;
       }
     }
 
     function initPreferences() {
-      var drawer = document.querySelector('[data-drawer]');
-      if (!drawer || drawer.hasAttribute('data-prefs-init')) return;
-      drawer.setAttribute('data-prefs-init', '');
+      var drawer = document.querySelector("[data-drawer]");
+      if (!drawer || drawer.hasAttribute("data-prefs-init")) return;
+      drawer.setAttribute("data-prefs-init", "");
 
       var prefs = readPrefs();
       var prefsSnapshot = JSON.stringify(prefs);
@@ -76,12 +84,12 @@ import PreferencesForm from "./PreferencesForm.astro";
       var dirty = false;
 
       // Track open/close for reload-on-change
-      drawer.addEventListener('drawer:open', function () {
+      drawer.addEventListener("drawer:open", function () {
         prefsSnapshot = JSON.stringify(buildPrefsFromSwitches(drawer));
         dirty = false;
       });
 
-      drawer.addEventListener('drawer:close', function () {
+      drawer.addEventListener("drawer:close", function () {
         if (dirty) window.location.reload();
       });
 
@@ -92,12 +100,12 @@ import PreferencesForm from "./PreferencesForm.astro";
       }
 
       // Reset button
-      var resetBtn = drawer.querySelector('[data-drawer-footer-action]');
+      var resetBtn = drawer.querySelector("[data-drawer-footer-action]");
       if (resetBtn) {
-        resetBtn.addEventListener('click', function () {
-          drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
+        resetBtn.addEventListener("click", function () {
+          drawer.querySelectorAll("input[data-pref]").forEach(function (input) {
             // "only-with-comments" defaults to off, everything else defaults to on
-            input.checked = input.getAttribute('data-pref') !== 'only-with-comments';
+            input.checked = input.getAttribute("data-pref") !== "only-with-comments";
           });
           savePrefs({ excludedSources: [], excludedCategories: [], onlyWithComments: false });
           dirty = JSON.stringify({ excludedSources: [], excludedCategories: [] }) !== prefsSnapshot;
@@ -105,8 +113,8 @@ import PreferencesForm from "./PreferencesForm.astro";
       }
 
       // Save on every switch change
-      drawer.querySelectorAll('input[data-pref]').forEach(function (input) {
-        input.addEventListener('change', onPrefChange);
+      drawer.querySelectorAll("input[data-pref]").forEach(function (input) {
+        input.addEventListener("change", onPrefChange);
       });
 
       // Language toggle syncs with EN source switches
@@ -114,10 +122,10 @@ import PreferencesForm from "./PreferencesForm.astro";
       var enSources = drawer.querySelectorAll('[data-lang="en"]');
 
       if (langSwitch) {
-        langSwitch.addEventListener('change', function () {
+        langSwitch.addEventListener("change", function () {
           enSources.forEach(function (input) {
             input.checked = langSwitch.checked;
-            input.dispatchEvent(new Event('change'));
+            input.dispatchEvent(new Event("change"));
           });
         });
       }

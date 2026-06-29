@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { Select } from "@base-ui/react/select";
-import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, Edit, Loader2, Newspaper, Search, Trash2, X } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  Edit,
+  Loader2,
+  Newspaper,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,12 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatShortDate } from "@/lib/date-utils";
 import { isDeletableArchived } from "@/lib/article-utils";
@@ -132,8 +138,7 @@ export default function NewsList({
 
   const eligibleItems = items.filter(isDeletableArchived);
   const eligibleIds = eligibleItems.map((a) => a.id);
-  const allEligibleSelected =
-    eligibleIds.length > 0 && eligibleIds.every((id) => selected.has(id));
+  const allEligibleSelected = eligibleIds.length > 0 && eligibleIds.every((id) => selected.has(id));
   const someSelected = selected.size > 0;
 
   function toggleAll() {
@@ -186,7 +191,11 @@ export default function NewsList({
         {/* Filters + search */}
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           {/* Segmented control */}
-          <div className="flex w-full justify-center sm:inline-flex sm:w-auto" role="group" aria-label="Filtrar noticias">
+          <div
+            className="flex w-full justify-center sm:inline-flex sm:w-auto"
+            role="group"
+            aria-label="Filtrar noticias"
+          >
             {FILTERS.map((f, i) => (
               <a
                 key={f.key}
@@ -330,12 +339,8 @@ export default function NewsList({
             </Select.Root>
 
             <form method="GET" className="flex flex-1 items-center gap-2">
-              {estado !== "activas" && (
-                <input type="hidden" name="estado" value={estado} />
-              )}
-              {sourceId && (
-                <input type="hidden" name="source_id" value={sourceId} />
-              )}
+              {estado !== "activas" && <input type="hidden" name="estado" value={estado} />}
+              {sourceId && <input type="hidden" name="source_id" value={sourceId} />}
               {tone && <input type="hidden" name="tone" value={tone} />}
               <div className="relative w-full">
                 <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -368,14 +373,9 @@ export default function NewsList({
             </p>
           ) : items.length === 0 ? (
             <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
-              <Newspaper
-                className="mb-4 size-16 text-muted-foreground/40"
-                strokeWidth={1}
-              />
+              <Newspaper className="mb-4 size-16 text-muted-foreground/40" strokeWidth={1} />
               <p className="text-base text-muted-foreground">
-                {q
-                  ? `Sin resultados para "${q}".`
-                  : "No hay noticias en esta vista."}
+                {q ? `Sin resultados para "${q}".` : "No hay noticias en esta vista."}
               </p>
             </div>
           ) : (
@@ -388,9 +388,7 @@ export default function NewsList({
                       {selected.size} seleccionada{selected.size !== 1 ? "s" : ""}
                     </p>
                     <div className="flex items-center gap-2">
-                      {deleteError && (
-                        <p className="text-sm text-destructive">{deleteError}</p>
-                      )}
+                      {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
                       <Button
                         variant="outline"
                         size="sm"
@@ -414,7 +412,9 @@ export default function NewsList({
                         />
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Eliminar {selected.size} noticia{selected.size !== 1 ? "s" : ""}?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              ¿Eliminar {selected.size} noticia{selected.size !== 1 ? "s" : ""}?
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
                               Esta acción es permanente y no se puede deshacer.
                             </AlertDialogDescription>
@@ -449,9 +449,12 @@ export default function NewsList({
                       />
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>¿Eliminar todas las archivadas antiguas?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            ¿Eliminar todas las archivadas antiguas?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Se eliminarán permanentemente todas las noticias archivadas con más de 30 días. Esta acción no se puede deshacer.
+                            Se eliminarán permanentemente todas las noticias archivadas con más de
+                            30 días. Esta acción no se puede deshacer.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -542,10 +545,20 @@ export default function NewsList({
                           <TableCell className="hidden md:table-cell">
                             <div className="flex flex-wrap gap-1">
                               {a.content_type === "video" && (
-                                <Badge variant="outline" className="h-6 px-3 py-1">Vídeo</Badge>
+                                <Badge variant="outline" className="h-6 px-3 py-1">
+                                  Vídeo
+                                </Badge>
                               )}
-                              {a.archived && <Badge variant="secondary" className="h-6 px-3 py-1">Archivada</Badge>}
-                              {!a.ai_summary && <Badge variant="default" className="h-6 px-3 py-1">Sin IA</Badge>}
+                              {a.archived && (
+                                <Badge variant="secondary" className="h-6 px-3 py-1">
+                                  Archivada
+                                </Badge>
+                              )}
+                              {!a.ai_summary && (
+                                <Badge variant="default" className="h-6 px-3 py-1">
+                                  Sin IA
+                                </Badge>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">

@@ -10,7 +10,10 @@ import EmptyState from "@/components/EmptyState.astro";
 import { STORAGE_KEY } from "@/lib/bookmarks";
 ---
 
-<BaseLayout title="Mis artículos y vídeos guardados - EVMinds" description="Tu lista personal con artículos y vídeos guardados sobre movilidad eléctrica.">
+<BaseLayout
+  title="Mis artículos y vídeos guardados - EVMinds"
+  description="Tu lista personal con artículos y vídeos guardados sobre movilidad eléctrica."
+>
   <PageLayout>
     <Header />
 
@@ -23,12 +26,18 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     <!-- Empty state (hidden by JS when bookmarks exist) -->
     <div id="guardados-empty">
       <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
-        Aún <strong>no has guardado</strong> ningún artículo.<br />Pulsa el icono de marcador en cualquier artículo para guardarlo aquí.
+        Aún <strong>no has guardado</strong> ningún artículo.<br />Pulsa el icono de marcador en
+        cualquier artículo para guardarlo aquí.
       </EmptyState>
     </div>
 
     <!-- Grid (hidden by default, shown by JS) -->
-    <section id="guardados-grid-section" class="news" style="display: none;" aria-label="Artículos guardados">
+    <section
+      id="guardados-grid-section"
+      class="news"
+      style="display: none;"
+      aria-label="Artículos guardados"
+    >
       <div id="guardados-grid" class="news__grid"></div>
     </section>
 

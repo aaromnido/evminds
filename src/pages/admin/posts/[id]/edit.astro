@@ -1,8 +1,6 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
-import PostEditor, {
-  type PostFormValues,
-} from "@/components/admin/PostEditor.tsx";
+import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
 
 const supabase = Astro.locals.supabase;
 const { id } = Astro.params;
@@ -120,11 +118,7 @@ if (!supabase || !id) {
 
 // Initial load (GET) or after a failed delete: fetch the row to prefill.
 if (!formValues && !notFound && supabase && id) {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data, error } = await supabase.from("posts").select("*").eq("id", id).single();
   if (error || !data) {
     notFound = true;
   } else {

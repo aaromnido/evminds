@@ -1,8 +1,6 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
-import NewsEditor, {
-  type NewsFormValues,
-} from "@/components/admin/NewsEditor.tsx";
+import NewsEditor, { type NewsFormValues } from "@/components/admin/NewsEditor.tsx";
 
 const supabase = Astro.locals.supabase;
 const { id } = Astro.params;
@@ -38,9 +36,7 @@ if (!supabase || !id) {
     // ("Sin clasificar"). Manual override of the AI traffic-light classification.
     const rawTone = get("headline_tone");
     const headlineTone =
-      rawTone === "green" || rawTone === "amber" || rawTone === "red"
-        ? rawTone
-        : null;
+      rawTone === "green" || rawTone === "amber" || rawTone === "red" ? rawTone : null;
 
     const missing: string[] = [];
     if (!title) missing.push("título");
@@ -103,15 +99,14 @@ if (!notFound && supabase && id) {
       title: formValues?.title ?? row.title,
       excerpt: formValues?.excerpt ?? row.excerpt,
       category: formValues?.category ?? row.category,
-      image_url: formValues?.image_url ?? (row.image_url ?? ""),
-      seo_title: formValues?.seo_title ?? (row.seo_title ?? ""),
+      image_url: formValues?.image_url ?? row.image_url ?? "",
+      seo_title: formValues?.seo_title ?? row.seo_title ?? "",
       // null here is a meaningful choice ("Sin clasificar"), so on a failed
       // submit keep the user's pick; on a plain GET fall back to the DB value.
       headline_tone: formValues ? (formValues.headline_tone ?? null) : row.headline_tone,
       archived: row.archived,
-      ai_summary: formValues?.ai_summary ?? (row.ai_summary ?? ""),
-      ai_discussion_prompt:
-        formValues?.ai_discussion_prompt ?? (row.ai_discussion_prompt ?? ""),
+      ai_summary: formValues?.ai_summary ?? row.ai_summary ?? "",
+      ai_discussion_prompt: formValues?.ai_discussion_prompt ?? row.ai_discussion_prompt ?? "",
       ai_warnings: (row.ai_warnings ?? []).map((w) => w.type),
       ai_generated_at: row.ai_generated_at ?? undefined,
       sourceName: row.source?.name,

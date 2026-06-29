@@ -1,10 +1,4 @@
-import {
-  LayoutDashboard,
-  FilePenLine,
-  Newspaper,
-  LogOut,
-  Plus,
-} from "lucide-react";
+import { LayoutDashboard, FilePenLine, Newspaper, LogOut, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -76,13 +70,7 @@ export default function AdminSidebarLayout({
       <Sidebar>
         <SidebarHeader className="px-3 py-8">
           <a href="/admin" className="flex items-center justify-center">
-            <img
-              src="/logo.svg"
-              alt="evminds"
-              className="h-6 w-auto"
-              width={617}
-              height={102}
-            />
+            <img src="/logo.svg" alt="evminds" className="h-6 w-auto" width={617} height={102} />
           </a>
         </SidebarHeader>
 
@@ -131,15 +119,10 @@ export default function AdminSidebarLayout({
 
         <SidebarFooter className="gap-2">
           {userEmail && (
-            <span className="truncate px-2 text-xs text-muted-foreground">
-              {userEmail}
-            </span>
+            <span className="truncate px-2 text-xs text-muted-foreground">{userEmail}</span>
           )}
           <form method="POST" action="/admin/logout">
-            <SidebarMenuButton
-              render={<button type="submit" />}
-              tooltip="Cerrar sesión"
-            >
+            <SidebarMenuButton render={<button type="submit" />} tooltip="Cerrar sesión">
               <LogOut />
               <span>Salir</span>
             </SidebarMenuButton>
@@ -172,9 +155,7 @@ export default function AdminSidebarLayout({
             )}
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1154px] flex-1 px-6 py-8">
-          {children}
-        </main>
+        <main className="mx-auto w-full max-w-[1154px] flex-1 px-6 py-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -44,16 +44,7 @@ function pageUrl(p: number, q: string) {
   return qs ? `/admin/posts?${qs}` : "/admin/posts";
 }
 
-
-export default function PostsList({
-  posts,
-  error,
-  nowIso,
-  q,
-  page,
-  totalPages,
-  total,
-}: Props) {
+export default function PostsList({ posts, error, nowIso, q, page, totalPages, total }: Props) {
   const now = new Date(nowIso).getTime();
 
   return (
@@ -90,14 +81,9 @@ export default function PostsList({
             </p>
           ) : posts.length === 0 ? (
             <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center">
-              <FilePenLine
-                className="mb-4 size-16 text-muted-foreground/40"
-                strokeWidth={1}
-              />
+              <FilePenLine className="mb-4 size-16 text-muted-foreground/40" strokeWidth={1} />
               <p className="text-base text-muted-foreground">
-                {q
-                  ? `Sin resultados para "${q}".`
-                  : "Aún no hay artículos propios."}
+                {q ? `Sin resultados para "${q}".` : "Aún no hay artículos propios."}
               </p>
               {!q && (
                 <a
@@ -123,11 +109,7 @@ export default function PostsList({
                   </TableHeader>
                   <TableBody>
                     {posts.map((p) => {
-                      const s = getPostStatusBadge(
-                        p.status,
-                        p.published_at,
-                        now,
-                      );
+                      const s = getPostStatusBadge(p.status, p.published_at, now);
                       return (
                         <TableRow key={p.id}>
                           <TableCell className="max-w-0 min-w-[60vw] font-medium md:min-w-0">
@@ -149,12 +131,7 @@ export default function PostsList({
                               // extra vertical padding is visible.
                               className={cn("h-6 gap-1.5 px-3 py-1", s.className)}
                             >
-                              <span
-                                className={cn(
-                                  "size-1.5 shrink-0 rounded-full",
-                                  s.dotClass,
-                                )}
-                              />
+                              <span className={cn("size-1.5 shrink-0 rounded-full", s.dotClass)} />
                               {s.label}
                             </Badge>
                           </TableCell>
@@ -193,8 +170,7 @@ export default function PostsList({
                   Anterior
                 </a>
                 <span className="order-first w-full text-center sm:order-none sm:w-auto sm:text-left">
-                  {total} artículo{total === 1 ? "" : "s"} · página {page} de{" "}
-                  {totalPages}
+                  {total} artículo{total === 1 ? "" : "s"} · página {page} de {totalPages}
                 </span>
                 <a
                   href={pageUrl(page + 1, q)}

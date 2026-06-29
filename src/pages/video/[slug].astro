@@ -35,9 +35,7 @@ if (error || !data) {
 }
 
 const video = data;
-const source = Array.isArray(video.source)
-  ? video.source[0]
-  : video.source;
+const source = Array.isArray(video.source) ? video.source[0] : video.source;
 
 // SEO-optimized headline: feeds <title>, og:title and the visible <h1>.
 // Falls back to the source title when no seo_title was generated (old videos).
@@ -48,33 +46,32 @@ const RELATED_VIDEOS_LIMIT = 3;
 // Fetch related videos (same category, excluding current)
 const { data: relatedData } = await supabase
   .from("articles")
-  .select("id, slug, title, seo_title, excerpt, image_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)")
+  .select(
+    "id, slug, title, seo_title, excerpt, image_url, category, content_type, youtube_video_id, published_at, scraped_at, source:sources!inner(name, url)",
+  )
   .eq("content_type", "video")
   .eq("category", video.category)
   .neq("id", video.id)
   .order("scraped_at", { ascending: false })
   .limit(RELATED_VIDEOS_LIMIT);
 
-const relatedVideos = (relatedData || []).map((v) =>
-  mapArticleToProps(normalizeArticle(v))
-);
+const relatedVideos = (relatedData || []).map((v) => mapArticleToProps(normalizeArticle(v)));
 
 // Page data
 const formattedDate = formatDate(video.published_at);
 const categorySlug = getCategorySlugByName(video.category);
-const canonicalUrl = new URL(
-  getVideoUrl(video.slug),
-  Astro.site,
-).toString();
+const canonicalUrl = new URL(getVideoUrl(video.slug), Astro.site).toString();
 
 // Excerpt is rendered with set:html — sanitize server-side so no executable
 // markup can reach the page even if a scraper or admin edit slips through.
 const safeExcerpt = sanitizeExcerpt(video.excerpt);
 
 const youtubeVideoId = video.youtube_video_id;
-const thumbnailUrl = video.image_url || (youtubeVideoId
-  ? `https://i.ytimg.com/vi/${youtubeVideoId}/maxresdefault.jpg`
-  : "/images/placeholder-image.webp");
+const thumbnailUrl =
+  video.image_url ||
+  (youtubeVideoId
+    ? `https://i.ytimg.com/vi/${youtubeVideoId}/maxresdefault.jpg`
+    : "/images/placeholder-image.webp");
 
 const articleDataJson = serializeBookmarkData({
   id: video.id,
@@ -144,28 +141,30 @@ const videoObject = {
       <h1 class="video-detail__title">{displayTitle}</h1>
 
       <!-- YouTube embed -->
-      {youtubeVideoId ? (
-        <div class="video-detail__player">
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeVideoId}`}
-            title={video.title}
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-          ></iframe>
-        </div>
-      ) : (
-        <div class="video-detail__hero">
-          <img
-            src={thumbnailUrl}
-            alt={video.title}
-            class="video-detail__hero-image"
-            loading="eager"
-            width="900"
-            height="500"
-          />
-        </div>
-      )}
+      {
+        youtubeVideoId ? (
+          <div class="video-detail__player">
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+              title={video.title}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            />
+          </div>
+        ) : (
+          <div class="video-detail__hero">
+            <img
+              src={thumbnailUrl}
+              alt={video.title}
+              class="video-detail__hero-image"
+              loading="eager"
+              width="900"
+              height="500"
+            />
+          </div>
+        )
+      }
 
       <div class="video-detail__header">
         <div class="video-detail__meta">
@@ -177,19 +176,12 @@ const videoObject = {
           <Badge label={source.name} variant="filled" />
           {
             categorySlug && (
-              <a
-                href={`/categoria/${categorySlug}`}
-                class="video-detail__category-link"
-              >
+              <a href={`/categoria/${categorySlug}`} class="video-detail__category-link">
                 <Badge label={video.category} variant="outlined" />
               </a>
             )
           }
-          {
-            !categorySlug && (
-              <Badge label={video.category} variant="outlined" />
-            )
-          }
+          {!categorySlug && <Badge label={video.category} variant="outlined" />}
           <DisqusCommentCount identifier={video.id} />
           <BookmarkButton articleId={video.id} articleData={articleDataJson} />
         </div>
@@ -197,9 +189,7 @@ const videoObject = {
       </div>
 
       <!-- Description -->
-      {safeExcerpt && (
-        <div class="video-detail__excerpt" set:html={safeExcerpt} />
-      )}
+      {safeExcerpt && <div class="video-detail__excerpt" set:html={safeExcerpt} />}
 
       <!-- CTA: watch on YouTube -->
       <a
@@ -232,13 +222,8 @@ const videoObject = {
       <!-- Related videos -->
       {
         relatedVideos.length > 0 && (
-          <section
-            class="video-detail__related"
-            aria-label="Vídeos relacionados"
-          >
-            <h2 class="video-detail__related-title">
-              Vídeos relacionados
-            </h2>
+          <section class="video-detail__related" aria-label="Vídeos relacionados">
+            <h2 class="video-detail__related-title">Vídeos relacionados</h2>
             <div class="video-detail__related-grid">
               {relatedVideos.map((props) => (
                 <NewsCard {...props} />
@@ -249,11 +234,7 @@ const videoObject = {
       }
 
       <!-- Disqus comments -->
-      <DisqusComments
-        identifier={video.id}
-        url={canonicalUrl}
-        title={video.title}
-      />
+      <DisqusComments identifier={video.id} url={canonicalUrl} title={video.title} />
     </article>
 
     <Footer />

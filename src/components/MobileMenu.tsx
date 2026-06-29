@@ -1,30 +1,39 @@
-import { useEffect, useState } from 'react';
-import { MenuIcon } from './icons/MenuIcon';
+import { useEffect, useState } from "react";
+import { MenuIcon } from "./icons/MenuIcon";
 
 function MobileThemeToggle({ isClosing, delay }: { isClosing: boolean; delay: number }) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
+    setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
   const handleClick = () => {
     const themeApi = (window as any).__evminds_theme;
     if (themeApi) {
       const next = themeApi.toggle();
-      setIsDark(next === 'dark');
+      setIsDark(next === "dark");
     }
   };
 
   return (
     <button
-      className={`mobile-menu-theme-toggle mobile-menu-item ${isClosing ? 'mobile-menu-item--closing' : ''}`}
+      className={`mobile-menu-theme-toggle mobile-menu-item ${isClosing ? "mobile-menu-item--closing" : ""}`}
       onClick={handleClick}
-      aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      style={{ animationDelay: isClosing ? '0s' : `${delay}s` }}
+      aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      style={{ animationDelay: isClosing ? "0s" : `${delay}s` }}
     >
       {isDark ? (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
@@ -36,7 +45,16 @@ function MobileThemeToggle({ isClosing, delay }: { isClosing: boolean; delay: nu
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
       ) : (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       )}
@@ -62,13 +80,13 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
   // Lock body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -95,7 +113,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
       <button
         onClick={toggleMenu}
         className="mobile-menu-button"
-        aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
+        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
         aria-expanded={isOpen}
       >
         <MenuIcon isOpen={isOpen} />
@@ -104,7 +122,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
       {/* Fullscreen Menu Overlay */}
       {isOpen && (
         <div
-          className={`mobile-menu-overlay ${isClosing ? 'mobile-menu-overlay--closing' : ''}`}
+          className={`mobile-menu-overlay ${isClosing ? "mobile-menu-overlay--closing" : ""}`}
           onClick={closeMenu}
         >
           <nav
@@ -116,20 +134,17 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
               <a
                 key={item.href}
                 href={item.href}
-                className={`mobile-menu-item ${item.active ? 'mobile-menu-item--active' : ''} ${isClosing ? 'mobile-menu-item--closing' : ''}`}
+                className={`mobile-menu-item ${item.active ? "mobile-menu-item--active" : ""} ${isClosing ? "mobile-menu-item--closing" : ""}`}
                 onClick={closeMenu}
                 style={{
-                  animationDelay: isClosing ? '0s' : `${index * 0.1}s`,
+                  animationDelay: isClosing ? "0s" : `${index * 0.1}s`,
                 }}
               >
                 {item.label}
                 {item.badge && <span className="nav__badge">{item.badge}</span>}
               </a>
             ))}
-            <MobileThemeToggle
-              isClosing={isClosing}
-              delay={navItems.length * 0.1}
-            />
+            <MobileThemeToggle isClosing={isClosing} delay={navItems.length * 0.1} />
           </nav>
         </div>
       )}

@@ -8,10 +8,7 @@ const supabase = Astro.locals.supabase;
 
 const PAGE_SIZE = 20;
 const q = Astro.url.searchParams.get("q")?.trim() ?? "";
-const page = Math.max(
-  1,
-  Number.parseInt(Astro.url.searchParams.get("page") ?? "1", 10) || 1,
-);
+const page = Math.max(1, Number.parseInt(Astro.url.searchParams.get("page") ?? "1", 10) || 1);
 const from = (page - 1) * PAGE_SIZE;
 const to = from + PAGE_SIZE - 1;
 

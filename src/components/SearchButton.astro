@@ -12,16 +12,34 @@ interface Props {
 const { showNew = false } = Astro.props;
 ---
 
-<button class="search-button" type="button" data-search-open aria-label="Buscar" title="Buscar (⌘K)">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<button
+  class="search-button"
+  type="button"
+  data-search-open
+  aria-label="Buscar"
+  title="Buscar (⌘K)"
+>
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
     <circle cx="11" cy="11" r="8"></circle>
     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
   </svg>
-  {showNew && (
-    <span class="search-button__badge" aria-hidden="true">
-      <NewBadge />
-    </span>
-  )}
+  {
+    showNew && (
+      <span class="search-button__badge" aria-hidden="true">
+        <NewBadge />
+      </span>
+    )
+  }
 </button>
 
 <style>
@@ -42,8 +60,12 @@ const { showNew = false } = Astro.props;
     flex-shrink: 0;
   }
 
-  .search-button:hover { opacity: 0.7; }
-  .search-button:active { opacity: 0.5; }
+  .search-button:hover {
+    opacity: 0.7;
+  }
+  .search-button:active {
+    opacity: 0.5;
+  }
 
   .search-button__badge {
     position: absolute;
@@ -58,9 +80,9 @@ const { showNew = false } = Astro.props;
   // View Transitions. SearchModal listens for the `search:open` event.
   if (!window.__searchButtonInit) {
     window.__searchButtonInit = true;
-    document.addEventListener('click', function (e) {
-      if (e.target.closest && e.target.closest('[data-search-open]')) {
-        document.dispatchEvent(new CustomEvent('search:open'));
+    document.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("[data-search-open]")) {
+        document.dispatchEvent(new CustomEvent("search:open"));
       }
     });
   }

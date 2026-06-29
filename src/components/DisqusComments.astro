@@ -9,62 +9,74 @@ const { identifier, url, title } = Astro.props;
 const shortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
 ---
 
-{shortname && (
-  <section class="disqus-comments" aria-label="Comentarios">
-    <h2 class="disqus-comments__title">Comentarios</h2>
-    <div id="disqus_thread" class="disqus-comments__thread"></div>
+{
+  shortname && (
+    <section class="disqus-comments" aria-label="Comentarios">
+      <h2 class="disqus-comments__title">Comentarios</h2>
+      <div id="disqus_thread" class="disqus-comments__thread" />
+    </section>
+  )
+}
 
-    <script
-      is:inline
-      define:vars={{ shortname, identifier, url, title }}
-    >
-      function loadDisqus() {
-        if (!shortname || !document.getElementById('disqus_thread')) return;
+{
+  /* Disqus embed script. Lives outside the {shortname && ...} conditional because
+    prettier-plugin-astro can't parse is:inline scripts inside expressions. Safe to
+    register unconditionally: the guard `if (!shortname || ...)` no-ops when there's
+    no shortname or no #disqus_thread in the DOM. */
+}
+<script is:inline define:vars={{ shortname, identifier, url, title }}>
+  function loadDisqus() {
+    if (!shortname || !document.getElementById("disqus_thread")) return;
 
-        window.disqus_config = function () {
-          this.page.url = url;
-          this.page.identifier = identifier;
-          this.page.title = title;
-        };
+    window.disqus_config = function () {
+      this.page.url = url;
+      this.page.identifier = identifier;
+      this.page.title = title;
+    };
 
-        if (typeof DISQUS !== 'undefined') {
-          DISQUS.reset({
-            reload: true,
-            config: window.disqus_config,
-          });
-        } else {
-          var d = document;
-          var s = d.createElement('script');
-          s.src = 'https://' + shortname + '.disqus.com/embed.js';
-          s.setAttribute('data-timestamp', String(+new Date()));
-          (d.head || d.body).appendChild(s);
-        }
-      }
+    if (typeof DISQUS !== "undefined") {
+      DISQUS.reset({
+        reload: true,
+        config: window.disqus_config,
+      });
+    } else {
+      var d = document;
+      var s = d.createElement("script");
+      s.src = "https://" + shortname + ".disqus.com/embed.js";
+      s.setAttribute("data-timestamp", String(+new Date()));
+      (d.head || d.body).appendChild(s);
+    }
+  }
 
-      // Lazy-load: Disqus (and its ~1 MB of ad/tracking JS) only loads when the
-      // reader scrolls near the comments, not on first paint. The 600px margin
-      // gives it a head start so the thread is ready by the time they arrive.
-      (function () {
-        var thread = document.getElementById('disqus_thread');
-        if (!thread) return;
+  // Lazy-load: Disqus (and its ~1 MB of ad/tracking JS) only loads when the
+  // reader scrolls near the comments, not on first paint. The 600px margin
+  // gives it a head start so the thread is ready by the time they arrive.
+  (function () {
+    var thread = document.getElementById("disqus_thread");
+    if (!thread) return;
 
-        if (!('IntersectionObserver' in window)) {
+    if (!("IntersectionObserver" in window)) {
+      loadDisqus();
+      return;
+    }
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        if (
+          entries.some(function (e) {
+            return e.isIntersecting;
+          })
+        ) {
+          observer.disconnect();
           loadDisqus();
-          return;
         }
+      },
+      { rootMargin: "600px 0px" },
+    );
 
-        var observer = new IntersectionObserver(function (entries) {
-          if (entries.some(function (e) { return e.isIntersecting; })) {
-            observer.disconnect();
-            loadDisqus();
-          }
-        }, { rootMargin: '600px 0px' });
-
-        observer.observe(thread);
-      })();
-    </script>
-  </section>
-)}
+    observer.observe(thread);
+  })();
+</script>
 
 <style>
   .disqus-comments {

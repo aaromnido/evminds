@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -45,13 +39,7 @@ export default function LoginForm({ errorMsg }: LoginFormProps) {
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              required
-            />
+            <Input id="email" name="email" type="email" autoComplete="username" required />
           </div>
 
           <div className="flex flex-col gap-1.5">

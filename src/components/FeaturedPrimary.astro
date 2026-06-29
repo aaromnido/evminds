@@ -21,7 +21,20 @@ interface Props {
   scraped_at?: string;
 }
 
-const { image, title, date, source, category, href = "#", contentType = "news", identifier, articleId, articleSlug, excerpt = "", scraped_at } = Astro.props;
+const {
+  image,
+  title,
+  date,
+  source,
+  category,
+  href = "#",
+  contentType = "news",
+  identifier,
+  articleId,
+  articleSlug,
+  excerpt = "",
+  scraped_at,
+} = Astro.props;
 
 const isVideo = contentType === "video";
 
@@ -38,10 +51,7 @@ const articleDataJson = serializeBookmarkData({
 });
 ---
 
-<a
-  href={href}
-  class="featured-primary"
->
+<a href={href} class="featured-primary">
   <!-- Background image -->
   <img
     src={optimizedImageUrl(image, 1200)}
@@ -56,9 +66,7 @@ const articleDataJson = serializeBookmarkData({
   <!-- Actions: comment count + bookmark -->
   <div class="card-actions">
     {identifier && <DisqusCommentCount identifier={identifier} />}
-    {articleId && (
-      <BookmarkButton articleId={articleId} articleData={articleDataJson} />
-    )}
+    {articleId && <BookmarkButton articleId={articleId} articleData={articleDataJson} />}
   </div>
 
   {isVideo && <VideoPlayOverlay size={64} />}
@@ -132,11 +140,7 @@ const articleDataJson = serializeBookmarkData({
     flex-direction: column;
     gap: 10px;
     padding: 24px;
-    background: linear-gradient(
-      to bottom,
-      rgba(114, 114, 114, 0),
-      rgba(25, 27, 65, 0.5)
-    );
+    background: linear-gradient(to bottom, rgba(114, 114, 114, 0), rgba(25, 27, 65, 0.5));
     border-radius: 6px;
   }
 

@@ -1,4 +1,4 @@
-import { CONTENT_TYPES } from './content-types';
+import { CONTENT_TYPES } from "./content-types";
 
 /**
  * Generate internal news detail URL from news slug

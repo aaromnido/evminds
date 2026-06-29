@@ -9,11 +9,7 @@ interface Props {
   activeSource?: string | null;
 }
 
-const {
-  activeCategory = null,
-  availableCategorySlugs,
-  activeSource = null,
-} = Astro.props;
+const { activeCategory = null, availableCategorySlugs, activeSource = null } = Astro.props;
 
 // Filter categories to only show those with articles (if availableCategorySlugs is provided)
 const visibleCategories = availableCategorySlugs

@@ -31,8 +31,22 @@ export function stripHtml(html: string | null | undefined): string {
  * else.
  */
 const EXCERPT_ALLOWED_TAGS: string[] = [
-  "p", "h2", "h3", "strong", "em", "s", "code", "pre",
-  "blockquote", "ul", "ol", "li", "a", "img", "br", "hr",
+  "p",
+  "h2",
+  "h3",
+  "strong",
+  "em",
+  "s",
+  "code",
+  "pre",
+  "blockquote",
+  "ul",
+  "ol",
+  "li",
+  "a",
+  "img",
+  "br",
+  "hr",
 ];
 
 const EXCERPT_ALLOWED_ATTRIBUTES: Record<string, sanitizeHtml.AllowedAttribute[]> = {

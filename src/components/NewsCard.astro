@@ -64,9 +64,7 @@ const articleDataJson = serializeBookmarkData({
       {isVideo && <VideoPlayOverlay />}
       <div class="card-actions">
         {identifier && <DisqusCommentCount identifier={identifier} />}
-        {articleId && (
-          <BookmarkButton articleId={articleId} articleData={articleDataJson} />
-        )}
+        {articleId && <BookmarkButton articleId={articleId} articleData={articleDataJson} />}
       </div>
     </div>
   </a>

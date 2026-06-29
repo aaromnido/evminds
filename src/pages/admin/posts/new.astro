@@ -1,8 +1,6 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
-import PostEditor, {
-  type PostFormValues,
-} from "@/components/admin/PostEditor.tsx";
+import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
 
 // Authed admin client set by the middleware. Insert is validated by the
 // posts_admin_all RLS policy (WITH CHECK is_admin()).

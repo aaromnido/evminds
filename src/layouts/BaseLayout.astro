@@ -39,10 +39,7 @@ const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
 // Canonical is always the no-trailing-slash form (root "/" excepted), regardless
 // of how the crawler reached the page. This prevents Google from treating
 // /noticia/slug and /noticia/slug/ as duplicates and picking its own canonical.
-const canonicalPath =
-  Astro.url.pathname === "/"
-    ? "/"
-    : Astro.url.pathname.replace(/\/+$/, "");
+const canonicalPath = Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/+$/, "");
 const canonicalURL = new URL(canonicalPath, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
 const siteUrl = Astro.site?.toString() || "https://evminds.es";
@@ -130,10 +127,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <meta name="viewport" content="width=device-width" />
     <meta name="theme-color" content="#191B41" />
     <meta name="generator" content={Astro.generator} />
-    <meta
-      name="google-site-verification"
-      content="FixCmGWafXJu_VRCiCdt9ZVEA5gMcdamdDBZlvTmbHw"
-    />
+    <meta name="google-site-verification" content="FixCmGWafXJu_VRCiCdt9ZVEA5gMcdamdDBZlvTmbHw" />
 
     <!-- Preconnect hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -169,12 +163,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title="EVMinds RSS"
-      href="/rss.xml"
-    />
+    <link rel="alternate" type="application/rss+xml" title="EVMinds RSS" href="/rss.xml" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content={type} />
@@ -200,10 +189,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       content="movilidad eléctrica, coches eléctricos, baterías, energías renovables, infraestructura de carga, vehículos eléctricos, EV, noticias EV"
     />
     <meta name="author" content="EVMinds.es" />
-    <meta
-      name="robots"
-      content={noIndex ? "noindex, nofollow" : "index, follow"}
-    />
+    <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow"} />
 
     <!-- Umami Analytics -->
     {
@@ -223,15 +209,13 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         <meta property="article:published_time" content={publishedAt} />
       )
     }
-    {isArticlePage && articleAuthor && (
-      <meta property="article:author" content={articleAuthor} />
-    )}
-    {isArticlePage && articleSection && (
-      <meta property="article:section" content={articleSection} />
-    )}
-    {isArticlePage && articleTags.map((tag) => (
-      <meta property="article:tag" content={tag} />
-    ))}
+    {isArticlePage && articleAuthor && <meta property="article:author" content={articleAuthor} />}
+    {
+      isArticlePage && articleSection && (
+        <meta property="article:section" content={articleSection} />
+      )
+    }
+    {isArticlePage && articleTags.map((tag) => <meta property="article:tag" content={tag} />)}
 
     <!-- JSON-LD structured data -->
     {
@@ -248,9 +232,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
     <script is:inline>
       (function () {
         var stored = localStorage.getItem("evminds-theme");
-        var prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)",
-        ).matches;
+        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         if (stored === "dark" || (!stored && prefersDark)) {
           document.documentElement.classList.add("dark");
         }
@@ -266,8 +248,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       document.addEventListener(
         "load",
         function (e) {
-          if (e.target && e.target.tagName === "IMG")
-            e.target.classList.add("loaded");
+          if (e.target && e.target.tagName === "IMG") e.target.classList.add("loaded");
         },
         true,
       );
@@ -282,9 +263,7 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       function getTheme(): "light" | "dark" {
         const stored = localStorage.getItem("evminds-theme");
         if (stored === "dark" || stored === "light") return stored;
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
 
       function setTheme(theme: "light" | "dark") {
@@ -323,23 +302,13 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       (window as any).__evminds_bookmarks = { isBookmarked, toggleBookmark };
 
       function updateBookmarkIcon(btn: Element, active: boolean) {
-        const defaultIcon = btn.querySelector(
-          ".bookmark-btn__icon--default",
-        ) as HTMLElement;
-        const activeIcon = btn.querySelector(
-          ".bookmark-btn__icon--active",
-        ) as HTMLElement;
+        const defaultIcon = btn.querySelector(".bookmark-btn__icon--default") as HTMLElement;
+        const activeIcon = btn.querySelector(".bookmark-btn__icon--active") as HTMLElement;
         if (defaultIcon) defaultIcon.style.display = active ? "none" : "";
         if (activeIcon) activeIcon.style.display = active ? "" : "none";
         btn.setAttribute("aria-pressed", String(active));
-        btn.setAttribute(
-          "aria-label",
-          active ? "Quitar de guardados" : "Guardar artículo",
-        );
-        btn.setAttribute(
-          "data-tooltip",
-          active ? "Quitar de guardados" : "Guardar artículo",
-        );
+        btn.setAttribute("aria-label", active ? "Quitar de guardados" : "Guardar artículo");
+        btn.setAttribute("data-tooltip", active ? "Quitar de guardados" : "Guardar artículo");
       }
 
       function syncAllBookmarkIcons() {
@@ -382,15 +351,11 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       ); // capture: true — intercepts before <a> bubbling phase
 
       // Sync duplicate buttons when bookmark changes
-      document.addEventListener("evminds:bookmark-change", ((
-        e: CustomEvent,
-      ) => {
+      document.addEventListener("evminds:bookmark-change", ((e: CustomEvent) => {
         const { id, bookmarked } = e.detail;
-        document
-          .querySelectorAll(`.bookmark-btn[data-article-id="${id}"]`)
-          .forEach((btn) => {
-            updateBookmarkIcon(btn, bookmarked);
-          });
+        document.querySelectorAll(`.bookmark-btn[data-article-id="${id}"]`).forEach((btn) => {
+          updateBookmarkIcon(btn, bookmarked);
+        });
       }) as EventListener);
 
       // Re-sync icons after View Transitions navigation
@@ -403,40 +368,38 @@ if (breadcrumbs && breadcrumbs.length > 0) {
       window.cleanDisqusCounts = function () {
         var idsWithComments = [];
 
-        document
-          .querySelectorAll(".disqus-comment-count")
-          .forEach(function (el) {
-            var text = el.textContent || "";
-            var match = text.match(/\d+/);
-            var count = match ? parseInt(match[0], 10) : 0;
-            var parent = el.parentElement;
-            if (!parent) return;
+        document.querySelectorAll(".disqus-comment-count").forEach(function (el) {
+          var text = el.textContent || "";
+          var match = text.match(/\d+/);
+          var count = match ? parseInt(match[0], 10) : 0;
+          var parent = el.parentElement;
+          if (!parent) return;
 
-            // Remove any previously injected badge (handles View Transitions re-runs)
-            var existing = parent.querySelector(".comment-count-badge");
-            if (existing) existing.remove();
+          // Remove any previously injected badge (handles View Transitions re-runs)
+          var existing = parent.querySelector(".comment-count-badge");
+          if (existing) existing.remove();
 
-            if (count > 0) {
-              var badge = document.createElement("span");
-              badge.className = "comment-count-badge";
+          if (count > 0) {
+            var badge = document.createElement("span");
+            badge.className = "comment-count-badge";
 
-              var countText = document.createTextNode(count.toString() + " ");
-              badge.appendChild(countText);
+            var countText = document.createTextNode(count.toString() + " ");
+            badge.appendChild(countText);
 
-              var icon = document.createElement("img");
-              icon.src = "/icons/icon-comment-white.svg";
-              icon.alt = "";
-              icon.width = 16;
-              icon.height = 16;
-              badge.appendChild(icon);
+            var icon = document.createElement("img");
+            icon.src = "/icons/icon-comment-white.svg";
+            icon.alt = "";
+            icon.width = 16;
+            icon.height = 16;
+            badge.appendChild(icon);
 
-              parent.insertBefore(badge, el);
+            parent.insertBefore(badge, el);
 
-              // Collect article ID for comments sync
-              var id = el.getAttribute("data-disqus-identifier");
-              if (id) idsWithComments.push(id);
-            }
-          });
+            // Collect article ID for comments sync
+            var id = el.getAttribute("data-disqus-identifier");
+            if (id) idsWithComments.push(id);
+          }
+        });
 
         // Sync has_comments to database (fire and forget)
         if (idsWithComments.length > 0) {

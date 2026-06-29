@@ -89,9 +89,7 @@ const activeChannelLabel = activeChannel
 
 // Calculate initial cursor for pagination
 const initialCursor =
-  videos.length > 0
-    ? videos[videos.length - 1].published_at.toISOString()
-    : null;
+  videos.length > 0 ? videos[videos.length - 1].published_at.toISOString() : null;
 
 const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategories.length > 0;
 ---
@@ -103,12 +101,8 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
   <PageLayout variant="compact">
     <Header />
 
-    <Subheader
-      subtitle="Reviews, noticias y análisis en vídeo sobre movilidad eléctrica"
-    >
-      <Fragment slot="title">
-        Vídeos
-      </Fragment>
+    <Subheader subtitle="Reviews, noticias y análisis en vídeo sobre movilidad eléctrica">
+      <Fragment slot="title"> Vídeos </Fragment>
       <nav class="channel-filter" aria-label="Filtrar por canal">
         <div class="channel-filter__wrapper">
           <Select
@@ -124,29 +118,42 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
       </nav>
     </Subheader>
 
-    {videos.length === 0 && hasActivePrefs ? (
-      <EmptyState ctaLabel="Restablecer filtros" ctaHref="/videos">
-        Sin resultados para tus preferencias.<br /><strong>Ajusta tus filtros</strong> para ver contenido.
-      </EmptyState>
-      <script is:inline>
-        document.querySelector('.empty-state__cta')?.addEventListener('click', function (e) {
-          e.preventDefault();
-          localStorage.removeItem('evminds-prefs');
-          document.cookie = 'evminds-prefs=;path=/;max-age=0';
-          window.location.href = '/videos';
-        });
-      </script>
-    ) : videos.length === 0 ? (
-      <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
-        Aún <strong>no hay vídeos</strong> disponibles. Pronto empezaremos a publicar contenido.
-      </EmptyState>
-    ) : (
-      <NewsGrid ariaLabel="Últimos vídeos" showSkeletons>
-        {videos.map((video) => (
-          <NewsCard {...mapArticleToProps(video)} />
-        ))}
-      </NewsGrid>
-    )}
+    {
+      videos.length === 0 && hasActivePrefs ? (
+        <EmptyState ctaLabel="Restablecer filtros" ctaHref="/videos">
+          Sin resultados para tus preferencias.
+          <>
+            <br />
+            <strong>Ajusta tus filtros</strong>
+          </>{" "}
+          para ver contenido.
+        </EmptyState>
+      ) : videos.length === 0 ? (
+        <EmptyState ctaLabel="Explorar artículos" ctaHref="/">
+          Aún <strong>no hay vídeos</strong> disponibles. Pronto empezaremos a publicar contenido.
+        </EmptyState>
+      ) : (
+        <NewsGrid ariaLabel="Últimos vídeos" showSkeletons>
+          {videos.map((video) => (
+            <NewsCard {...mapArticleToProps(video)} />
+          ))}
+        </NewsGrid>
+      )
+    }
+
+    {
+      /* Resets preferences when the "empty state" CTA is clicked. Lives outside the
+        ternary because the listener is safe to register unconditionally: it uses
+        optional chaining and no-ops when .empty-state__cta isn't in the DOM. */
+    }
+    <script is:inline>
+      document.querySelector(".empty-state__cta")?.addEventListener("click", function (e) {
+        e.preventDefault();
+        localStorage.removeItem("evminds-prefs");
+        document.cookie = "evminds-prefs=;path=/;max-age=0";
+        window.location.href = "/videos";
+      });
+    </script>
 
     <Footer availableCategorySlugs={availableCategorySlugs} />
   </PageLayout>

@@ -27,9 +27,7 @@ export async function getOwnArticles(): Promise<OwnArticle[]> {
   // localized cast.
   const { data } = await supabase
     .from("posts")
-    .select(
-      "title, excerpt, image_url, image_alt, author, category, tags, slug, published_at",
-    );
+    .select("title, excerpt, image_url, image_alt, author, category, tags, slug, published_at");
   const posts: OwnArticle[] = (
     (data ?? []) as unknown as {
       title: string;

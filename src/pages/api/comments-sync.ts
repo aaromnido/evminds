@@ -16,8 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Keep only real article UUIDs. News/videos use the article UUID as their
     // Disqus identifier, but own articles use `articulo-<slug>` (markdown posts
     // with no DB row), which would crash the uuid `.in("id", …)` cast (22P02).
-    const UUID_RE =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const articleIds = Array.isArray(ids)
       ? ids.filter((id) => typeof id === "string" && UUID_RE.test(id))
       : [];

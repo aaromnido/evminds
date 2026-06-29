@@ -19,9 +19,7 @@ export function getSupabaseService(): SupabaseClient<Database> {
   // import.meta.env in dev/build, process.env for Netlify runtime-only secrets.
   const key =
     import.meta.env.SUPABASE_SERVICE_ROLE_KEY ??
-    (typeof process !== "undefined"
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY
-      : undefined);
+    (typeof process !== "undefined" ? process.env.SUPABASE_SERVICE_ROLE_KEY : undefined);
 
   if (!url || !key) {
     throw new Error(

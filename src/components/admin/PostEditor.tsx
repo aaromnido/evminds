@@ -71,7 +71,12 @@ export default function PostEditor({
   const [status, setStatus] = useState(post?.status ?? "draft");
   const [imageUrl, setImageUrl] = useState(post?.image_url ?? "");
   const [tags, setTags] = useState<string[]>(
-    post?.tags ? post.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+    post?.tags
+      ? post.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [],
   );
   const [tagInput, setTagInput] = useState("");
   const [excerptError, setExcerptError] = useState("");
@@ -84,10 +89,14 @@ export default function PostEditor({
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     if (submitter?.value === "delete") return;
     let valid = true;
-    if (emptyRTE(excerpt)) { setExcerptError("El extracto es obligatorio."); valid = false; }
-    else setExcerptError("");
-    if (emptyRTE(content)) { setContentError("El contenido es obligatorio."); valid = false; }
-    else setContentError("");
+    if (emptyRTE(excerpt)) {
+      setExcerptError("El extracto es obligatorio.");
+      valid = false;
+    } else setExcerptError("");
+    if (emptyRTE(content)) {
+      setContentError("El contenido es obligatorio.");
+      valid = false;
+    } else setContentError("");
     if (!valid) e.preventDefault();
   };
 
@@ -115,7 +124,12 @@ export default function PostEditor({
 
       {/* Title + slug — mobile: 1st; desktop: left col row 1 */}
       <div className="grid gap-1.5">
-        <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+        <Label htmlFor="title">
+          Título{" "}
+          <span aria-hidden="true" className="text-destructive">
+            *
+          </span>
+        </Label>
         <Input
           id="title"
           name="title"
@@ -275,25 +289,53 @@ export default function PostEditor({
 
         <div className="grid gap-1.5">
           <Label htmlFor="image_alt">Texto alternativo</Label>
-          <Input
-            id="image_alt"
-            name="image_alt"
-            defaultValue={post?.image_alt ?? ""}
+          <Input id="image_alt" name="image_alt" defaultValue={post?.image_alt ?? ""} />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>
+            Extracto{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
+          <RichTextEditor
+            value={post?.excerpt ?? ""}
+            onChange={(v) => {
+              setExcerpt(v);
+              if (excerptError && v && v !== "<p></p>") setExcerptError("");
+            }}
+            minHeight="200px"
           />
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <RichTextEditor value={post?.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} minHeight="200px" />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
-          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
+          {excerptError && (
+            <p role="alert" className="text-xs text-destructive">
+              {excerptError}
+            </p>
+          )}
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Contenido <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <RichTextEditor value={post?.content ?? ""} onChange={(v) => { setContent(v); if (contentError && v && v !== "<p></p>") setContentError(""); }} minHeight="400px" />
+          <Label>
+            Contenido{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
+          <RichTextEditor
+            value={post?.content ?? ""}
+            onChange={(v) => {
+              setContent(v);
+              if (contentError && v && v !== "<p></p>") setContentError("");
+            }}
+            minHeight="400px"
+          />
           <input type="hidden" name="content" value={content} readOnly />
-          {contentError && <p role="alert" className="text-xs text-destructive">{contentError}</p>}
+          {contentError && (
+            <p role="alert" className="text-xs text-destructive">
+              {contentError}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -309,10 +351,7 @@ export default function PostEditor({
                 render={
                   <button
                     type="button"
-                    className={cn(
-                      buttonVariants({ variant: "destructive" }),
-                      "ml-auto",
-                    )}
+                    className={cn(buttonVariants({ variant: "destructive" }), "ml-auto")}
                   >
                     <Trash2 className="h-4 w-4" />
                     Eliminar
@@ -321,12 +360,8 @@ export default function PostEditor({
               />
               <AlertDialogContent className="gap-6 p-8">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-lg">
-                    ¿Eliminar este artículo?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción no se puede deshacer.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle className="text-lg">¿Eliminar este artículo?</AlertDialogTitle>
+                  <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="flex justify-end gap-3">
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -339,9 +374,16 @@ export default function PostEditor({
                     value="delete"
                     formNoValidate
                     onClick={() => setDeleting(true)}
-                    className={cn(buttonVariants({ variant: "destructive" }), deleting && "pointer-events-none opacity-75")}
+                    className={cn(
+                      buttonVariants({ variant: "destructive" }),
+                      deleting && "pointer-events-none opacity-75",
+                    )}
                   >
-                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {deleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                     {deleting ? "Eliminando…" : "Eliminar"}
                   </button>
                 </div>
@@ -350,7 +392,6 @@ export default function PostEditor({
           )}
         </div>
       </div>
-
     </form>
   );
 }

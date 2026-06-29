@@ -9,11 +9,7 @@
  * yet. Links to the explainer page and exposes its meaning via title + aria.
  */
 import Badge from "@/components/Badge.astro";
-import {
-  resolveToneLabel,
-  resolveToneDescription,
-  type HeadlineTone,
-} from "@/lib/headline-tone";
+import { resolveToneLabel, resolveToneDescription, type HeadlineTone } from "@/lib/headline-tone";
 
 interface Props {
   tone: HeadlineTone | null;

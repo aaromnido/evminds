@@ -8,12 +8,36 @@ import { MobileMenu } from "./MobileMenu";
 const currentPath = Astro.url.pathname;
 
 const navItems = [
-  { label: "Noticias", href: "/", active: currentPath === "/" || currentPath.startsWith("/noticia/") },
-  { label: "Artículos", href: "/articulos", active: currentPath === "/articulos" || currentPath.startsWith("/articulo/") },
-  { label: "Vídeos", href: "/videos", active: currentPath === "/videos" || currentPath.startsWith("/video/") },
-  { label: "Guardados", href: "/articulos-guardados", active: currentPath === "/articulos-guardados" },
-  { label: "Recursos", href: "/recursos", active: currentPath === "/recursos" || currentPath.startsWith("/recursos/") },
-  { label: "Confianza medios", href: "/medios-de-confianza", active: currentPath === "/medios-de-confianza" },
+  {
+    label: "Noticias",
+    href: "/",
+    active: currentPath === "/" || currentPath.startsWith("/noticia/"),
+  },
+  {
+    label: "Artículos",
+    href: "/articulos",
+    active: currentPath === "/articulos" || currentPath.startsWith("/articulo/"),
+  },
+  {
+    label: "Vídeos",
+    href: "/videos",
+    active: currentPath === "/videos" || currentPath.startsWith("/video/"),
+  },
+  {
+    label: "Guardados",
+    href: "/articulos-guardados",
+    active: currentPath === "/articulos-guardados",
+  },
+  {
+    label: "Recursos",
+    href: "/recursos",
+    active: currentPath === "/recursos" || currentPath.startsWith("/recursos/"),
+  },
+  {
+    label: "Confianza medios",
+    href: "/medios-de-confianza",
+    active: currentPath === "/medios-de-confianza",
+  },
 ];
 ---
 
@@ -28,10 +52,7 @@ const navItems = [
     <div class="nav__indicator" aria-hidden="true"></div>
     {
       navItems.map((item) => (
-        <a
-          href={item.href}
-          class:list={["nav__item", { "nav__item--active": item.active }]}
-        >
+        <a href={item.href} class:list={["nav__item", { "nav__item--active": item.active }]}>
           {item.label}
         </a>
       ))
@@ -89,7 +110,11 @@ const navItems = [
     top: 0;
     height: 2px;
     background-color: var(--navy-2);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s, background-color 0.15s;
+    transition:
+      left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.15s,
+      background-color 0.15s;
     opacity: 0;
     pointer-events: none;
   }
@@ -125,26 +150,28 @@ const navItems = [
 
 <script is:inline>
   function initNavIndicator() {
-    var nav = document.querySelector('.nav');
-    var indicator = nav && nav.querySelector('.nav__indicator');
-    var items = nav ? nav.querySelectorAll('.nav__item') : [];
+    var nav = document.querySelector(".nav");
+    var indicator = nav && nav.querySelector(".nav__indicator");
+    var items = nav ? nav.querySelectorAll(".nav__item") : [];
     if (!nav || !indicator || !items.length) return;
 
     // Already initialized — skip
-    if (nav.hasAttribute('data-nav-init')) return;
-    nav.setAttribute('data-nav-init', '');
+    if (nav.hasAttribute("data-nav-init")) return;
+    nav.setAttribute("data-nav-init", "");
 
-    var activeItem = nav.querySelector('.nav__item--active');
-    var navColor = getComputedStyle(document.documentElement).getPropertyValue('--navy-2').trim();
-    var blueColor = getComputedStyle(document.documentElement).getPropertyValue('--ev-primary-blue').trim();
+    var activeItem = nav.querySelector(".nav__item--active");
+    var navColor = getComputedStyle(document.documentElement).getPropertyValue("--navy-2").trim();
+    var blueColor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--ev-primary-blue")
+      .trim();
 
     function positionAt(el, color) {
       var navRect = nav.getBoundingClientRect();
       var elRect = el.getBoundingClientRect();
-      indicator.style.left = (elRect.left - navRect.left) + 'px';
-      indicator.style.width = elRect.width + 'px';
+      indicator.style.left = elRect.left - navRect.left + "px";
+      indicator.style.width = elRect.width + "px";
       indicator.style.backgroundColor = color;
-      indicator.style.opacity = '1';
+      indicator.style.opacity = "1";
     }
 
     // Show on active item initially
@@ -152,18 +179,18 @@ const navItems = [
       positionAt(activeItem, navColor);
     }
 
-    items.forEach(function(item) {
-      item.addEventListener('mouseenter', function() {
-        var isActive = item.classList.contains('nav__item--active');
+    items.forEach(function (item) {
+      item.addEventListener("mouseenter", function () {
+        var isActive = item.classList.contains("nav__item--active");
         positionAt(item, isActive ? navColor : blueColor);
       });
     });
 
-    nav.addEventListener('mouseleave', function() {
+    nav.addEventListener("mouseleave", function () {
       if (activeItem) {
         positionAt(activeItem, navColor);
       } else {
-        indicator.style.opacity = '0';
+        indicator.style.opacity = "0";
       }
     });
   }

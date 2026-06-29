@@ -31,12 +31,14 @@ The scraper is ready but needs to run automatically 4 times per day.
    ```
 
 **Expected result:** 4 cron jobs scheduled:
+
 - `scrape-morning` (07:00 UTC = 08:00/09:00 Madrid)
 - `scrape-midday` (11:00 UTC = 12:00/13:00 Madrid)
 - `scrape-afternoon` (15:00 UTC = 16:00/17:00 Madrid)
 - `scrape-evening` (17:00 UTC = 18:00/19:00 Madrid)
 
 **To verify execution:**
+
 ```sql
 SELECT * FROM cron.job_run_details
 ORDER BY start_time DESC
@@ -82,11 +84,13 @@ Your domain `evminds.es` is configured but pending DNS verification.
 5. Wait 1-2 minutes for verification to complete
 
 **Expected results:**
+
 - ✅ DNS verified
 - ✅ SSL certificate auto-generated (Let's Encrypt)
 - ✅ Site accessible at `https://evminds.es` (HTTPS enabled)
 
 **To verify:**
+
 - Visit https://evminds.es in a browser
 - Check for the padlock icon (SSL active)
 - Check that https://www.evminds.es redirects to https://evminds.es
@@ -98,6 +102,7 @@ Your domain `evminds.es` is configured but pending DNS verification.
 After completing all steps above, test the entire flow:
 
 1. **Manual scraper test:**
+
    ```bash
    # Test the scraper Edge Function manually
    curl -X POST https://<PROJECT_REF>.supabase.co/functions/v1/scrape \
@@ -135,6 +140,7 @@ These are frontend features and don't require manual Supabase/Netlify configurat
 ---
 
 **Questions or issues?** Check the logs in:
+
 - Supabase: Functions → Logs
 - Netlify: Deploys → Deploy log
 - Cron jobs: `SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 20;`

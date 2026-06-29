@@ -21,13 +21,7 @@ const {
 <article class="resource-card">
   <a href={href} class="resource-card__photo-link" target="_blank" rel="noopener noreferrer">
     <div class="resource-card__photo">
-      <img
-        src={image}
-        alt={title}
-        loading="lazy"
-        width="600"
-        height="300"
-      />
+      <img src={image} alt={title} loading="lazy" width="600" height="300" />
     </div>
   </a>
 
@@ -55,13 +49,15 @@ const {
 
     <p class="resource-card__description">{description}</p>
 
-    {category && (
-      <div class="resource-card__footer">
-        <div class="resource-card__badges">
-          <Badge label={category} variant="outlined" />
+    {
+      category && (
+        <div class="resource-card__footer">
+          <div class="resource-card__badges">
+            <Badge label={category} variant="outlined" />
+          </div>
         </div>
-      </div>
-    )}
+      )
+    }
   </div>
 </article>
 

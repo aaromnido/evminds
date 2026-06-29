@@ -1,12 +1,4 @@
-import {
-  Newspaper,
-  Video,
-  FileText,
-  Plus,
-  ArrowRight,
-  Sparkles,
-  Clock,
-} from "lucide-react";
+import { Newspaper, Video, FileText, Plus, ArrowRight, Sparkles, Clock } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -81,9 +73,7 @@ function Kpi({
         >
           {value}
         </span>
-        {hint ? (
-          <span className="text-xs text-muted-foreground">{hint}</span>
-        ) : null}
+        {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
       </CardContent>
     </Card>
   );
@@ -154,16 +144,11 @@ export default function DashboardHome({
             </CardDescription>
           </CardHeader>
           <CardContent className="text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {newsTotal.toLocaleString("es-ES")}
-            </span>{" "}
+            <span className="font-medium text-foreground">{newsTotal.toLocaleString("es-ES")}</span>{" "}
             en total · {newsArchived} archivadas
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button
-              className="w-full sm:w-auto"
-              render={<a href="/admin/noticias" />}
-            >
+            <Button className="w-full sm:w-auto" render={<a href="/admin/noticias" />}>
               Gestionar noticias
               <ArrowRight />
             </Button>
@@ -181,20 +166,14 @@ export default function DashboardHome({
         <Card>
           <CardHeader>
             <CardTitle>Artículos propios</CardTitle>
-            <CardDescription>
-              Crear y editar el contenido original (tabla posts).
-            </CardDescription>
+            <CardDescription>Crear y editar el contenido original (tabla posts).</CardDescription>
           </CardHeader>
           <CardContent className="text-muted-foreground">
-            <span className="font-medium text-foreground">{postsTotal}</span> en
-            total · {postsDrafts}{" "}
-            {postsDrafts === 1 ? "borrador" : "borradores"}
+            <span className="font-medium text-foreground">{postsTotal}</span> en total ·{" "}
+            {postsDrafts} {postsDrafts === 1 ? "borrador" : "borradores"}
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button
-              className="w-full sm:w-auto"
-              render={<a href="/admin/posts" />}
-            >
+            <Button className="w-full sm:w-auto" render={<a href="/admin/posts" />}>
               Gestionar artículos
               <ArrowRight />
             </Button>
@@ -214,15 +193,11 @@ export default function DashboardHome({
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Últimas noticias capturadas
-            </CardTitle>
+            <CardTitle className="text-base">Últimas noticias capturadas</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col">
             {recentNews.length === 0 ? (
-              <p className="py-2 text-sm text-muted-foreground">
-                Nada todavía.
-              </p>
+              <p className="py-2 text-sm text-muted-foreground">Nada todavía.</p>
             ) : (
               recentNews.map((n) => (
                 <a
@@ -249,15 +224,11 @@ export default function DashboardHome({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Últimos artículos editados
-            </CardTitle>
+            <CardTitle className="text-base">Últimos artículos editados</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col">
             {recentPosts.length === 0 ? (
-              <p className="py-2 text-sm text-muted-foreground">
-                Nada todavía.
-              </p>
+              <p className="py-2 text-sm text-muted-foreground">Nada todavía.</p>
             ) : (
               recentPosts.map((p) => {
                 const s = getPostStatusBadge(p.status, p.published_at, now);
@@ -267,19 +238,9 @@ export default function DashboardHome({
                     href={`/admin/posts/${p.id}/edit`}
                     className="flex items-center gap-3 rounded-lg px-2 py-2 -mx-2 transition-colors hover:bg-muted"
                   >
-                    <span className="line-clamp-1 flex-1 text-sm">
-                      {p.title}
-                    </span>
-                    <Badge
-                      variant={s.variant}
-                      className={cn("shrink-0", s.className)}
-                    >
-                      <span
-                        className={cn(
-                          "size-1.5 shrink-0 rounded-full",
-                          s.dotClass,
-                        )}
-                      />
+                    <span className="line-clamp-1 flex-1 text-sm">{p.title}</span>
+                    <Badge variant={s.variant} className={cn("shrink-0", s.className)}>
+                      <span className={cn("size-1.5 shrink-0 rounded-full", s.dotClass)} />
                       {s.label}
                     </Badge>
                     <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">

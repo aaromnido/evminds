@@ -66,8 +66,6 @@ export const TAGS = {
   TeslaSC: "Tesla Supercharger",
   Wenea: "Wenea",
   Zunder: "Zunder",
-
-
 } as const;
 
 export type Tag = (typeof TAGS)[keyof typeof TAGS];

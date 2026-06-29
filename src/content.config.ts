@@ -9,12 +9,7 @@ const recursos = defineCollection({
     description: z.string(),
     image: z.string().optional(),
     href: z.string().url(),
-    category: z.enum([
-      "Asociación",
-      "Entidad Pública",
-      "Fundación",
-      "Grupo de usuarios",
-    ]),
+    category: z.enum(["Asociación", "Entidad Pública", "Fundación", "Grupo de usuarios"]),
   }),
 });
 

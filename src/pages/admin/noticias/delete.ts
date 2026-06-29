@@ -75,14 +75,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (deleted === 0) {
       console.warn(
         `[delete-news] BLOCKED — 0 rows deleted. ` +
-        `Requested: ${requested} id(s). ` +
-        `Cutoff: published_at < ${cutoffISO} (>${ARCHIVED_DELETE_MIN_AGE_DAYS} days). ` +
-        `All rows failed the eligibility filter (not archived, too recent, or wrong content_type).`
+          `Requested: ${requested} id(s). ` +
+          `Cutoff: published_at < ${cutoffISO} (>${ARCHIVED_DELETE_MIN_AGE_DAYS} days). ` +
+          `All rows failed the eligibility filter (not archived, too recent, or wrong content_type).`,
       );
     } else if (!all && deleted < (ids as string[]).length) {
       console.warn(
         `[delete-news] PARTIAL block — ${deleted}/${(ids as string[]).length} rows deleted. ` +
-        `${(ids as string[]).length - deleted} id(s) were ineligible (not archived or published_at >= ${cutoffISO}).`
+          `${(ids as string[]).length - deleted} id(s) were ineligible (not archived or published_at >= ${cutoffISO}).`,
       );
     } else {
       console.log(`[delete-news] OK — deleted ${deleted} row(s).`);

@@ -45,12 +45,7 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function NewsCreateForm({
-  sources,
-  categories = [],
-  values,
-  error,
-}: Props) {
+export default function NewsCreateForm({ sources, categories = [], values, error }: Props) {
   const [title, setTitle] = useState(values?.title ?? "");
   const [slug, setSlug] = useState(values?.slug ?? "");
   const [excerpt, setExcerpt] = useState(values?.excerpt ?? "");
@@ -61,8 +56,10 @@ export default function NewsCreateForm({
 
   const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     const empty = !excerpt || excerpt === "<p></p>";
-    if (empty) { setExcerptError("El extracto es obligatorio."); e.preventDefault(); }
-    else setExcerptError("");
+    if (empty) {
+      setExcerptError("El extracto es obligatorio.");
+      e.preventDefault();
+    } else setExcerptError("");
   };
 
   const onTitleChange = (v: string) => {
@@ -71,7 +68,11 @@ export default function NewsCreateForm({
   };
 
   return (
-    <form method="POST" className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]" onSubmit={handleSubmit}>
+    <form
+      method="POST"
+      className="grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]"
+      onSubmit={handleSubmit}
+    >
       {error && (
         <p
           role="alert"
@@ -84,7 +85,12 @@ export default function NewsCreateForm({
       {/* Left column: title, image, main content fields, buttons */}
       <div className="flex flex-col gap-6">
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <Label htmlFor="title">
+            Título{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
           <Input
             id="title"
             name="title"
@@ -106,10 +112,25 @@ export default function NewsCreateForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <RichTextEditor value={values?.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} />
+          <Label>
+            Extracto{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
+          <RichTextEditor
+            value={values?.excerpt ?? ""}
+            onChange={(v) => {
+              setExcerpt(v);
+              if (excerptError && v && v !== "<p></p>") setExcerptError("");
+            }}
+          />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
-          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
+          {excerptError && (
+            <p role="alert" className="text-xs text-destructive">
+              {excerptError}
+            </p>
+          )}
         </div>
 
         <div className="grid gap-1.5">

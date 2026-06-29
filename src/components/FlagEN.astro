@@ -33,22 +33,18 @@ const clipId2 = `flag-en-cross-${uid}`;
 >
   <title>{label}</title>
   <clipPath id={clipId}>
-    <path d="M0 0v30h60V0z" />
+    <path d="M0 0v30h60V0z"></path>
   </clipPath>
   <clipPath id={clipId2}>
-    <path d="M30 15h30v15zv15H0zH0V0zV0h30z" />
+    <path d="M30 15h30v15zv15H0zH0V0zV0h30z"></path>
   </clipPath>
   <g clip-path={`url(#${clipId})`}>
-    <path fill="#012169" d="M0 0v30h60V0z" />
-    <path stroke="#fff" stroke-width="6" d="M0 0l60 30m0-30L0 30" />
-    <path
-      stroke="#C8102E"
-      stroke-width="4"
-      clip-path={`url(#${clipId2})`}
-      d="M0 0l60 30m0-30L0 30"
-    />
-    <path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60" />
-    <path stroke="#C8102E" stroke-width="6" d="M30 0v30M0 15h60" />
+    <path fill="#012169" d="M0 0v30h60V0z"></path>
+    <path stroke="#fff" stroke-width="6" d="M0 0l60 30m0-30L0 30"></path>
+    <path stroke="#C8102E" stroke-width="4" clip-path={`url(#${clipId2})`} d="M0 0l60 30m0-30L0 30"
+    ></path>
+    <path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60"></path>
+    <path stroke="#C8102E" stroke-width="6" d="M30 0v30M0 15h60"></path>
   </g>
 </svg>
 

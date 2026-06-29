@@ -72,9 +72,7 @@ const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
 
 // Calculate initial cursor for pagination
 const initialCursor =
-  articles.length > 0
-    ? articles[articles.length - 1].scraped_at.toISOString()
-    : null;
+  articles.length > 0 ? articles[articles.length - 1].scraped_at.toISOString() : null;
 
 // Page metadata
 const pageTitle = `${category.name} - EVMinds`;
@@ -87,11 +85,7 @@ const breadcrumbs = [
 ];
 ---
 
-<BaseLayout
-  title={pageTitle}
-  description={pageDescription}
-  breadcrumbs={breadcrumbs}
->
+<BaseLayout title={pageTitle} description={pageDescription} breadcrumbs={breadcrumbs}>
   <PageLayout variant="compact">
     <Header />
 
@@ -130,4 +124,3 @@ const breadcrumbs = [
   category={category.slug}
   source={activeSource || ""}
 />
-

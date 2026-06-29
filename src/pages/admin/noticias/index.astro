@@ -22,10 +22,7 @@ let total = 0;
 let errorMsg: string | undefined;
 
 if (supabase) {
-  const { data: sourcesData } = await supabase
-    .from("sources")
-    .select("id, name")
-    .order("name");
+  const { data: sourcesData } = await supabase.from("sources").select("id, name").order("name");
   sources = (sourcesData ?? []) as SourceOption[];
 
   let query = supabase

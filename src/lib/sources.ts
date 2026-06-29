@@ -11,8 +11,8 @@ export interface Source {
   name: string; // Name as it appears in database (e.g., "electrek.co")
   displayName: string; // Clean name for display without domain (e.g., "electrek")
   url: string;
-  lang: 'es' | 'en';
-  feedType: 'rss' | 'html' | 'youtube';
+  lang: "es" | "en";
+  feedType: "rss" | "html" | "youtube";
 }
 
 /**
@@ -26,19 +26,19 @@ const DISPLAY_NAMES: Record<string, string> = {
   "hibridosyelectricos.com": "Híbridos y Eléctricos",
   "motor.es": "Motor.es",
   "somoselectricos.com": "SomosEléctricos",
-  "bjornnyland": "Bjørn Nyland",
+  bjornnyland: "Bjørn Nyland",
   "cochesnet-yt": "Coches.net YT",
-  "earcos": "Eduardo Arcos",
-  "electrifyingcom": "Electrifying.com",
-  "electromiaumiau": "Electromiaumiau",
-  "motorpuntoes": "Motor.es YT",
+  earcos: "Eduardo Arcos",
+  electrifyingcom: "Electrifying.com",
+  electromiaumiau: "Electromiaumiau",
+  motorpuntoes: "Motor.es YT",
   "somoselectricos-yt": "SomosEléctricos YT",
-  "piltrafilla": "Piltrafilla",
-  "concachalote": "Cachalote",
-  "solkuno": "Solkuno",
-  "macvoltio": "MacVoltio",
-  "luisvaldes": "Luis Valdés",
-  "rictorres": "Ricardo Torres",
+  piltrafilla: "Piltrafilla",
+  concachalote: "Cachalote",
+  solkuno: "Solkuno",
+  macvoltio: "MacVoltio",
+  luisvaldes: "Luis Valdés",
+  rictorres: "Ricardo Torres",
   "cocheselectricos.org": "Coches Eléctricos Org",
 };
 
@@ -50,7 +50,9 @@ export function toDisplayName(name: string): string {
  * Create a URL-safe slug from source name
  */
 function toSlug(name: string): string {
-  return toDisplayName(name).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  return toDisplayName(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
 }
 
 // Cache loaded sources to avoid repeated queries within the same request lifecycle
@@ -73,7 +75,13 @@ export async function loadSources(): Promise<Source[]> {
     return [];
   }
 
-  type SourceRow = { id: string; name: string; url: string; lang: 'es' | 'en'; feed_type: 'rss' | 'html' | 'youtube' };
+  type SourceRow = {
+    id: string;
+    name: string;
+    url: string;
+    lang: "es" | "en";
+    feed_type: "rss" | "html" | "youtube";
+  };
   _sourcesCache = ((data ?? []) as SourceRow[]).map((s) => ({
     id: s.id,
     slug: toSlug(s.name),
@@ -90,9 +98,7 @@ export async function loadSources(): Promise<Source[]> {
 /**
  * Get source by slug
  */
-export async function getSourceBySlug(
-  slug: string
-): Promise<Source | undefined> {
+export async function getSourceBySlug(slug: string): Promise<Source | undefined> {
   const sources = await loadSources();
   return sources.find((source) => source.slug === slug);
 }
@@ -100,22 +106,16 @@ export async function getSourceBySlug(
 /**
  * Get source by name (matches against database name, e.g., "electrek.co")
  */
-export async function getSourceByName(
-  name: string
-): Promise<Source | undefined> {
+export async function getSourceByName(name: string): Promise<Source | undefined> {
   const sources = await loadSources();
 
   // Direct match first
-  const directMatch = sources.find(
-    (source) => source.name.toLowerCase() === name.toLowerCase()
-  );
+  const directMatch = sources.find((source) => source.name.toLowerCase() === name.toLowerCase());
   if (directMatch) return directMatch;
 
   // Fallback: match by cleaned name
   const cleanName = toDisplayName(name).toLowerCase();
-  return sources.find(
-    (source) => toDisplayName(source.name).toLowerCase() === cleanName
-  );
+  return sources.find((source) => toDisplayName(source.name).toLowerCase() === cleanName);
 }
 
 /**
@@ -137,9 +137,7 @@ export async function isValidSourceSlug(slug: string): Promise<boolean> {
 /**
  * Get source slug from name (matches against database name)
  */
-export async function getSourceSlugByName(
-  name: string
-): Promise<string | undefined> {
+export async function getSourceSlugByName(name: string): Promise<string | undefined> {
   const source = await getSourceByName(name);
   return source?.slug;
 }

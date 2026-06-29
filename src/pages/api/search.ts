@@ -44,8 +44,7 @@ function normalize(s: string): string {
  */
 function parseQuery(raw: string): { isPhrase: boolean; phrase: string; words: string[] } {
   const trimmed = raw.trim();
-  const isPhrase =
-    trimmed.length >= 3 && trimmed.startsWith('"') && trimmed.endsWith('"');
+  const isPhrase = trimmed.length >= 3 && trimmed.startsWith('"') && trimmed.endsWith('"');
   const inner = isPhrase ? trimmed.slice(1, -1) : trimmed.replace(/"/g, " ");
   const phrase = normalize(inner);
   const words = phrase.split(/\s+/).filter((w) => w.length >= 2);
@@ -68,9 +67,11 @@ interface SearchResult {
  * is title/excerpt/category/tags (not body); ARTICLE shape/URL, id =
  * articulo-${slug}. The helper already dedups (.md wins) and orders newest-first.
  */
-async function searchOwnContent(
-  parsed: { isPhrase: boolean; phrase: string; words: string[] },
-): Promise<SearchResult[]> {
+async function searchOwnContent(parsed: {
+  isPhrase: boolean;
+  phrase: string;
+  words: string[];
+}): Promise<SearchResult[]> {
   const own = await getOwnArticles();
 
   return own

@@ -32,10 +32,9 @@ const year = new Date().getFullYear();
 // computed here.
 const datasets = await Promise.all(
   TIME_WINDOWS.map(async (w) => {
-    const { data, error } = await supabase.rpc(
-      "source_headline_ranking",
-      { p_since: windowToSince(w.key) },
-    );
+    const { data, error } = await supabase.rpc("source_headline_ranking", {
+      p_since: windowToSince(w.key),
+    });
     if (error) {
       console.error("source_headline_ranking RPC failed:", error.message);
     }
@@ -129,69 +128,86 @@ function pct(part: number, total: number): number {
         d.views.map((v) => {
           const noun = v.filter === "video" ? "Canales" : "Medios";
           return (
-        <div
-          class="mdc__panel"
-          data-mdc-panel={`${d.key}__${v.filter}`}
-          hidden={!(d.key === periodo && v.filter === tipo)}
-        >
-          {v.podium.length > 0 ? (
-            <section class="mdc__podium" aria-label={`${noun} más fiables del periodo`}>
-              <p class="mdc__podium-kicker">
-                🏆 {noun} más fiables {d.key === "year" ? year : `· ${d.label}`}
-              </p>
-              <ol class="mdc__podium-grid">
-                {v.podium.map((s, i) => (
-                  <li class:list={["mdc__medal", `mdc__medal--${MEDALS[i].key}`]}>
-                    <span class="mdc__medal-icon" aria-hidden="true">{MEDALS[i].icon}</span>
-                    <span class="mdc__medal-label">{MEDALS[i].label}</span>
-                    <p class="mdc__medal-name">{toDisplayName(s.sourceName)}</p>
-                    <div class="mdc__medal-badge">
-                      <Badge
-                        label={s.color ? TONE_DEFINITIONS[s.color].label.es : "Titular honesto"}
-                        variant={s.color ?? "green"}
-                      />
-                    </div>
-                    <p class="mdc__medal-stat">
-                      {pct(s.counts.green, s.counts.total)}% honestos
-                      <span class="mdc__medal-stat-sub"> · {s.counts.total} titulares</span>
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ) : (
-            <section class="mdc__empty">
-              <p class="mdc__empty-title">Aún estamos recopilando datos</p>
-              <p class="mdc__empty-text">
-                Clasificamos los titulares según se publican. En cuanto cada medio
-                acumule al menos {MIN_SAMPLE} titulares en este periodo, aparecerá aquí su nota y
-                entregaremos el reconocimiento a los más fiables.
-              </p>
-            </section>
-          )}
+            <div
+              class="mdc__panel"
+              data-mdc-panel={`${d.key}__${v.filter}`}
+              hidden={!(d.key === periodo && v.filter === tipo)}
+            >
+              {v.podium.length > 0 ? (
+                <section class="mdc__podium" aria-label={`${noun} más fiables del periodo`}>
+                  <p class="mdc__podium-kicker">
+                    🏆 {noun} más fiables {d.key === "year" ? year : `· ${d.label}`}
+                  </p>
+                  <ol class="mdc__podium-grid">
+                    {v.podium.map((s, i) => (
+                      <li class:list={["mdc__medal", `mdc__medal--${MEDALS[i].key}`]}>
+                        <span class="mdc__medal-icon" aria-hidden="true">
+                          {MEDALS[i].icon}
+                        </span>
+                        <span class="mdc__medal-label">{MEDALS[i].label}</span>
+                        <p class="mdc__medal-name">{toDisplayName(s.sourceName)}</p>
+                        <div class="mdc__medal-badge">
+                          <Badge
+                            label={s.color ? TONE_DEFINITIONS[s.color].label.es : "Titular honesto"}
+                            variant={s.color ?? "green"}
+                          />
+                        </div>
+                        <p class="mdc__medal-stat">
+                          {pct(s.counts.green, s.counts.total)}% honestos
+                          <span class="mdc__medal-stat-sub"> · {s.counts.total} titulares</span>
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : (
+                <section class="mdc__empty">
+                  <p class="mdc__empty-title">Aún estamos recopilando datos</p>
+                  <p class="mdc__empty-text">
+                    Clasificamos los titulares según se publican. En cuanto cada medio acumule al
+                    menos {MIN_SAMPLE} titulares en este periodo, aparecerá aquí su nota y
+                    entregaremos el reconocimiento a los más fiables.
+                  </p>
+                </section>
+              )}
 
-          {v.ranking.length > 0 && (
-            <section class="mdc__ranking" aria-label="Ranking de medios">
-              <h2 class="mdc__section-title">Ranking completo</h2>
-              <ol class="mdc__list">
-                {v.ranking.map((s, i) => (
-                  <li class="mdc__row">
-                    <span class="mdc__rank">{i + 1}</span>
-                    <span class:list={["mdc__dot", `mdc__dot--${s.color ?? "empty"}`]} aria-hidden="true" />
-                    <span class="mdc__name">{toDisplayName(s.sourceName)}</span>
-                    <span class="mdc__bar" role="img"
-                      aria-label={`${s.counts.green} honestos, ${s.counts.amber} hot, ${s.counts.red} clickbait`}>
-                      <span class="mdc__bar-seg mdc__bar-seg--green" style={`width:${pct(s.counts.green, s.counts.total)}%`} />
-                      <span class="mdc__bar-seg mdc__bar-seg--amber" style={`width:${pct(s.counts.amber, s.counts.total)}%`} />
-                      <span class="mdc__bar-seg mdc__bar-seg--red" style={`width:${pct(s.counts.red, s.counts.total)}%`} />
-                    </span>
-                    <span class="mdc__count">{s.counts.total}</span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-        </div>
+              {v.ranking.length > 0 && (
+                <section class="mdc__ranking" aria-label="Ranking de medios">
+                  <h2 class="mdc__section-title">Ranking completo</h2>
+                  <ol class="mdc__list">
+                    {v.ranking.map((s, i) => (
+                      <li class="mdc__row">
+                        <span class="mdc__rank">{i + 1}</span>
+                        <span
+                          class:list={["mdc__dot", `mdc__dot--${s.color ?? "empty"}`]}
+                          aria-hidden="true"
+                        />
+                        <span class="mdc__name">{toDisplayName(s.sourceName)}</span>
+                        <span
+                          class="mdc__bar"
+                          role="img"
+                          aria-label={`${s.counts.green} honestos, ${s.counts.amber} hot, ${s.counts.red} clickbait`}
+                        >
+                          <span
+                            class="mdc__bar-seg mdc__bar-seg--green"
+                            style={`width:${pct(s.counts.green, s.counts.total)}%`}
+                          />
+                          <span
+                            class="mdc__bar-seg mdc__bar-seg--amber"
+                            style={`width:${pct(s.counts.amber, s.counts.total)}%`}
+                          />
+                          <span
+                            class="mdc__bar-seg mdc__bar-seg--red"
+                            style={`width:${pct(s.counts.red, s.counts.total)}%`}
+                          />
+                        </span>
+                        <span class="mdc__count">{s.counts.total}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+            </div>
           );
         }),
       )
@@ -201,14 +217,26 @@ function pct(part: number, total: number): number {
     <section class="mdc__legend" aria-label="Cómo funciona">
       <h2 class="mdc__section-title">Cómo lo medimos</h2>
       <ul class="mdc__legend-list">
-        <li><span class="mdc__dot mdc__dot--green" aria-hidden="true" /> <strong>Titular honesto.</strong> {TONE_DEFINITIONS.green.description.es}</li>
-        <li><span class="mdc__dot mdc__dot--amber" aria-hidden="true" /> <strong>Titular hot.</strong> {TONE_DEFINITIONS.amber.description.es}</li>
-        <li><span class="mdc__dot mdc__dot--red" aria-hidden="true" /> <strong>Titular clickbait.</strong> {TONE_DEFINITIONS.red.description.es}</li>
+        <li>
+          <span class="mdc__dot mdc__dot--green" aria-hidden="true"></span>
+          <strong>Titular honesto.</strong>
+          {TONE_DEFINITIONS.green.description.es}
+        </li>
+        <li>
+          <span class="mdc__dot mdc__dot--amber" aria-hidden="true"></span>
+          <strong>Titular hot.</strong>
+          {TONE_DEFINITIONS.amber.description.es}
+        </li>
+        <li>
+          <span class="mdc__dot mdc__dot--red" aria-hidden="true"></span>
+          <strong>Titular clickbait.</strong>
+          {TONE_DEFINITIONS.red.description.es}
+        </li>
       </ul>
       <p class="mdc__legend-note">
-        Evaluamos el titular original de cada fuente. Mostramos color solo a
-        partir de {MIN_SAMPLE} titulares en el periodo, para que nadie quede señalado por azar.
-        El ranking se reinicia cada año: borrón y cuenta nueva.
+        Evaluamos el titular original de cada fuente. Mostramos color solo a partir de {MIN_SAMPLE} titulares
+        en el periodo, para que nadie quede señalado por azar. El ranking se reinicia cada año: borrón
+        y cuenta nueva.
       </p>
     </section>
 
@@ -259,7 +287,9 @@ function pct(part: number, total: number): number {
     border-left: 1.5px solid var(--navy-2);
     color: var(--navy-2);
     text-decoration: none;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
   }
   .mdc__filter-item:first-child {
     border-left: none;
@@ -318,10 +348,19 @@ function pct(part: number, total: number): number {
     align-items: center;
     gap: 8px;
   }
-  .mdc__medal--gold { border-color: #d4af37; }
-  .mdc__medal--silver { border-color: #a8adb4; }
-  .mdc__medal--bronze { border-color: #b08147; }
-  .mdc__medal-icon { font-size: 34px; line-height: 1; }
+  .mdc__medal--gold {
+    border-color: #d4af37;
+  }
+  .mdc__medal--silver {
+    border-color: #a8adb4;
+  }
+  .mdc__medal--bronze {
+    border-color: #b08147;
+  }
+  .mdc__medal-icon {
+    font-size: 34px;
+    line-height: 1;
+  }
   .mdc__medal-label {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 11px;
@@ -340,7 +379,9 @@ function pct(part: number, total: number): number {
     color: var(--navy-light);
     margin: 0;
   }
-  .mdc__medal-badge { margin: 10px 0 2px; }
+  .mdc__medal-badge {
+    margin: 10px 0 2px;
+  }
   .mdc__medal-stat {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 14px;
@@ -393,7 +434,9 @@ function pct(part: number, total: number): number {
   }
 
   /* Ranking list */
-  .mdc__ranking { margin-bottom: 40px; }
+  .mdc__ranking {
+    margin-bottom: 40px;
+  }
   .mdc__list {
     list-style: none;
     margin: 0;
@@ -441,10 +484,18 @@ function pct(part: number, total: number): number {
     flex: 0 0 auto;
     display: inline-block;
   }
-  .mdc__dot--green { background-color: var(--ev-tone-green); }
-  .mdc__dot--amber { background-color: var(--ev-tone-amber); }
-  .mdc__dot--red { background-color: var(--ev-tone-red); }
-  .mdc__dot--empty { background-color: var(--ev-tone-empty); }
+  .mdc__dot--green {
+    background-color: var(--ev-tone-green);
+  }
+  .mdc__dot--amber {
+    background-color: var(--ev-tone-amber);
+  }
+  .mdc__dot--red {
+    background-color: var(--ev-tone-red);
+  }
+  .mdc__dot--empty {
+    background-color: var(--ev-tone-empty);
+  }
 
   /* Stacked breakdown bar */
   .mdc__bar {
@@ -454,13 +505,23 @@ function pct(part: number, total: number): number {
     overflow: hidden;
     background-color: var(--ev-border-subtle);
   }
-  .mdc__bar-seg { height: 100%; }
-  .mdc__bar-seg--green { background-color: var(--ev-tone-green); }
-  .mdc__bar-seg--amber { background-color: var(--ev-tone-amber); }
-  .mdc__bar-seg--red { background-color: var(--ev-tone-red); }
+  .mdc__bar-seg {
+    height: 100%;
+  }
+  .mdc__bar-seg--green {
+    background-color: var(--ev-tone-green);
+  }
+  .mdc__bar-seg--amber {
+    background-color: var(--ev-tone-amber);
+  }
+  .mdc__bar-seg--red {
+    background-color: var(--ev-tone-red);
+  }
 
   /* Pending */
-  .mdc__pending { margin-bottom: 40px; }
+  .mdc__pending {
+    margin-bottom: 40px;
+  }
   .mdc__pending-list {
     list-style: none;
     margin: 0;
@@ -490,7 +551,9 @@ function pct(part: number, total: number): number {
     padding: 28px 28px 30px;
     color: var(--ev-text-on-image);
   }
-  .mdc__legend .mdc__section-title { color: var(--ev-text-on-image); }
+  .mdc__legend .mdc__section-title {
+    color: var(--ev-text-on-image);
+  }
   .mdc__legend-list {
     list-style: none;
     margin: 0 0 18px;
@@ -507,7 +570,10 @@ function pct(part: number, total: number): number {
     align-items: baseline;
     gap: 10px;
   }
-  .mdc__legend-list .mdc__dot { border-color: var(--ev-text-on-image); align-self: center; }
+  .mdc__legend-list .mdc__dot {
+    border-color: var(--ev-text-on-image);
+    align-self: center;
+  }
   .mdc__legend-note {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 13.5px;
@@ -524,7 +590,9 @@ function pct(part: number, total: number): number {
     .mdc__row {
       grid-template-columns: 24px 14px 1fr 44px;
     }
-    .mdc__bar { display: none; }
+    .mdc__bar {
+      display: none;
+    }
     .mdc__podium-grid {
       gap: 12px;
     }
@@ -535,7 +603,10 @@ function pct(part: number, total: number): number {
       justify-content: center;
       gap: 6px 12px;
     }
-    .mdc__medal-name { font-size: 22px; flex-basis: 100%; }
+    .mdc__medal-name {
+      font-size: 22px;
+      flex-basis: 100%;
+    }
   }
 </style>
 
@@ -547,9 +618,7 @@ function pct(part: number, total: number): number {
   // Re-binds on every View Transitions navigation.
   (function () {
     function initMdcFilters() {
-      const navs = Array.from(
-        document.querySelectorAll(".mdc__filter[data-mdc-group]"),
-      );
+      const navs = Array.from(document.querySelectorAll(".mdc__filter[data-mdc-group]"));
       if (!navs.length || navs[0].dataset.bound) return;
       const panels = Array.from(document.querySelectorAll("[data-mdc-panel]"));
 

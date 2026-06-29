@@ -40,7 +40,8 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     // Use !inner join when filtering by source so PostgREST excludes non-matching articles
     const needsInnerJoin = source || prefs.excludedSources.length > 0;
-    const articleColumns = "id, slug, title, seo_title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at";
+    const articleColumns =
+      "id, slug, title, seo_title, excerpt, image_url, article_url, category, content_type, youtube_video_id, published_at, scraped_at";
     const joinClause = needsInnerJoin
       ? `${articleColumns}, source:sources!inner(name, url)`
       : `${articleColumns}, source:sources(name, url)`;
@@ -67,10 +68,10 @@ export const GET: APIRoute = async ({ url, request }) => {
     if (category) {
       const cat = getCategoryBySlug(category);
       if (!cat) {
-        return new Response(
-          JSON.stringify({ articles: [], nextCursor: null }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ articles: [], nextCursor: null }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       }
       query = query.eq("category", cat.name);
     }
@@ -97,20 +98,15 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     if (error) {
       console.error("Supabase query error:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch articles" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Failed to fetch articles" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Calculate next cursor (last article's order field)
     const nextCursor =
-      data && data.length === limit
-        ? (data[data.length - 1] as any)[orderField]
-        : null;
+      data && data.length === limit ? (data[data.length - 1] as any)[orderField] : null;
 
     return new Response(
       JSON.stringify({
@@ -120,16 +116,13 @@ export const GET: APIRoute = async ({ url, request }) => {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

@@ -30,8 +30,9 @@ export async function GET(context: APIContext) {
     categories: article.category ? [article.category] : [],
   }));
 
-  const allItems = [...ownArticles, ...newsItems]
-    .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
+  const allItems = [...ownArticles, ...newsItems].sort(
+    (a, b) => b.pubDate.getTime() - a.pubDate.getTime(),
+  );
 
   return rss({
     title: "EVMinds — Movilidad Eléctrica",

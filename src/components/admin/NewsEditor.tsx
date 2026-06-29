@@ -59,9 +59,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
   const [excerptError, setExcerptError] = useState("");
   const [regenerating, setRegenerating] = useState(false);
   const [seoGenerating, setSeoGenerating] = useState(false);
-  const [seoMsg, setSeoMsg] = useState<{ ok: boolean; text: string } | null>(
-    null,
-  );
+  const [seoMsg, setSeoMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Independent "Generar con IA" for the SEO title: regenerates ONLY seo_title
   // (only: 'seo_title') and fills the input, without touching the other fields.
@@ -94,12 +92,12 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     if (submitter?.value === "archive" || submitter?.value === "unarchive") return;
     const empty = !excerpt || excerpt === "<p></p>";
-    if (empty) { setExcerptError("El extracto es obligatorio."); e.preventDefault(); }
-    else setExcerptError("");
+    if (empty) {
+      setExcerptError("El extracto es obligatorio.");
+      e.preventDefault();
+    } else setExcerptError("");
   };
-  const [regenMsg, setRegenMsg] = useState<{ ok: boolean; text: string } | null>(
-    null,
-  );
+  const [regenMsg, setRegenMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const regenerate = async () => {
     setRegenMsg(null);
@@ -144,7 +142,12 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
       {/* Title + SEO title — mobile: 1st; desktop: left col row 1 */}
       <div className="flex flex-col gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="title">Título <span aria-hidden="true" className="text-destructive">*</span></Label>
+          <Label htmlFor="title">
+            Título{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
           <Input id="title" name="title" defaultValue={article.title ?? ""} required />
         </div>
 
@@ -181,17 +184,14 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
             </IconButton>
           </div>
           <p className="text-xs text-muted-foreground">
-            Alimenta el {"<title>"}, og:title y el H1. Si se deja vacío, se usa el
-            título. Máx. 75 caracteres, con lo esencial en los primeros 60 (lo
-            que Google muestra en sus resultados).
+            Alimenta el {"<title>"}, og:title y el H1. Si se deja vacío, se usa el título. Máx. 75
+            caracteres, con lo esencial en los primeros 60 (lo que Google muestra en sus
+            resultados).
           </p>
           {seoMsg && (
             <span
               role="status"
-              className={cn(
-                "text-sm",
-                seoMsg.ok ? "text-foreground" : "text-destructive",
-              )}
+              className={cn("text-sm", seoMsg.ok ? "text-foreground" : "text-destructive")}
             >
               {seoMsg.text}
             </span>
@@ -202,8 +202,8 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
           <Label>Tono del titular</Label>
           <ToneSelect name="headline_tone" defaultValue={article.headline_tone ?? ""} />
           <p className="text-xs text-muted-foreground">
-            Semáforo de honestidad del titular ("Medios de Confianza"). La IA lo
-            asigna al scrapear; corrígelo aquí si hace falta.
+            Semáforo de honestidad del titular ("Medios de Confianza"). La IA lo asigna al scrapear;
+            corrígelo aquí si hace falta.
           </p>
         </div>
       </div>
@@ -296,10 +296,25 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Extracto <span aria-hidden="true" className="text-destructive">*</span></Label>
-          <RichTextEditor value={article.excerpt ?? ""} onChange={(v) => { setExcerpt(v); if (excerptError && v && v !== "<p></p>") setExcerptError(""); }} />
+          <Label>
+            Extracto{" "}
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
+          </Label>
+          <RichTextEditor
+            value={article.excerpt ?? ""}
+            onChange={(v) => {
+              setExcerpt(v);
+              if (excerptError && v && v !== "<p></p>") setExcerptError("");
+            }}
+          />
           <input type="hidden" name="excerpt" value={excerpt} readOnly />
-          {excerptError && <p role="alert" className="text-xs text-destructive">{excerptError}</p>}
+          {excerptError && (
+            <p role="alert" className="text-xs text-destructive">
+              {excerptError}
+            </p>
+          )}
         </div>
 
         {/* IA (Gemini) block */}

@@ -14,13 +14,7 @@ interface Props {
   minWidth?: string;
 }
 
-const {
-  label,
-  activeLabel,
-  options,
-  dataSelector,
-  minWidth = "200px",
-} = Astro.props;
+const { label, activeLabel, options, dataSelector, minWidth = "200px" } = Astro.props;
 
 const displayLabel = activeLabel || label;
 // Only show active state if there's a specific selection (not the default "All" option)
@@ -30,10 +24,7 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
 <div class="select" data-select={dataSelector}>
   <button
     type="button"
-    class:list={[
-      "select__trigger",
-      { "select__trigger--active": hasActiveOption },
-    ]}
+    class:list={["select__trigger", { "select__trigger--active": hasActiveOption }]}
     aria-haspopup="listbox"
     aria-expanded="false"
     data-trigger={dataSelector}
@@ -63,10 +54,7 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
       options.map((option) => (
         <a
           href={option.href}
-          class:list={[
-            "select__option",
-            { "select__option--active": option.isActive },
-          ]}
+          class:list={["select__option", { "select__option--active": option.isActive }]}
           role="option"
           aria-selected={option.isActive}
           data-option={dataSelector}
@@ -176,11 +164,7 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
   }
 
   .select__option:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--ev-primary-blue) 10%,
-      transparent
-    );
+    background-color: color-mix(in srgb, var(--ev-primary-blue) 10%, transparent);
     color: var(--ev-primary-blue);
   }
 
@@ -232,17 +216,15 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
           var isOpen = select.hasAttribute("data-open");
 
           // Close all dropdowns
-          document
-            .querySelectorAll("[data-select][data-open]")
-            .forEach(function (other) {
-              if (other !== select) {
-                other.removeAttribute("data-open");
-                var otherTrigger = other.querySelector("[data-trigger]");
-                if (otherTrigger) {
-                  otherTrigger.setAttribute("aria-expanded", "false");
-                }
+          document.querySelectorAll("[data-select][data-open]").forEach(function (other) {
+            if (other !== select) {
+              other.removeAttribute("data-open");
+              var otherTrigger = other.querySelector("[data-trigger]");
+              if (otherTrigger) {
+                otherTrigger.setAttribute("aria-expanded", "false");
               }
-            });
+            }
+          });
 
           if (isOpen) {
             select.removeAttribute("data-open");
@@ -257,31 +239,27 @@ const hasActiveOption = options.slice(1).some((opt) => opt.isActive);
       // Close on outside click
       document.addEventListener("click", function (e) {
         if (!e.target.closest("[data-select]")) {
-          document
-            .querySelectorAll("[data-select][data-open]")
-            .forEach(function (select) {
-              select.removeAttribute("data-open");
-              var trigger = select.querySelector("[data-trigger]");
-              if (trigger) {
-                trigger.setAttribute("aria-expanded", "false");
-              }
-            });
+          document.querySelectorAll("[data-select][data-open]").forEach(function (select) {
+            select.removeAttribute("data-open");
+            var trigger = select.querySelector("[data-trigger]");
+            if (trigger) {
+              trigger.setAttribute("aria-expanded", "false");
+            }
+          });
         }
       });
 
       // Close on escape
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
-          document
-            .querySelectorAll("[data-select][data-open]")
-            .forEach(function (select) {
-              select.removeAttribute("data-open");
-              var trigger = select.querySelector("[data-trigger]");
-              if (trigger) {
-                trigger.setAttribute("aria-expanded", "false");
-                trigger.focus();
-              }
-            });
+          document.querySelectorAll("[data-select][data-open]").forEach(function (select) {
+            select.removeAttribute("data-open");
+            var trigger = select.querySelector("[data-trigger]");
+            if (trigger) {
+              trigger.setAttribute("aria-expanded", "false");
+              trigger.focus();
+            }
+          });
         }
       });
     }

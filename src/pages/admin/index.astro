@@ -27,9 +27,7 @@ let recentPosts: RecentPostItem[] = [];
 if (supabase) {
   const articles = () => supabase.from("articles");
   const posts = () => supabase.from("posts");
-  const sevenDaysAgo = new Date(
-    Date.now() - 7 * 24 * 60 * 60 * 1000,
-  ).toISOString();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     newsTotalRes,
@@ -71,8 +69,7 @@ if (supabase) {
   postsTotal = postsTotalRes.count ?? 0;
   postsDrafts = postsDraftsRes.count ?? 0;
   lastScrapeIso =
-    (lastScrapeRes.data as unknown as { scraped_at: string } | null)
-      ?.scraped_at ?? null;
+    (lastScrapeRes.data as unknown as { scraped_at: string } | null)?.scraped_at ?? null;
   recentNews = (recentNewsRes.data ?? []) as unknown as RecentNewsItem[];
   recentPosts = (recentPostsRes.data ?? []) as unknown as RecentPostItem[];
 }

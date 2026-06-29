@@ -14,7 +14,7 @@ export async function GET(context: APIContext) {
   <url>
     <loc>${new URL(getNewsUrl(a.slug), context.site).toString()}</loc>
     <lastmod>${new Date(a.published_at).toISOString().split("T")[0]}</lastmod>
-  </url>`
+  </url>`,
     )
     .join("");
 

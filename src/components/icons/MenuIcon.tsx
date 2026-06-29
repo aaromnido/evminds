@@ -3,7 +3,7 @@ interface MenuIconProps {
   className?: string;
 }
 
-export function MenuIcon({ isOpen, className = '' }: MenuIconProps) {
+export function MenuIcon({ isOpen, className = "" }: MenuIconProps) {
   return (
     <svg
       width="24"
@@ -24,9 +24,9 @@ export function MenuIcon({ isOpen, className = '' }: MenuIconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         style={{
-          transformOrigin: '12px 12px',
-          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: isOpen ? 'rotate(45deg) translateY(6px)' : 'none',
+          transformOrigin: "12px 12px",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: isOpen ? "rotate(45deg) translateY(6px)" : "none",
         }}
       />
 
@@ -40,7 +40,7 @@ export function MenuIcon({ isOpen, className = '' }: MenuIconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         style={{
-          transition: 'opacity 0.2s',
+          transition: "opacity 0.2s",
           opacity: isOpen ? 0 : 1,
         }}
       />
@@ -55,9 +55,9 @@ export function MenuIcon({ isOpen, className = '' }: MenuIconProps) {
         strokeWidth="2"
         strokeLinecap="round"
         style={{
-          transformOrigin: '12px 12px',
-          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: isOpen ? 'rotate(-45deg) translateY(-6px)' : 'none',
+          transformOrigin: "12px 12px",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: isOpen ? "rotate(-45deg) translateY(-6px)" : "none",
         }}
       />
     </svg>

@@ -6,8 +6,7 @@ import type { VariantProps } from "class-variance-authority";
 type IconComponent = ComponentType<{ className?: string }>;
 
 interface IconButtonProps
-  extends React.ComponentProps<typeof Button>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ComponentProps<typeof Button>, VariantProps<typeof buttonVariants> {
   icon?: IconComponent;
   showIcon?: boolean;
   href?: string;

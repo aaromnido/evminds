@@ -45,11 +45,7 @@ let bodyHtml: string | null = null;
 
 if (slug) {
   const db = isPreview ? getSupabaseService() : supabase;
-  const { data: post } = await db
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data: post } = await db.from("posts").select("*").eq("slug", slug).maybeSingle();
   if (post) {
     const p = post as unknown as {
       title: string;
@@ -65,10 +61,7 @@ if (slug) {
       slug: string;
     };
     // Draft = not published, or scheduled for a future date (not yet due).
-    isDraft =
-      p.status !== "published" ||
-      !p.published_at ||
-      new Date(p.published_at) > now;
+    isDraft = p.status !== "published" || !p.published_at || new Date(p.published_at) > now;
     bodyHtml = p.content;
     view = {
       title: p.title,
@@ -153,13 +146,14 @@ const relatedArticles = ownArticles
   <main class="article-detail">
     <Header />
 
-    {isDraft && (
-      <div class="article-detail__preview-banner" role="status">
-        <strong>Vista previa · borrador.</strong> Esta página no es pública ni
-        aparece en el listado de artículos. Solo quien tenga este enlace puede
-        verla.
-      </div>
-    )}
+    {
+      isDraft && (
+        <div class="article-detail__preview-banner" role="status">
+          <strong>Vista previa · borrador.</strong> Esta página no es pública ni aparece en el
+          listado de artículos. Solo quien tenga este enlace puede verla.
+        </div>
+      )
+    }
 
     <!-- Title (centered, wide) -->
     <h1 class="article-detail__title">{v.title}</h1>
@@ -191,9 +185,7 @@ const relatedArticles = ownArticles
         <div class="article-detail__badges">
           <Badge label="EVMinds" variant="filled" />
           <Badge label={v.category} variant="outlined" />
-          {v.tags.map((tag) => (
-            <Badge label={tag} variant="outlined" />
-          ))}
+          {v.tags.map((tag) => <Badge label={tag} variant="outlined" />)}
         </div>
       </div>
 
@@ -206,38 +198,38 @@ const relatedArticles = ownArticles
       {!isDraft && <ShareButtons url={canonicalUrl} title={v.title} />}
 
       <!-- Related articles -->
-      {relatedArticles.length > 0 && (
-        <section class="article-detail__related" aria-label="Artículos relacionados">
-          <h2 class="article-detail__related-title">Artículos relacionados</h2>
-          <div class="article-detail__related-grid">
-            {relatedArticles.map((related) => (
-              <NewsCard
-                image={related.image || "/images/placeholder-image.webp"}
-                title={related.title}
-                date={formatDate(related.date.toISOString())}
-                excerpt={related.excerpt}
-                source={related.author}
-                category={related.category}
-                href={getArticleUrl(related.slug)}
-                articleId={`articulo-${related.slug}`}
-                articleSlug={related.slug}
-                identifier={`articulo-${related.slug}`}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {
+        relatedArticles.length > 0 && (
+          <section class="article-detail__related" aria-label="Artículos relacionados">
+            <h2 class="article-detail__related-title">Artículos relacionados</h2>
+            <div class="article-detail__related-grid">
+              {relatedArticles.map((related) => (
+                <NewsCard
+                  image={related.image || "/images/placeholder-image.webp"}
+                  title={related.title}
+                  date={formatDate(related.date.toISOString())}
+                  excerpt={related.excerpt}
+                  source={related.author}
+                  category={related.category}
+                  href={getArticleUrl(related.slug)}
+                  articleId={`articulo-${related.slug}`}
+                  articleSlug={related.slug}
+                  identifier={`articulo-${related.slug}`}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
 
       <!-- Disqus comments. Identifier is articulo-${slug} (NOT a UUID) so threads
            stay linked when .md articles migrate to posts in Fase 5. Hidden in
            preview so no thread is opened under a draft before it goes live. -->
-      {!isDraft && (
-        <DisqusComments
-          identifier={`articulo-${v.slug}`}
-          url={canonicalUrl}
-          title={v.title}
-        />
-      )}
+      {
+        !isDraft && (
+          <DisqusComments identifier={`articulo-${v.slug}`} url={canonicalUrl} title={v.title} />
+        )
+      }
     </article>
 
     <Footer />
@@ -332,7 +324,6 @@ const relatedArticles = ownArticles
     flex-wrap: wrap;
     gap: 8px;
   }
-
 
   .article-detail__meta {
     display: flex;

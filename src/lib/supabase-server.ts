@@ -8,9 +8,7 @@ const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error(
-    "Missing Supabase environment variables. Check .env.local configuration."
-  );
+  throw new Error("Missing Supabase environment variables. Check .env.local configuration.");
 }
 
 /**
@@ -34,14 +32,13 @@ export function createSupabaseServerClient({
       getAll() {
         // parseCookieHeader may yield `value: undefined`; coerce to "" to
         // satisfy the getAll() return type.
-        return parseCookieHeader(request.headers.get("Cookie") ?? "").map(
-          ({ name, value }) => ({ name, value: value ?? "" })
-        );
+        return parseCookieHeader(request.headers.get("Cookie") ?? "").map(({ name, value }) => ({
+          name,
+          value: value ?? "",
+        }));
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          cookies.set(name, value, options)
-        );
+        cookiesToSet.forEach(({ name, value, options }) => cookies.set(name, value, options));
       },
     },
   });

@@ -54,13 +54,11 @@ export default function SaveButton({
       {...props}
       type="submit"
       className={cn(saving && "pointer-events-none opacity-75", className)}
-      onClick={() => { pendingRef.current = true; }}
+      onClick={() => {
+        pendingRef.current = true;
+      }}
     >
-      {saving ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Save className="h-4 w-4" />
-      )}
+      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
       {saving ? loadingText : children}
     </Button>
   );
