@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-flight runs for the same ref when a new commit lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: check, lint, format, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (astro check)
+        run: pnpm check
+
+      - name: Lint (biome)
+        run: pnpm lint
+
+      # Format check (prettier) is intentionally absent from CI until 2B-ii
+      # (repo-wide `prettier --write`) lands. Running --check now would fail on
+      # every legacy file that hasn't been formatted yet, and the reformat is
+      # deliberately split into its own reviewable lote. Enable this step in 2B-ii:
+      #   - name: Format check (prettier)
+      #     run: pnpm format:check
+
+      - name: Unit tests (vitest)
+        run: pnpm test
+
+      - name: Build (astro build)
+        run: pnpm build
+        env:
+          # Astro build reads these at module-eval time. Provide stubs so the
+          # SSR build can resolve env references without real Supabase creds.
+          PUBLIC_SUPABASE_URL: https://stub.supabase.co
+          PUBLIC_SUPABASE_ANON_KEY: stub-anon-key

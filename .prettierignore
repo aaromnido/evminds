@@ -1,0 +1,38 @@
+# Build output
+dist/
+.astro/
+
+# Dependencies
+node_modules/
+
+# Edge Functions run on Deno — different runtime, don't format/lint from here
+supabase/functions/
+
+# Standalone scripts (Node CLI tools, not part of the app bundle)
+scripts/
+
+# Generated / caches
+.netlify/
+.temp/
+.screenshots/
+lighthouse-reports/
+
+# OS / editor
+.DS_Store
+.idea/
+
+# Local-only docs (gitignored too)
+CLAUDE.md
+AGENTS.md
+SECURITY.md
+context/
+.claude/
+
+# Lockfile — keep as-is to avoid churn
+pnpm-lock.yaml
+
+# Migration SQL — hand-formatted, don't reflow
+supabase/migrations/
+
+# Vitest coverage
+coverage/

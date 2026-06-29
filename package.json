@@ -11,7 +11,11 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "verify": "./scripts/run-verify.sh"
+    "verify": "./scripts/run-verify.sh",
+    "lint": "biome lint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.2",
@@ -44,10 +48,14 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@biomejs/biome": "^2.5.1",
     "@types/node": "^25.5.0",
     "@types/sanitize-html": "^2.16.1",
     "dotenv": "^17.3.1",
+    "prettier": "^3.9.1",
+    "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "vitest": "^4.1.9"
   }
 }
