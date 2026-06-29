@@ -112,10 +112,8 @@ export const GET: APIRoute = async ({ url }) => {
     // Two sources in parallel: own content (markdown + posts) + DB news/videos.
     const [ownContent, dbRes] = await Promise.all([
       searchOwnContent(parsed),
-      // `search_articles` is a Postgres RPC; the hand-maintained Database types
-      // don't declare Functions, so cast the args to satisfy the typed client.
       supabase
-        .rpc("search_articles", { search_query: q, max_results: SEARCH_LIMIT } as never)
+        .rpc("search_articles", { search_query: q, max_results: SEARCH_LIMIT })
         .select(ARTICLE_SELECT),
     ]);
 

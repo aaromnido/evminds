@@ -29,18 +29,17 @@ const year = new Date().getFullYear();
 // own panel, hidden except the active one. The RPC returns tone counts per source
 // broken down by content type, so the three type-views are derived here from the
 // same four window queries (no extra DB round-trips). Score/color/award are
-// computed here. Hand-maintained types lack a Functions block, so the rpc call is
-// cast (house style).
+// computed here.
 const datasets = await Promise.all(
   TIME_WINDOWS.map(async (w) => {
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await supabase.rpc(
       "source_headline_ranking",
       { p_since: windowToSince(w.key) },
     );
     if (error) {
       console.error("source_headline_ranking RPC failed:", error.message);
     }
-    const rows = error ? [] : ((data ?? []) as SourceToneCounts[]);
+    const rows = (error ? [] : (data ?? [])) as SourceToneCounts[];
     const views = CONTENT_FILTERS.map((f) => {
       // Project each source onto this content-type view, dropping sources with no
       // articles in it (e.g. video channels under the "Noticias" filter).

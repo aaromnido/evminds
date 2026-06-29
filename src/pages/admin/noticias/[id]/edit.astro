@@ -19,10 +19,9 @@ if (!supabase || !id) {
   const action = String(form.get("_action") ?? "");
 
   if (action === "archive" || action === "unarchive") {
-    // Cast: hand-written Database type infers `never` on .from() (typecheck task).
     const { error } = await supabase
       .from("articles")
-      .update({ archived: action === "archive" } as never)
+      .update({ archived: action === "archive" })
       .eq("id", id);
     if (!error) return Astro.redirect("/admin/noticias");
     errorMsg = `No se pudo ${action === "archive" ? "archivar" : "desarchivar"}: ${error.message}`;
@@ -71,7 +70,7 @@ if (!supabase || !id) {
           headline_tone: headlineTone,
           ai_summary: aiSummary || null,
           ai_discussion_prompt: aiDiscussionPrompt || null,
-        } as never)
+        })
         .eq("id", id);
       if (error) errorMsg = `No se pudo guardar: ${error.message}`;
       else return Astro.redirect("/admin/noticias");
@@ -83,8 +82,7 @@ if (!supabase || !id) {
 // distinct categories already in use for the datalist suggestions.
 if (!notFound && supabase && id) {
   // Categories come from a DISTINCT RPC (get_article_categories) instead of
-  // fetching the `category` column of every article — see migration 43. Hand-
-  // maintained types lack a Functions block, so the rpc is cast (house style).
+  // fetching the `category` column of every article — see migration 43.
   const [{ data, error }, { data: catRows }] = await Promise.all([
     supabase
       .from("articles")
@@ -93,31 +91,13 @@ if (!notFound && supabase && id) {
       )
       .eq("id", id)
       .single(),
-    (supabase as any).rpc("get_article_categories"),
+    supabase.rpc("get_article_categories"),
   ]);
 
   if (error || !data) {
     notFound = true;
   } else {
-    const row = data as unknown as {
-      title: string;
-      slug: string;
-      excerpt: string;
-      category: string;
-      image_url: string | null;
-      archived: boolean;
-      article_url: string;
-      published_at: string;
-      content_type: string;
-      has_comments: boolean;
-      seo_title: string | null;
-      headline_tone: "green" | "amber" | "red" | null;
-      ai_summary: string | null;
-      ai_discussion_prompt: string | null;
-      ai_warnings: { type: string }[] | null;
-      ai_generated_at: string | null;
-      source: { name: string } | null;
-    };
+    const row = data;
     // Keep the edited (failed-submit) values if present, only fill the rest.
     formValues = {
       title: formValues?.title ?? row.title,
@@ -141,7 +121,9 @@ if (!notFound && supabase && id) {
       contentType: row.content_type,
       hasComments: row.has_comments,
     };
-    categories = (catRows ?? []) as unknown as string[];
+    // supabase-js types SETOF text as `string` (not string[]); the runtime data
+    // is an array. Justified cast — see supabase-js GenericFunction limitations.
+    categories = (catRows ?? []) as string[];
   }
 }
 

@@ -39,11 +39,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     .select("role")
     .eq("id", user.id)
     .single();
-  // Cast: the hand-written Database type doesn't satisfy supabase-js's
-  // GenericSchema, so .from() infers `never`. Localized workaround until the
-  // type-check cleanup task fixes the root cause (.claude/tasks/typecheck-cleanup.md).
-  const profile = data as { role: string } | null;
-  const isAdmin = profile?.role === "admin";
+  const isAdmin = data?.role === "admin";
 
   // On the login page: admins go straight to the dashboard; a logged-in
   // non-admin stays to see the "forbidden" message (no redirect loop).

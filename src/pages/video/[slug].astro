@@ -34,7 +34,7 @@ if (error || !data) {
   return new Response(null, { status: 404, statusText: "Not Found" });
 }
 
-const video = data as any;
+const video = data;
 const source = Array.isArray(video.source)
   ? video.source[0]
   : video.source;
@@ -55,7 +55,7 @@ const { data: relatedData } = await supabase
   .order("scraped_at", { ascending: false })
   .limit(RELATED_VIDEOS_LIMIT);
 
-const relatedVideos = (relatedData || []).map((v: any) =>
+const relatedVideos = (relatedData || []).map((v) =>
   mapArticleToProps(normalizeArticle(v))
 );
 

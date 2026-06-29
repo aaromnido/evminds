@@ -26,7 +26,7 @@ if (supabase) {
     .from("sources")
     .select("id, name")
     .order("name");
-  sources = (sourcesData ?? []) as unknown as SourceOption[];
+  sources = (sourcesData ?? []) as SourceOption[];
 
   let query = supabase
     .from("articles")
@@ -42,7 +42,8 @@ if (supabase) {
 
   if (sourceId) query = query.eq("source_id", sourceId);
   if (tone === "none") query = query.is("headline_tone", null);
-  else if (tone) query = query.eq("headline_tone", tone);
+  else if (tone === "green" || tone === "amber" || tone === "red")
+    query = query.eq("headline_tone", tone);
   if (q) query = query.ilike("title", `%${q}%`);
 
   const { data, error, count } = await query
@@ -50,8 +51,6 @@ if (supabase) {
     .range(from, to);
 
   if (error) errorMsg = error.message;
-  // Cast: hand-written Database type infers `never` on .from() (see typecheck
-  // cleanup task). Shape is guaranteed by the explicit select above.
   else {
     items = (data ?? []) as unknown as NewsListItem[];
     total = count ?? 0;

@@ -39,9 +39,7 @@ if (error || !data) {
   return new Response(null, { status: 404, statusText: "Not Found" });
 }
 
-// Hand-maintained Database types lack join Relationships, so the typed client
-// collapses this joined row to `never`; cast to access the fields.
-const article = data as any;
+const article = data;
 
 // Redirect videos to their correct URL
 if (article.content_type === "video") {
@@ -62,7 +60,7 @@ const { data: relatedData } = await supabase
   .order("scraped_at", { ascending: false })
   .limit(RELATED_ARTICLES_LIMIT);
 
-const relatedArticles = (relatedData || []).map((a: any) =>
+const relatedArticles = (relatedData || []).map((a) =>
   mapArticleToProps(normalizeArticle(a))
 );
 
