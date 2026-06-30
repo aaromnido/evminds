@@ -18,8 +18,7 @@ import { X, Trash2, Loader2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 import SlugField from "./SlugField";
-
-const CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
+import { VALID_POST_CATEGORIES } from "@/lib/post-categories";
 
 export interface PostFormValues {
   title?: string;
@@ -219,11 +218,11 @@ export default function PostEditor({
           <select
             id="category"
             name="category"
-            defaultValue={post?.category ?? CATEGORIES[0]}
+            defaultValue={post?.category ?? VALID_POST_CATEGORIES[0]}
             required
             className={fieldClass}
           >
-            {CATEGORIES.map((c) => (
+            {VALID_POST_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

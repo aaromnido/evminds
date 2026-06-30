@@ -1,6 +1,7 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
 import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
+import { parsePostForm, validatePostForm } from "@/lib/post-form";
 
 const supabase = Astro.locals.supabase;
 const { id } = Astro.params;
@@ -8,73 +9,6 @@ const { id } = Astro.params;
 let errorMsg = "";
 let formValues: PostFormValues | undefined;
 let notFound = false;
-
-const parseForm = (
-  form: FormData,
-): {
-  values: PostFormValues;
-  payload: Record<string, unknown>;
-  missingFields: string[];
-} => {
-  const get = (k: string) => String(form.get(k) ?? "").trim();
-
-  const title = get("title");
-  const slug = get("slug");
-  const excerpt = get("excerpt");
-  const content = get("content");
-  const category = get("category");
-  const tagsRaw = get("tags");
-  const imageUrl = get("image_url");
-  const imageAlt = get("image_alt");
-  const status = get("status");
-  const publishedAtRaw = get("published_at");
-
-  const tags = tagsRaw
-    ? tagsRaw
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
-    : [];
-
-  let publishedAt: string | null = null;
-  if (publishedAtRaw) publishedAt = new Date(publishedAtRaw).toISOString();
-  else if (status === "published") publishedAt = new Date().toISOString();
-
-  const emptyContent = !content || content === "<p></p>";
-  const missingFields: string[] = [];
-  if (!title) missingFields.push("título");
-  if (!slug) missingFields.push("slug");
-  if (!excerpt) missingFields.push("extracto");
-  if (emptyContent) missingFields.push("contenido");
-
-  return {
-    values: {
-      title,
-      slug,
-      excerpt,
-      content,
-      category,
-      tags: tagsRaw,
-      image_url: imageUrl,
-      image_alt: imageAlt,
-      status,
-      published_at: publishedAtRaw,
-    },
-    payload: {
-      title,
-      slug,
-      excerpt,
-      content,
-      category,
-      tags,
-      image_url: imageUrl || null,
-      image_alt: imageAlt || null,
-      status,
-      published_at: publishedAt,
-    },
-    missingFields,
-  };
-};
 
 if (!supabase || !id) {
   notFound = true;
@@ -88,21 +22,16 @@ if (!supabase || !id) {
     if (!error) return Astro.redirect("/admin/posts");
     errorMsg = `No se pudo eliminar: ${error.message}`;
   } else {
-    const { values, payload, missingFields } = parseForm(form);
-    formValues = values;
-    const VALID_CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
-    const publishedAtRaw = String(form.get("published_at") ?? "").trim();
-    if (missingFields.length) {
-      errorMsg = `Faltan campos obligatorios: ${missingFields.join(", ")}.`;
-    } else if (payload.category && !VALID_CATEGORIES.includes(payload.category as string)) {
-      errorMsg = "Categoría no válida.";
-    } else if (publishedAtRaw && isNaN(new Date(publishedAtRaw).getTime())) {
-      errorMsg = "Fecha de publicación no válida.";
+    const parsed = parsePostForm(form);
+    formValues = parsed.values;
+
+    const validationError = validatePostForm(parsed);
+    if (validationError) {
+      errorMsg = validationError;
     } else {
-      // Cast: hand-written Database type infers `never` on .from() (typecheck task).
       const { error } = await supabase
         .from("posts")
-        .update(payload as never)
+        .update(parsed.payload as never)
         .eq("id", id);
       if (error) {
         errorMsg =

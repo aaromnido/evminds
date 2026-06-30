@@ -1,6 +1,7 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
 import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
+import { parsePostForm, validatePostForm } from "@/lib/post-form";
 
 // Authed admin client set by the middleware. Insert is validated by the
 // posts_admin_all RLS policy (WITH CHECK is_admin()).
@@ -11,79 +12,14 @@ let values: PostFormValues | undefined;
 
 if (Astro.request.method === "POST" && supabase) {
   const form = await Astro.request.formData();
-  const get = (k: string) => String(form.get(k) ?? "").trim();
+  const parsed = parsePostForm(form);
+  values = parsed.values;
 
-  const title = get("title");
-  const slug = get("slug");
-  const excerpt = get("excerpt");
-  const content = get("content");
-  const category = get("category");
-  const tagsRaw = get("tags");
-  const imageUrl = get("image_url");
-  const imageAlt = get("image_alt");
-  const status = get("status");
-  const publishedAtRaw = get("published_at");
-
-  // Keep submitted values so the form repopulates if validation/insert fails.
-  values = {
-    title,
-    slug,
-    excerpt,
-    content,
-    category,
-    tags: tagsRaw,
-    image_url: imageUrl,
-    image_alt: imageAlt,
-    status,
-    published_at: publishedAtRaw,
-  };
-
-  // Content is HTML; an empty editor yields "<p></p>".
-  const emptyContent = !content || content === "<p></p>";
-  const VALID_CATEGORIES = ["Experiencia", "Guía", "Review", "Opinión", "Viaje"];
-
-  const missing: string[] = [];
-  if (!title) missing.push("título");
-  if (!slug) missing.push("slug");
-  if (!excerpt) missing.push("extracto");
-  if (emptyContent) missing.push("contenido");
-
-  if (missing.length) {
-    errorMsg = `Faltan campos obligatorios: ${missing.join(", ")}.`;
-  } else if (category && !VALID_CATEGORIES.includes(category)) {
-    errorMsg = "Categoría no válida.";
-  } else if (publishedAtRaw && isNaN(new Date(publishedAtRaw).getTime())) {
-    errorMsg = "Fecha de publicación no válida.";
+  const validationError = validatePostForm(parsed);
+  if (validationError) {
+    errorMsg = validationError;
   } else {
-    const tags = tagsRaw
-      ? tagsRaw
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
-      : [];
-
-    // Scheduling model (ADR-006): published + future date = scheduled.
-    // Published with no date = now. Draft keeps whatever date was given (or null).
-    let publishedAt: string | null = null;
-    if (publishedAtRaw) publishedAt = new Date(publishedAtRaw).toISOString();
-    else if (status === "published") publishedAt = new Date().toISOString();
-
-    const payload = {
-      title,
-      slug,
-      excerpt,
-      content,
-      category,
-      tags,
-      image_url: imageUrl || null,
-      image_alt: imageAlt || null,
-      status,
-      published_at: publishedAt,
-    };
-
-    // Cast: hand-written Database type infers `never` on .from() (see typecheck
-    // cleanup task). The payload shape matches the posts Insert type.
-    const { error } = await supabase.from("posts").insert(payload as never);
+    const { error } = await supabase.from("posts").insert(parsed.payload as never);
 
     if (error) {
       errorMsg =
