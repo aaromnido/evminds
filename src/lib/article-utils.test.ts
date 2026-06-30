@@ -5,6 +5,7 @@ import {
   mapArticleToProps,
   isDeletableArchived,
   serializeBookmarkData,
+  getAvailableCategorySlugs,
   ARCHIVED_DELETE_MIN_AGE_DAYS,
 } from "./article-utils";
 
@@ -100,6 +101,26 @@ describe("isDeletableArchived", () => {
     const old = new Date();
     old.setDate(old.getDate() - (ARCHIVED_DELETE_MIN_AGE_DAYS + 1));
     expect(isDeletableArchived({ archived: true, published_at: old.toISOString() })).toBe(true);
+  });
+});
+
+describe("getAvailableCategorySlugs", () => {
+  it("returns unique, valid slugs mapped from category names", () => {
+    const rows = [
+      { category: "Coches eléctricos" },
+      { category: "Coches eléctricos" }, // duplicate → deduped
+      { category: "Renovables" },
+    ];
+    expect(getAvailableCategorySlugs(rows).sort()).toEqual(["coches-electricos", "renovables"]);
+  });
+
+  it("drops null/empty and unknown category names", () => {
+    const rows = [{ category: null }, { category: "" }, { category: "Inexistente" }];
+    expect(getAvailableCategorySlugs(rows)).toEqual([]);
+  });
+
+  it("returns an empty array for null input", () => {
+    expect(getAvailableCategorySlugs(null)).toEqual([]);
   });
 });
 
