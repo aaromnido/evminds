@@ -15,7 +15,8 @@
     "lint": "biome lint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.2",
@@ -51,6 +52,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.1",
+    "@vitest/coverage-v8": "^4.1.9",
     "dotenv": "^17.3.1",
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",

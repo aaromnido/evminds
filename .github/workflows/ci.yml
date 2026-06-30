@@ -44,8 +44,8 @@ jobs:
       - name: Format check (prettier)
         run: pnpm format:check
 
-      - name: Unit tests (vitest)
-        run: pnpm test
+      - name: Unit tests (vitest) + coverage report
+        run: pnpm test:coverage
 
       - name: Build (astro build)
         run: pnpm build

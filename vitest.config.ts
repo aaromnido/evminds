@@ -11,5 +11,11 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     environment: "node",
     globals: false,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      include: ["src/lib/**"],
+      exclude: ["src/lib/**/*.test.ts", "src/lib/database.types.ts"],
+    },
   },
 });

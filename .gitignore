@@ -20,6 +20,9 @@ pnpm-debug.log*
 *.temp
 .screenshots/
 
+# coverage reports
+coverage/
+
 # lighthouse reports
 lighthouse-reports/
 lighthouse*.json
