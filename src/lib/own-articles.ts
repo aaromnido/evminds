@@ -20,14 +20,26 @@ export interface OwnArticle {
   slug: string;
 }
 
-export async function getOwnArticles(): Promise<OwnArticle[]> {
+/**
+ * Fetch published own-content articles (tabla posts), newest first.
+ *
+ * @param limit - Maximum number of articles to return. Defaults to 100
+ *   (preventive cap so a future surge in own content doesn't load the entire
+ *   table into memory on every call). Callers that need all articles for
+ *   scoring/matching (e.g. related-articles in articulo/[slug].astro) can pass
+ *   a higher limit or omit it. RLS (`posts_public_read`) limits the query to
+ *   published & due rows.
+ */
+export async function getOwnArticles(limit = 100): Promise<OwnArticle[]> {
   const now = new Date();
 
   // The hand-written Database type makes .from() infer `never`, hence the
   // localized cast.
   const { data } = await supabase
     .from("posts")
-    .select("title, excerpt, image_url, image_alt, author, category, tags, slug, published_at");
+    .select("title, excerpt, image_url, image_alt, author, category, tags, slug, published_at")
+    .order("published_at", { ascending: false })
+    .limit(limit);
   const posts: OwnArticle[] = (
     (data ?? []) as unknown as {
       title: string;
@@ -52,6 +64,8 @@ export async function getOwnArticles(): Promise<OwnArticle[]> {
     slug: p.slug,
   }));
 
-  // Newest first.
+  // The query already orders by published_at DESC, but published_at can be null
+  // (drafts published without a date get `now` above). Re-sort to guarantee
+  // newest-first regardless of how Supabase handled nulls in the ORDER BY.
   return posts.sort((a, b) => b.date.getTime() - a.date.getTime());
 }
