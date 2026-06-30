@@ -34,7 +34,12 @@ import type { Source, RawArticle, ScraperResult } from './types.ts';
 import { YOUTUBE_EV_FILTERED_SOURCES } from './types.ts';
 
 /**
- * Generate a URL-safe slug from a title string
+ * Generate a URL-safe slug from a title string.
+ *
+ * STRUCTURAL DUPLICATE of src/lib/slugify.ts (the canonical implementation).
+ * This Edge Function runs on Deno and cannot import from src/ (runtime
+ * boundary), so the copy is intentional. Keep both in parity — if you change
+ * one, change the other. The canonical source is src/lib/slugify.ts.
  */
 function slugify(text: string): string {
   return text

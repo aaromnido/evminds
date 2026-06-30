@@ -29,4 +29,16 @@ describe("slugify", () => {
   it("handles a string with only punctuation", () => {
     expect(slugify("!!! ??? ---")).toBe("");
   });
+
+  // Canonical behaviour fixers (Familia A): apostrophes are removed without
+  // inserting a hyphen; em-dashes are removed without inserting a hyphen.
+  // The admin .tsx variants (Familia B) used to produce "tesla-s-car" and
+  // "cafe-resume" — these tests pin the canonical output so no regression.
+  it("removes apostrophes without converting to hyphens", () => {
+    expect(slugify("Tesla's car")).toBe("teslas-car");
+  });
+
+  it("removes em-dashes without converting to hyphens", () => {
+    expect(slugify("café—résumé")).toBe("caferesume");
+  });
 });

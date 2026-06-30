@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import RichTextEditor from "./RichTextEditor";
 import SlugField from "./SlugField";
 import { VALID_POST_CATEGORIES } from "@/lib/post-categories";
+import { slugify } from "@/lib/slugify";
 
 export interface PostFormValues {
   title?: string;
@@ -45,16 +46,6 @@ interface Props {
 // Native field styling that matches the shadcn Input look (for <select>/<textarea>).
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
-
-function slugify(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export default function PostEditor({
   post,
