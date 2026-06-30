@@ -147,20 +147,53 @@ serve(async (req) => {
         let processedCount = 0;
         let skippedCount = 0;
 
+        // Batch duplicate check: fetch all existing article_urls for this batch
+        // in a single query instead of one .single() per article (N+1 → 1).
+        // Guard: skip the query when there are no articles to check (empty batch
+        // after filtering).
+        const existingUrls = new Set<string>();
+        let batchQueryOk = false;
+        if (articles.length > 0) {
+          const urls = articles.map(a => a.article_url);
+          const { data: existingRows, error: dupError } = await supabaseClient
+            .from('articles')
+            .select('article_url')
+            .in('article_url', urls);
+
+          if (dupError) {
+            console.error(`Duplicate check query failed for ${source.name}:`, dupError.message);
+            // Fall back to per-article checks so a batch query failure doesn't
+            // skip the entire source — same behaviour as before the batch.
+          } else {
+            batchQueryOk = true;
+            for (const row of (existingRows ?? [])) {
+              existingUrls.add((row as { article_url: string }).article_url);
+            }
+          }
+        }
+
         // Process each article
         for (let i = 0; i < articles.length; i++) {
           const article = articles[i];
           try {
-            // Check for duplicates (unique constraint on article_url)
-            const { data: existing } = await supabaseClient
-              .from('articles')
-              .select('id')
-              .eq('article_url', article.article_url)
-              .single();
-
-            if (existing) {
-              skippedCount++;
-              continue;
+            // Check for duplicates against the batch-fetched set (in-memory).
+            // Falls back to a per-article query if the batch query failed above.
+            if (batchQueryOk) {
+              if (existingUrls.has(article.article_url)) {
+                skippedCount++;
+                continue;
+              }
+            } else {
+              // Batch query failed (or wasn't run) — per-article fallback.
+              const { data: existing } = await supabaseClient
+                .from('articles')
+                .select('id')
+                .eq('article_url', article.article_url)
+                .single();
+              if (existing) {
+                skippedCount++;
+                continue;
+              }
             }
 
             let title = article.title;
@@ -252,6 +285,12 @@ serve(async (req) => {
             if (insertError) {
               console.error(`Insert error for ${article.article_url}:`, insertError);
             } else {
+              // Mirror the insert into the in-memory set so a duplicate
+              // article_url later in the same batch skips cleanly (without
+              // this, an intra-lote dup would pass the check and waste a
+              // Gemini call + Cloudinary upload before hitting the UNIQUE
+              // constraint).
+              existingUrls.add(article.article_url);
               processedCount++;
             }
           } catch (articleError) {
