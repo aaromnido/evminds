@@ -216,7 +216,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
         }
 
         .mobile-menu-item {
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: var(--font-body);
           font-size: 32px;
           font-weight: 500;
           color: var(--navy-2);

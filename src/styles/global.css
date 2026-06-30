@@ -78,6 +78,8 @@
 
 /* evminds design tokens */
 :root {
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
   --navy-1: #1f1633;
   --navy-2: #191b41;
   --navy-light: #23254a;
@@ -239,7 +241,7 @@
   border-radius: 75px;
   background-color: var(--ev-bg-accent);
   color: var(--ev-text-on-image);
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-body);
   font-weight: 500;
   font-size: 16px;
   line-height: 1;
@@ -279,7 +281,7 @@
 
 /* Nav badge (e.g. "New" next to menu items) */
 .nav__badge {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 8px;
   font-weight: 700;
   text-transform: uppercase;

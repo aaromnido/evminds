@@ -111,7 +111,7 @@ const { title, footerLabel, footerIcon = false } = Astro.props;
   }
 
   .drawer__title {
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: var(--font-body);
     font-size: 18px;
     font-weight: 700;
     color: var(--navy-2);
@@ -140,7 +140,7 @@ const { title, footerLabel, footerIcon = false } = Astro.props;
     padding: 24px;
     flex: 1;
     overflow-y: auto;
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: var(--font-body);
     font-size: 14px;
     color: var(--navy-2);
   }
@@ -162,7 +162,7 @@ const { title, footerLabel, footerIcon = false } = Astro.props;
     border-radius: 100px;
     background: transparent;
     color: var(--navy-2);
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: var(--font-body);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
