@@ -12,4 +12,16 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # Content-Security-Policy: 'unsafe-eval' and 'unsafe-inline' are conscious
+    # decisions, not oversights — see SECURITY.md for the full analysis.
+    #   - 'unsafe-eval': required by Disqus (its bundles use eval() internally).
+    #     Cannot be removed without breaking comments.
+    #   - 'unsafe-inline': required by our own inline scripts (theme FOUC prevention,
+    #     define:vars in DisqusComments/articulos-guardados); Disqus may also need it
+    #     (inline script injection, not verified). Hardening with hashes/nonces is
+    #     blocked because Astro 6 security.csp does not support <ClientRouter />,
+    #     which the site uses on every public page.
+    #   - The real XSS vector (article/video excerpts rendered with set:html) is
+    #     mitigated at the source with sanitize-html (src/lib/html-utils.ts), so
+    #     this CSP acts as defense-in-depth, not the primary XSS control.
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is https://*.disqus.com https://*.disquscdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.disquscdn.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://cloud.umami.is https://*.disqus.com; frame-src https://*.disqus.com; media-src 'self'"
