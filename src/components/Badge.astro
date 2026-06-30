@@ -60,9 +60,9 @@ const { label, variant = "outlined", href, title, ariaLabel } = Astro.props;
   }
 
   .dark .badge--outlined {
-    background-color: #faf7f0;
-    color: #191b41;
-    border-color: #faf7f0;
+    background-color: var(--ev-text-on-image);
+    color: var(--ev-bg-accent);
+    border-color: var(--ev-text-on-image);
   }
 
   .badge--light {
@@ -76,16 +76,16 @@ const { label, variant = "outlined", href, title, ariaLabel } = Astro.props;
   .badge--green {
     background-color: var(--ev-tone-green);
     border: 1.5px solid var(--ev-tone-green);
-    color: #faf7f0;
+    color: var(--ev-text-on-image);
   }
   .badge--amber {
     background-color: var(--ev-tone-amber);
     border: 1.5px solid var(--ev-tone-amber);
-    color: #191b41;
+    color: var(--ev-bg-accent);
   }
   .badge--red {
     background-color: var(--ev-tone-red);
     border: 1.5px solid var(--ev-tone-red);
-    color: #faf7f0;
+    color: var(--ev-text-on-image);
   }
 </style>

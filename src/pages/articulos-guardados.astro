@@ -61,6 +61,9 @@ import { STORAGE_KEY } from "@/lib/bookmarks";
     });
   }
 
+  // Keep in parity with renderArticleCard in src/scripts/infinite-scroll.ts —
+  // same card markup, duplicated due to the inline script runtime boundary
+  // (this script is is:inline and cannot import from src/).
   function renderBookmarkCard(bookmark) {
     var image = bookmark.image_url || "/images/placeholder-image.webp";
     var title = bookmark.title;

@@ -48,6 +48,10 @@ function formatDate(dateString: string): string {
 
 /**
  * Render an article card using safe DOM methods (XSS-safe).
+ *
+ * Keep in parity with renderBookmarkCard in src/pages/articulos-guardados.astro —
+ * same card markup, duplicated due to the inline script runtime boundary (that
+ * script is is:inline and cannot import from src/).
  */
 function renderArticleCard(article: any): HTMLElement {
   const image = article.image_url || "/images/placeholder-image.webp";

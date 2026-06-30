@@ -348,20 +348,6 @@ const articleDataJson = serializeBookmarkData({
     color: var(--navy-2);
   }
 
-  .article-detail__meta-separator {
-    font-weight: 700;
-  }
-
-  .article-detail__source-link {
-    color: var(--navy-2);
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .article-detail__source-link:hover {
-    text-decoration: underline;
-  }
-
   /* Excerpt */
   .article-detail__excerpt {
     font-family: var(--font-body);
@@ -472,13 +458,6 @@ const articleDataJson = serializeBookmarkData({
     color: var(--sepia-light);
   }
 
-  .article-detail__cta-flag {
-    display: inline-block;
-    border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-  }
-
   /* CTA button */
   .article-detail__cta {
     display: inline-flex;
@@ -504,8 +483,8 @@ const articleDataJson = serializeBookmarkData({
   }
 
   :global(.dark) .article-detail__cta {
-    background-color: #faf7f0;
-    color: #191b41;
+    background-color: var(--ev-text-on-image);
+    color: var(--ev-bg-accent);
   }
 
   /* Related articles */
