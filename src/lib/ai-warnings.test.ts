@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  resolveWarningText,
-  WARNING_DEFINITIONS,
-  type WarningType,
-} from "./ai-warnings";
+import { resolveWarningText, WARNING_DEFINITIONS, type WarningType } from "./ai-warnings";
 
 const ALL_TYPES: WarningType[] = [
   "price_non_european",

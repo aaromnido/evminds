@@ -90,9 +90,9 @@ describe("scoreFromCounts / colorFromScore", () => {
 
   it("computes the weighted mean (green=0, amber=1, red=2)", () => {
     // (2*1 + 1*2) / 8 = 0.5
-    expect(scoreFromCounts(row({ source_id: "s", n_green: 5, n_amber: 2, n_red: 1, n_total: 8 }))).toBe(
-      0.5,
-    );
+    expect(
+      scoreFromCounts(row({ source_id: "s", n_green: 5, n_amber: 2, n_red: 1, n_total: 8 })),
+    ).toBe(0.5);
   });
 
   it("maps scores to traffic-light colors at the boundaries", () => {
