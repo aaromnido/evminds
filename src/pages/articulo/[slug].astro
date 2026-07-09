@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { getSupabaseService } from "@/lib/supabase-service";
 import { getOwnArticles } from "@/lib/own-articles";
 import { stripHtml } from "@/lib/html-utils";
+import { isAdminRequest } from "@/lib/admin-session";
+import AdminEditButton from "@/components/AdminEditButton.astro";
 
 const { slug } = Astro.params;
 
@@ -28,6 +30,7 @@ let isDraft = false;
 // Own articles live in the `posts` table. RLS (posts_public_read) returns only
 // published & due rows, so drafts/scheduled never leak.
 interface ArticleView {
+  id: string;
   title: string;
   excerpt: string;
   image?: string;
@@ -48,6 +51,7 @@ if (slug) {
   const { data: post } = await db.from("posts").select("*").eq("slug", slug).maybeSingle();
   if (post) {
     const p = post as unknown as {
+      id: string;
       title: string;
       excerpt: string;
       content: string;
@@ -64,6 +68,7 @@ if (slug) {
     isDraft = p.status !== "published" || !p.published_at || new Date(p.published_at) > now;
     bodyHtml = p.content;
     view = {
+      id: p.id,
       title: p.title,
       excerpt: p.excerpt,
       image: p.image_url ?? undefined,
@@ -104,6 +109,7 @@ if (isDraft) {
 }
 
 const v = view;
+const isAdmin = await isAdminRequest({ request: Astro.request, cookies: Astro.cookies });
 const heroImage = v.image || "/images/placeholder-image.webp";
 const formattedDate = formatDate(v.date.toISOString());
 const readingTime = calculateReadingTime(v.bodyText);
@@ -156,7 +162,10 @@ const relatedArticles = ownArticles
     }
 
     <!-- Title (centered, wide) -->
-    <h1 class="article-detail__title">{v.title}</h1>
+    <div class="article-detail__title-wrap">
+      <h1 class="article-detail__title">{v.title}</h1>
+      {isAdmin && <AdminEditButton href={`/admin/posts/${v.id}/edit`} />}
+    </div>
 
     <!-- Hero image (wide, like quienes-somos) -->
     <div class="article-detail__hero">
@@ -266,6 +275,10 @@ const relatedArticles = ownArticles
   }
 
   /* Title (centered, wide) */
+  .article-detail__title-wrap {
+    position: relative;
+  }
+
   .article-detail__title {
     font-family: var(--font-heading);
     font-size: 56px;
