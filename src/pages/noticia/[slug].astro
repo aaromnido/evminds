@@ -15,7 +15,13 @@ import { formatDate } from "@/lib/date-utils";
 import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
 import { getNewsUrl, getVideoUrl } from "@/lib/article-url";
-import { normalizeArticle, mapArticleToProps, serializeBookmarkData } from "@/lib/article-utils";
+import {
+  ARTICLE_SELECT,
+  normalizeArticle,
+  mapArticleToProps,
+  serializeBookmarkData,
+} from "@/lib/article-utils";
+import { extractKeywords, relatedArticleScore, searchTermsFor } from "@/lib/related-articles";
 import { resolveWarningText, type AiWarning } from "@/lib/ai-warnings";
 import ToneIndicator from "@/components/ToneIndicator.astro";
 import { formatSummaryParagraph, summaryToMetaDescription } from "@/lib/format-summary";
@@ -52,19 +58,77 @@ if (article.content_type === "video") {
 const source = Array.isArray(article.source) ? article.source[0] : article.source;
 
 const RELATED_ARTICLES_LIMIT = 3;
+const RELATED_CANDIDATE_POOL_SIZE = 20;
+const RELATED_KEYWORD_TERMS_LIMIT = 14;
+const RELATED_KEYWORD_PER_TERM_LIMIT = 6;
 
-// Fetch related articles (same category, excluding current)
-const { data: relatedData } = await supabase
+const currentKeywords = extractKeywords(article.title, article.seo_title);
+// DB-searchable terms: a matched topic cluster (e.g. "topic:conduccion-autonoma")
+// expands back into its full synonym list (autopilot, waymo, fsd...) so a
+// sibling using different vocabulary than this article still gets fetched —
+// see src/lib/related-articles.ts.
+const searchTerms = searchTermsFor(currentKeywords);
+
+// Same-category pool: recency-ordered safety net so the section never goes
+// empty even when no candidate shares a meaningful keyword with this article.
+const { data: categoryPool } = await supabase
   .from("articles")
-  .select(
-    "id, slug, title, seo_title, excerpt, image_url, category, published_at, scraped_at, source:sources!inner(name, url)",
-  )
+  .select(ARTICLE_SELECT)
   .eq("category", article.category)
   .neq("id", article.id)
   .order("scraped_at", { ascending: false })
-  .limit(RELATED_ARTICLES_LIMIT);
+  .limit(RELATED_CANDIDATE_POOL_SIZE);
 
-const relatedArticles = (relatedData || []).map((a) => mapArticleToProps(normalizeArticle(a)));
+// Cross-category pool: articles whose title/seo_title mention one of this
+// article's search terms, so a genuinely related piece can outrank
+// same-category noise (A9, 2026-07-15 SEO/stats meeting).
+//
+// One small query PER term (not a single combined OR with a shared limit):
+// a combined query's LIMIT is filled by whichever term matches most often
+// and most recently, so a common one (e.g. "tesla") starves a rarer, more
+// specific one (e.g. "degradacion") out of the result window entirely —
+// confirmed during A9 manual QA. A per-term limit guarantees every term
+// gets its own shot at contributing candidates.
+const keywordPoolResults =
+  searchTerms.length > 0
+    ? await Promise.all(
+        searchTerms
+          .slice(0, RELATED_KEYWORD_TERMS_LIMIT)
+          .map((term) =>
+            supabase
+              .from("articles")
+              .select(ARTICLE_SELECT)
+              .neq("id", article.id)
+              .or(`title.ilike.%${term}%,seo_title.ilike.%${term}%`)
+              .order("scraped_at", { ascending: false })
+              .limit(RELATED_KEYWORD_PER_TERM_LIMIT),
+          ),
+      )
+    : [];
+const keywordPool = keywordPoolResults.flatMap((result) => result.data || []);
+
+const candidatesById = new Map<string, ReturnType<typeof normalizeArticle>>();
+for (const raw of [...(categoryPool || []), ...keywordPool]) {
+  const candidate = normalizeArticle(raw);
+  candidatesById.set(candidate.id, candidate);
+}
+
+const currentKeywordSet = new Set(currentKeywords);
+const relatedArticles = Array.from(candidatesById.values())
+  .map((candidate) => ({
+    candidate,
+    score: relatedArticleScore(
+      extractKeywords(candidate.title, candidate.seo_title),
+      currentKeywordSet,
+      candidate.category === article.category,
+    ),
+  }))
+  .sort(
+    (a, b) =>
+      b.score - a.score || b.candidate.scraped_at.getTime() - a.candidate.scraped_at.getTime(),
+  )
+  .slice(0, RELATED_ARTICLES_LIMIT)
+  .map((entry) => mapArticleToProps(entry.candidate));
 
 // SEO-optimized headline: feeds <title>, og:title and the visible <h1>.
 // Falls back to the source title when no seo_title was generated (old articles).
