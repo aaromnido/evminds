@@ -161,9 +161,12 @@ export interface Database {
           isOneToOne: true;
         };
       };
-      /** Distinct article categories for the admin datalist (migration 43). */
+      /** Distinct article categories for the admin datalist (migration 43),
+       *  optionally filtered by content_type for the public category-filter
+       *  pills (migration 49). p_content_type is optional so the existing
+       *  zero-argument admin calls keep working unchanged. */
       get_article_categories: {
-        Args: Record<PropertyKey, never>;
+        Args: { p_content_type?: string };
         Returns: string;
       };
       /**
