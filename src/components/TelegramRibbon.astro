@@ -8,8 +8,11 @@
 <aside class="telegram-ribbon" aria-label="Únete a nuestra comunidad de Telegram">
   <div class="telegram-ribbon__container">
     <p class="telegram-ribbon__text">
-      <em class="telegram-ribbon__title">Sigamos debatiendo entre amigos.</em>
-      <span class="telegram-ribbon__subtitle">Únete a la comunidad en Telegram.</span>
+      <em class="telegram-ribbon__title">¿Dudas sobre tu próximo eléctrico?</em>
+      <span class="telegram-ribbon__subtitle"
+        >Resuelve dudas con quien conduce eléctrico o se lo plantea. Únete a la comunidad de
+        Telegram.</span
+      >
     </p>
     <a
       class="telegram-ribbon__button"
@@ -129,12 +132,12 @@
     }
   }
 
-  /* Very small mobile: ribbon stays single row, subtitle truncates with ellipsis */
+  /* Very small mobile: let the subtitle wrap onto two lines instead of truncating —
+     the container has no fixed height, so it grows to fit. */
   @media (max-width: 380px) {
     .telegram-ribbon__subtitle {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
     }
   }
 </style>
