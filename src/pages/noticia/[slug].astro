@@ -83,29 +83,26 @@ const { data: categoryPool } = await supabase
 // article's search terms, so a genuinely related piece can outrank
 // same-category noise (A9, 2026-07-15 SEO/stats meeting).
 //
-// One small query PER term (not a single combined OR with a shared limit):
-// a combined query's LIMIT is filled by whichever term matches most often
-// and most recently, so a common one (e.g. "tesla") starves a rarer, more
-// specific one (e.g. "degradacion") out of the result window entirely —
-// confirmed during A9 manual QA. A per-term limit guarantees every term
-// gets its own shot at contributing candidates.
-const keywordPoolResults =
+// One RPC call covering every term (not 14 separate round trips): each term
+// still gets its own per-term LIMIT inside related_articles_pool() (a
+// combined query's LIMIT is filled by whichever term matches most often and
+// most recently, so a common one like "tesla" would starve a rarer, more
+// specific one like "degradacion" out of the result window entirely —
+// confirmed during A9 manual QA), so recall is unchanged from the previous
+// 14-query version. See supabase/migrations/48_related_articles_pool_fn.sql
+// for why this needs to be a DEFINER RPC rather than a client-side query.
+const { data: keywordPoolRows } =
   searchTerms.length > 0
-    ? await Promise.all(
-        searchTerms
-          .slice(0, RELATED_KEYWORD_TERMS_LIMIT)
-          .map((term) =>
-            supabase
-              .from("articles")
-              .select(ARTICLE_SELECT)
-              .neq("id", article.id)
-              .or(`title.ilike.%${term}%,seo_title.ilike.%${term}%`)
-              .order("scraped_at", { ascending: false })
-              .limit(RELATED_KEYWORD_PER_TERM_LIMIT),
-          ),
-      )
-    : [];
-const keywordPool = keywordPoolResults.flatMap((result) => result.data || []);
+    ? await (supabase as any).rpc("related_articles_pool", {
+        p_article_id: article.id,
+        p_terms: searchTerms.slice(0, RELATED_KEYWORD_TERMS_LIMIT),
+        p_per_term: RELATED_KEYWORD_PER_TERM_LIMIT,
+      })
+    : { data: [] };
+const keywordPool = (keywordPoolRows || []).map((row: any) => ({
+  ...row,
+  source: { name: row.source_name, url: row.source_url },
+}));
 
 const candidatesById = new Map<string, ReturnType<typeof normalizeArticle>>();
 for (const raw of [...(categoryPool || []), ...keywordPool]) {

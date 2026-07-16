@@ -61,7 +61,7 @@ if (prefs.onlyWithComments) {
 
 const [{ data: articleData }, { data: categoryRows }, { data: videoData }] = await Promise.all([
   articlesQuery,
-  supabase.from("articles").select("category").eq("content_type", "news"),
+  supabase.rpc("get_article_categories", { p_content_type: "news" }),
   supabase
     .from("articles")
     .select(ARTICLE_SELECT)
@@ -71,7 +71,14 @@ const [{ data: articleData }, { data: categoryRows }, { data: videoData }] = awa
 ]);
 
 const articles = normalizeArticles(articleData);
-const availableCategorySlugs = getAvailableCategorySlugs(categoryRows);
+// get_article_categories() returns bare category names (SETOF text). Two
+// casts: supabase-js types SETOF text as `string`, not `string[]` (the
+// runtime data is an array — justified cast, see the admin call sites in
+// noticias/new.astro); then wrap into the { category } row shape
+// getAvailableCategorySlugs expects.
+const availableCategorySlugs = getAvailableCategorySlugs(
+  ((categoryRows ?? []) as string[]).map((category) => ({ category })),
+);
 const featuredVideos = normalizeArticles(videoData);
 
 // Featured primary — exclude hibridosyelectricos (small images)
