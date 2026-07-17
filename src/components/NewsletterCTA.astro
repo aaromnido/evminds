@@ -26,6 +26,7 @@ const emailId = `newsletter-email-${uid}`;
       method="POST"
       action={BREVO_FORM_ACTION}
       data-type="subscription"
+      novalidate
     >
       <label for={emailId} class="newsletter-cta__label">Email</label>
       <div class="newsletter-cta__row">
@@ -64,59 +65,93 @@ const emailId = `newsletter-email-${uid}`;
     </form>
 
     <p class="newsletter-cta__feedback newsletter-cta__feedback--success" role="status" hidden>
-      ¡Listo! Revisa tu correo para confirmar la suscripción.
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm4.28 7.53-4.5 4.5a.75.75 0 0 1-1.06 0l-2.25-2.25a.75.75 0 1 1 1.06-1.06l1.72 1.72 3.97-3.97a.75.75 0 1 1 1.06 1.06Z"
+          fill="currentColor"></path>
+      </svg>
+      <span>¡Listo! Revisa tu correo para confirmar la suscripción.</span>
     </p>
     <p class="newsletter-cta__feedback newsletter-cta__feedback--error" role="alert" hidden>
-      No hemos podido validar tu suscripción. Inténtalo de nuevo.
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8Z"
+          fill="currentColor"></path>
+      </svg>
+      <span class="newsletter-cta__error-text"
+        >No hemos podido validar tu suscripción. Inténtalo de nuevo.</span
+      >
     </p>
+
+    <script is:inline>
+      (function () {
+        // Brevo's own main.js binds via a global document.querySelector("#sib-form"),
+        // which only supports one instance per page. This component can render
+        // several times on the same page, so instead each instance scopes itself
+        // via document.currentScript, valid only synchronously at parse time —
+        // this must stay a classic (non-module) inline script. It also must live
+        // INSIDE .newsletter-cta (not as a sibling after it): closest() only
+        // walks ancestors, never siblings.
+        var script = document.currentScript;
+        var root = script.closest(".newsletter-cta");
+        if (!root) return;
+
+        var form = root.querySelector("form");
+        var emailInput = form.querySelector(".newsletter-cta__input");
+        var button = form.querySelector(".newsletter-cta__button");
+        var buttonLabel = button.querySelector(".newsletter-cta__button-label");
+        var successMessage = root.querySelector(".newsletter-cta__feedback--success");
+        var errorMessage = root.querySelector(".newsletter-cta__feedback--error");
+        var errorText = errorMessage.querySelector(".newsletter-cta__error-text");
+        var originalButtonLabel = buttonLabel.textContent;
+        var originalErrorText = errorText.textContent;
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          errorMessage.hidden = true;
+
+          // Custom-styled validation instead of the browser's native bubble
+          // (form has novalidate): same look as a real submission error.
+          if (!emailInput.checkValidity()) {
+            errorText.textContent = emailInput.validity.valueMissing
+              ? "Escribe tu email para suscribirte."
+              : "Ese email no parece válido. Revísalo e inténtalo de nuevo.";
+            errorMessage.hidden = false;
+            emailInput.focus();
+            return;
+          }
+
+          button.disabled = true;
+          buttonLabel.textContent = "Enviando...";
+
+          var formData = new FormData(form);
+
+          // Brevo's endpoint expects a full-page form POST, not a CORS-enabled
+          // fetch, so a normal "cors" request would reject even on success.
+          // "no-cors" avoids that; the response is opaque and unreadable, which
+          // is fine here since we show success optimistically — with double
+          // opt-in, the real confirmation happens via the email click, not this
+          // POST's result.
+          fetch(form.action, { method: "POST", mode: "no-cors", body: formData })
+            .then(function () {
+              form.hidden = true;
+              successMessage.hidden = false;
+            })
+            .catch(function () {
+              button.disabled = false;
+              buttonLabel.textContent = originalButtonLabel;
+              errorText.textContent = originalErrorText;
+              errorMessage.hidden = false;
+            });
+        });
+      })();
+    </script>
   </div>
 </div>
-
-<script is:inline>
-  (function () {
-    // Brevo's own main.js binds via a global document.querySelector("#sib-form"),
-    // which only supports one instance per page. This component can render
-    // several times on the same page, so instead each instance scopes itself
-    // via document.currentScript, valid only synchronously at parse time —
-    // this must stay a classic (non-module) inline script.
-    var script = document.currentScript;
-    var root = script.closest(".newsletter-cta");
-    if (!root) return;
-
-    var form = root.querySelector("form");
-    var button = form.querySelector(".newsletter-cta__button");
-    var buttonLabel = button.querySelector(".newsletter-cta__button-label");
-    var successMessage = root.querySelector(".newsletter-cta__feedback--success");
-    var errorMessage = root.querySelector(".newsletter-cta__feedback--error");
-    var originalButtonLabel = buttonLabel.textContent;
-
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      errorMessage.hidden = true;
-      button.disabled = true;
-      buttonLabel.textContent = "Enviando...";
-
-      var formData = new FormData(form);
-
-      // Brevo's endpoint expects a full-page form POST, not a CORS-enabled
-      // fetch, so a normal "cors" request would reject even on success.
-      // "no-cors" avoids that; the response is opaque and unreadable, which
-      // is fine here since we show success optimistically — with double
-      // opt-in, the real confirmation happens via the email click, not this
-      // POST's result.
-      fetch(form.action, { method: "POST", mode: "no-cors", body: formData })
-        .then(function () {
-          form.hidden = true;
-          successMessage.hidden = false;
-        })
-        .catch(function () {
-          button.disabled = false;
-          buttonLabel.textContent = originalButtonLabel;
-          errorMessage.hidden = false;
-        });
-    });
-  })();
-</script>
 
 <style>
   .newsletter-cta {
@@ -262,10 +297,23 @@ const emailId = `newsletter-email-${uid}`;
   }
 
   .newsletter-cta__feedback {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--font-body);
     font-size: 15px;
     font-weight: 600;
     margin-top: 4px;
+  }
+
+  .newsletter-cta__feedback svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .newsletter-cta__feedback--success {
+    color: color-mix(in srgb, var(--ev-primary-green) 55%, white);
   }
 
   .newsletter-cta__feedback--error {
