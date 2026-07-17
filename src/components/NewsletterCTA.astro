@@ -27,8 +27,8 @@ const emailId = `newsletter-email-${uid}`;
       action={BREVO_FORM_ACTION}
       data-type="subscription"
     >
-      <div class="newsletter-cta__field">
-        <label for={emailId} class="newsletter-cta__label">Tu e-mail</label>
+      <label for={emailId} class="newsletter-cta__label">Email</label>
+      <div class="newsletter-cta__row">
         <input
           type="email"
           id={emailId}
@@ -38,7 +38,17 @@ const emailId = `newsletter-email-${uid}`;
           required
           class="newsletter-cta__input"
         />
-        <p class="newsletter-cta__hint">Ej.: nombre@email.com</p>
+        <button type="submit" class="newsletter-cta__button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M1.5 8.67v8.58a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3V8.67l-8.928 5.493a3 3 0 0 1-3.144 0L1.5 8.67Z"
+              fill="currentColor"></path>
+            <path
+              d="M22.5 6.908V6.75a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3v.158l9.714 5.978a1.5 1.5 0 0 0 1.572 0L22.5 6.908Z"
+              fill="currentColor"></path>
+          </svg>
+          <span class="newsletter-cta__button-label">Quiero recibir la newsletter</span>
+        </button>
       </div>
 
       <input
@@ -51,8 +61,6 @@ const emailId = `newsletter-email-${uid}`;
         aria-hidden="true"
       />
       <input type="hidden" name="locale" value="es" />
-
-      <button type="submit" class="newsletter-cta__button">Quiero recibir la newsletter</button>
     </form>
 
     <p class="newsletter-cta__feedback newsletter-cta__feedback--success" role="status" hidden>
@@ -77,15 +85,16 @@ const emailId = `newsletter-email-${uid}`;
 
     var form = root.querySelector("form");
     var button = form.querySelector(".newsletter-cta__button");
+    var buttonLabel = button.querySelector(".newsletter-cta__button-label");
     var successMessage = root.querySelector(".newsletter-cta__feedback--success");
     var errorMessage = root.querySelector(".newsletter-cta__feedback--error");
-    var originalButtonText = button.textContent;
+    var originalButtonLabel = buttonLabel.textContent;
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();
       errorMessage.hidden = true;
       button.disabled = true;
-      button.textContent = "Enviando...";
+      buttonLabel.textContent = "Enviando...";
 
       var formData = new FormData(form);
 
@@ -102,7 +111,7 @@ const emailId = `newsletter-email-${uid}`;
         })
         .catch(function () {
           button.disabled = false;
-          button.textContent = originalButtonText;
+          buttonLabel.textContent = originalButtonLabel;
           errorMessage.hidden = false;
         });
     });
@@ -126,7 +135,7 @@ const emailId = `newsletter-email-${uid}`;
     align-items: center;
     text-align: center;
     gap: 20px;
-    max-width: 480px;
+    max-width: 640px;
     width: 100%;
   }
 
@@ -147,39 +156,44 @@ const emailId = `newsletter-email-${uid}`;
     line-height: 1.6;
     color: inherit;
     opacity: 0.85;
+    /* Preserves the \n call sites use to force "Sin spam..." onto its own
+       line instead of an awkward mid-sentence wrap. */
+    white-space: pre-line;
   }
 
   .newsletter-cta__form {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
     width: 100%;
     margin-top: 12px;
-  }
-
-  .newsletter-cta__field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
     text-align: left;
   }
 
   .newsletter-cta__label {
+    display: block;
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 600;
     color: inherit;
     opacity: 0.85;
+    margin-bottom: 8px;
+  }
+
+  .newsletter-cta__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 12px;
   }
 
   .newsletter-cta__input {
+    width: 100%;
+    box-sizing: border-box;
     font-family: var(--font-body);
     font-size: 16px;
-    padding: 14px 16px;
+    padding: 16px 20px;
     border-radius: 8px;
     border: 1.5px solid transparent;
-    background: var(--ev-text-on-image);
+    /* Distinct from the solid button fill: same tone, 80% opacity. */
+    background: color-mix(in srgb, var(--ev-text-on-image) 80%, transparent);
     color: var(--ev-bg-accent);
   }
 
@@ -190,15 +204,8 @@ const emailId = `newsletter-email-${uid}`;
 
   .newsletter-cta__input:focus {
     outline: none;
-    border-color: var(--ev-text-on-image);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-text-on-image) 40%, transparent);
-  }
-
-  .newsletter-cta__hint {
-    font-family: var(--font-body);
-    font-size: 12px;
-    color: inherit;
-    opacity: 0.65;
+    border-color: var(--ev-primary-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-primary-blue) 35%, transparent);
   }
 
   /* Honeypot: hidden from sighted users and assistive tech, but present and
@@ -216,15 +223,17 @@ const emailId = `newsletter-email-${uid}`;
   }
 
   .newsletter-cta__button {
+    width: 100%;
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 16px 28px;
+    padding: 16px 32px;
     background: var(--ev-text-on-image);
     color: var(--ev-bg-accent);
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     border: none;
     border-radius: 8px;
@@ -234,6 +243,12 @@ const emailId = `newsletter-email-${uid}`;
       transform 0.2s ease,
       box-shadow 0.2s ease,
       opacity 0.2s ease;
+  }
+
+  .newsletter-cta__button svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
   }
 
   .newsletter-cta__button:hover:not(:disabled) {
@@ -258,13 +273,8 @@ const emailId = `newsletter-email-${uid}`;
   }
 
   @media (max-width: 640px) {
-    .newsletter-cta__form {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .newsletter-cta__button {
-      width: 100%;
+    .newsletter-cta__row {
+      grid-template-columns: 1fr;
     }
   }
 

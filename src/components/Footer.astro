@@ -1,6 +1,7 @@
 ---
 import { CATEGORIES } from "@/lib/categories";
 import Logo from "./Logo.astro";
+import NewsletterCTA from "./NewsletterCTA.astro";
 
 interface Props {
   availableCategorySlugs?: string[];
@@ -14,110 +15,131 @@ const visibleCategories = availableCategorySlugs
   : CATEGORIES;
 ---
 
-<footer class="site-footer">
-  <div class="footer__columns">
-    <!-- Column 1: Brand & Social -->
-    <div class="footer__column">
-      <Logo />
-      <p class="footer__tagline">Un punto de encuentro para mentes inquietas y eléctricas</p>
-      <div class="footer__social">
-        <a
-          href="https://t.me/evminders"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="footer__social-link"
-          aria-label="Unirse a Telegram"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+<div class="footer-wrapper">
+  <!-- Newsletter signup: sits directly above the footer on every page, with
+       its own fixed 48px margin-bottom (not the page's flex gap). Wrapped
+       together with <footer> so a parent's flex `gap` (e.g. PageLayout,
+       article-detail) can't add extra space on top of that margin. -->
+  <div class="footer-newsletter">
+    <NewsletterCTA
+      title="¿No quieres perderte nada?"
+      text={"Cada domingo comparto mi visión sobre el mundo eléctrico en tu correo.\nSin spam, date de baja cuando quieras."}
+    />
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer__columns">
+      <!-- Column 1: Brand & Social -->
+      <div class="footer__column">
+        <Logo />
+        <p class="footer__tagline">Un punto de encuentro para mentes inquietas y eléctricas</p>
+        <div class="footer__social">
+          <a
+            href="https://t.me/evminders"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__social-link"
+            aria-label="Unirse a Telegram"
           >
-            <path
-              d="M18.384 2.394a1.215 1.215 0 0 0-1.244-.047L1.29 9.597a1.217 1.217 0 0 0 .046 2.26l3.99 1.496 1.53 4.893a1.217 1.217 0 0 0 1.952.455l2.413-2.02 3.807 2.843a1.217 1.217 0 0 0 1.91-.705l2.6-14.906a1.218 1.218 0 0 0-.154-.519zM7.44 12.662l-.962 3.076-.964-3.076 9.643-7.183-7.717 7.183z"
-              fill="currentColor"></path>
-          </svg>
-        </a>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18.384 2.394a1.215 1.215 0 0 0-1.244-.047L1.29 9.597a1.217 1.217 0 0 0 .046 2.26l3.99 1.496 1.53 4.893a1.217 1.217 0 0 0 1.952.455l2.413-2.02 3.807 2.843a1.217 1.217 0 0 0 1.91-.705l2.6-14.906a1.218 1.218 0 0 0-.154-.519zM7.44 12.662l-.962 3.076-.964-3.076 9.643-7.183-7.717 7.183z"
+                fill="currentColor"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Column 2: Categories -->
+      <div class="footer__column">
+        <h3 class="footer__heading">Categorías</h3>
+        <nav aria-label="Categorías de contenido">
+          <ul class="footer__list">
+            {
+              visibleCategories.map((category) => (
+                <li>
+                  <a href={`/categoria/${category.slug}`} class="footer__link">
+                    {category.name}
+                  </a>
+                </li>
+              ))
+            }
+            <li>
+              <a href="/articulos" class="footer__link">Artículos</a>
+            </li>
+            <li>
+              <a href="/videos" class="footer__link">Vídeos</a>
+            </li>
+            <li>
+              <a href="/recursos" class="footer__link">Recursos</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Column 3: EVMinds -->
+      <div class="footer__column">
+        <h3 class="footer__heading">EVMinds</h3>
+        <nav aria-label="Acerca de EVMinds">
+          <ul class="footer__list">
+            <li>
+              <a href="/quienes-somos" class="footer__link">Acerca de</a>
+            </li>
+            <li>
+              <a href="/contacto" class="footer__link">Colaboraciones</a>
+            </li>
+            <li>
+              <a href="/contacto" class="footer__link">Contacto</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Column 4: Legal -->
+      <div class="footer__column">
+        <h3 class="footer__heading">Legal</h3>
+        <nav aria-label="Información legal">
+          <ul class="footer__list">
+            <li>
+              <a href="/aviso-legal" class="footer__link">Aviso legal</a>
+            </li>
+            <li>
+              <a href="/politica-privacidad" class="footer__link">Política de privacidad</a>
+            </li>
+            <li>
+              <a href="/politica-cookies" class="footer__link">Política de cookies</a>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
 
-    <!-- Column 2: Categories -->
-    <div class="footer__column">
-      <h3 class="footer__heading">Categorías</h3>
-      <nav aria-label="Categorías de contenido">
-        <ul class="footer__list">
-          {
-            visibleCategories.map((category) => (
-              <li>
-                <a href={`/categoria/${category.slug}`} class="footer__link">
-                  {category.name}
-                </a>
-              </li>
-            ))
-          }
-          <li>
-            <a href="/articulos" class="footer__link">Artículos</a>
-          </li>
-          <li>
-            <a href="/videos" class="footer__link">Vídeos</a>
-          </li>
-          <li>
-            <a href="/recursos" class="footer__link">Recursos</a>
-          </li>
-        </ul>
-      </nav>
+    <!-- Bottom bar -->
+    <div class="footer__bottom">
+      <p class="footer__copyright">© 2026 EVMinds.es</p>
+      <p class="footer__disclaimer">
+        Las noticias enlazan a sus fuentes originales. EVMinds.es es un agregador de noticias y no
+        produce contenido propio.
+      </p>
     </div>
-
-    <!-- Column 3: EVMinds -->
-    <div class="footer__column">
-      <h3 class="footer__heading">EVMinds</h3>
-      <nav aria-label="Acerca de EVMinds">
-        <ul class="footer__list">
-          <li>
-            <a href="/quienes-somos" class="footer__link">Acerca de</a>
-          </li>
-          <li>
-            <a href="/contacto" class="footer__link">Colaboraciones</a>
-          </li>
-          <li>
-            <a href="/contacto" class="footer__link">Contacto</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-
-    <!-- Column 4: Legal -->
-    <div class="footer__column">
-      <h3 class="footer__heading">Legal</h3>
-      <nav aria-label="Información legal">
-        <ul class="footer__list">
-          <li>
-            <a href="/aviso-legal" class="footer__link">Aviso legal</a>
-          </li>
-          <li>
-            <a href="/politica-privacidad" class="footer__link">Política de privacidad</a>
-          </li>
-          <li>
-            <a href="/politica-cookies" class="footer__link">Política de cookies</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-
-  <!-- Bottom bar -->
-  <div class="footer__bottom">
-    <p class="footer__copyright">© 2026 EVMinds.es</p>
-    <p class="footer__disclaimer">
-      Las noticias enlazan a sus fuentes originales. EVMinds.es es un agregador de noticias y no
-      produce contenido propio.
-    </p>
-  </div>
-</footer>
+  </footer>
+</div>
 
 <style>
+  .footer-wrapper {
+    width: 100%;
+  }
+
+  .footer-newsletter {
+    margin-bottom: 48px;
+  }
+
   .site-footer {
     width: 100%;
     padding: 48px 0 24px;
@@ -243,6 +265,10 @@ const visibleCategories = availableCategorySlugs
     .footer__columns {
       grid-template-columns: 1fr;
       gap: 32px;
+      margin-bottom: 32px;
+    }
+
+    .footer-newsletter {
       margin-bottom: 32px;
     }
 
