@@ -20,26 +20,45 @@ export interface OwnArticle {
   slug: string;
 }
 
+// A10 newsletter exclusivity window: gated callers hide own articles newer
+// than this from discovery surfaces, while the direct URL keeps working —
+// see .claude/tasks/newsletter.md, "Phase 1: ready to execute".
+const GATING_HOURS = 48;
+
 /**
  * Fetch published own-content articles (tabla posts), newest first.
  *
- * @param limit - Maximum number of articles to return. Defaults to 100
- *   (preventive cap so a future surge in own content doesn't load the entire
- *   table into memory on every call). Callers that need all articles for
- *   scoring/matching (e.g. related-articles in articulo/[slug].astro) can pass
- *   a higher limit or omit it. RLS (`posts_public_read`) limits the query to
- *   published & due rows.
+ * @param options.limit - Maximum number of articles to return. Defaults to
+ *   100 (preventive cap so a future surge in own content doesn't load the
+ *   entire table into memory on every call). Callers that need all articles
+ *   for scoring/matching (e.g. related-articles in articulo/[slug].astro) can
+ *   pass a higher limit or omit it. RLS (`posts_public_read`) limits the
+ *   query to published & due rows.
+ * @param options.gated - When true, excludes articles published within the
+ *   last GATING_HOURS (A10 newsletter exclusivity). Only discovery surfaces
+ *   (home, /articulo listing, articulo related-articles, site search) opt
+ *   in; rss.xml deliberately stays ungated (accepted low-risk leak path).
  */
-export async function getOwnArticles(limit = 100): Promise<OwnArticle[]> {
+export async function getOwnArticles(
+  options: { limit?: number; gated?: boolean } = {},
+): Promise<OwnArticle[]> {
+  const { limit = 100, gated = false } = options;
   const now = new Date();
 
   // The hand-written Database type makes .from() infer `never`, hence the
   // localized cast.
-  const { data } = await supabase
+  let query = supabase
     .from("posts")
     .select("title, excerpt, image_url, image_alt, author, category, tags, slug, published_at")
     .order("published_at", { ascending: false })
     .limit(limit);
+
+  if (gated) {
+    const cutoff = new Date(now.getTime() - GATING_HOURS * 60 * 60 * 1000).toISOString();
+    query = query.lt("published_at", cutoff);
+  }
+
+  const { data } = await query;
   const posts: OwnArticle[] = (
     (data ?? []) as unknown as {
       title: string;

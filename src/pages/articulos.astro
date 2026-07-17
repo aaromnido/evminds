@@ -11,7 +11,9 @@ import { getArticleUrl } from "@/lib/article-url";
 import { getOwnArticles } from "@/lib/own-articles";
 
 // Unified own-content source (.md + published posts), newest first.
-const articles = await getOwnArticles();
+// Gated: A10 newsletter exclusivity window (48h) hides the freshest article
+// from this listing while its direct URL keeps working.
+const articles = await getOwnArticles({ gated: true });
 ---
 
 <BaseLayout

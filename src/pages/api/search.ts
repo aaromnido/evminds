@@ -72,7 +72,9 @@ async function searchOwnContent(parsed: {
   phrase: string;
   words: string[];
 }): Promise<SearchResult[]> {
-  const own = await getOwnArticles();
+  // Gated: A10 newsletter exclusivity window (48h) keeps the freshest
+  // article out of search results while its direct URL keeps working.
+  const own = await getOwnArticles({ gated: true });
 
   return own
     .filter((a) => {

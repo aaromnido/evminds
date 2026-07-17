@@ -90,8 +90,10 @@ const featuredPrimary = primaryIndex >= 0 ? articles[primaryIndex] : articles[0]
 const remaining = articles.filter((_, i) => i !== primaryIndex);
 const featuredSecondary1 = featuredVideos[0];
 
-// Fetch latest published own article for featured slot (.md + DB posts)
-const ownArticles = await getOwnArticles();
+// Fetch latest published own article for featured slot (.md + DB posts).
+// Gated: A10 newsletter exclusivity window (48h) hides the freshest article
+// from discovery surfaces while its direct URL keeps working.
+const ownArticles = await getOwnArticles({ gated: true });
 const latestArticle = ownArticles[0];
 
 const featuredSecondary2 = latestArticle

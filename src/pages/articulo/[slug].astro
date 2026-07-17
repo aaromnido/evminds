@@ -118,7 +118,9 @@ const canonicalUrl = new URL(getArticleUrl(v.slug), Astro.site).toString();
 
 // Related articles: score by shared tags (x2) + same category (+1), fallback to
 // most recent. Drawn from the unified own-content pool (.md + posts).
-const ownArticles = await getOwnArticles();
+// Gated: A10 newsletter exclusivity window (48h) keeps the freshest article
+// out of recommendations while its direct URL keeps working.
+const ownArticles = await getOwnArticles({ gated: true });
 const relatedArticles = ownArticles
   .filter((a) => a.slug !== v.slug)
   .map((a) => {
