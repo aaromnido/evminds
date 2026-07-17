@@ -11,6 +11,7 @@ import DisqusCommentCount from "@/components/DisqusCommentCount.astro";
 import { supabase } from "@/lib/supabase";
 import { isAdminRequest } from "@/lib/admin-session";
 import AdminEditButton from "@/components/AdminEditButton.astro";
+import NewsletterCTA from "@/components/NewsletterCTA.astro";
 import { formatDate } from "@/lib/date-utils";
 import { optimizedImageUrl } from "@/lib/image-utils";
 import { getCategorySlugByName } from "@/lib/categories";
@@ -299,6 +300,11 @@ const articleDataJson = serializeBookmarkData({
 
       <!-- Share buttons -->
       <ShareButtons url={canonicalUrl} title={displayTitle} />
+
+      <NewsletterCTA
+        title="¿Te ha gustado esta noticia?"
+        text="Cada domingo comparto mi visión sobre el mundo eléctrico en tu correo. Sin spam, date de baja cuando quieras."
+      />
 
       <!-- Related articles -->
       {
