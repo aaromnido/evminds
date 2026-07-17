@@ -1,0 +1,284 @@
+---
+interface Props {
+  title: string;
+  text: string;
+}
+
+const { title, text } = Astro.props;
+
+// Brevo form "Newsletter EVminds - Suscripción" (double opt-in enabled).
+const BREVO_FORM_ACTION =
+  "https://9df3ce87.sibforms.com/serve/MUIFAFbEHf9-Tt47DVGzqKdRporKhvKfKVDDkirxO8UpEUzq-zdDvK3ZxQOUbLw2o120n0esmyuwCwZkKgS1wDmtpPbNmX7bixtlHazyNVVRJ9jQDXKPJl8LZvrDhkaRrDtrPaKri0YL-IlcW3M-TuXP7Kgkhj28iLqjWE0ioMjdDtPo6HXQ--4Td1gkEeu6zeeN1HoGl0pxOTBlBg==";
+
+// Unique id so the label/input pairing stays valid even when this component
+// renders more than once on the same page (e.g. end-of-article + footer).
+const uid = crypto.randomUUID().slice(0, 8);
+const emailId = `newsletter-email-${uid}`;
+---
+
+<div class="newsletter-cta">
+  <div class="newsletter-cta__content">
+    <h2 class="newsletter-cta__title">{title}</h2>
+    <p class="newsletter-cta__text">{text}</p>
+
+    <form
+      class="newsletter-cta__form"
+      method="POST"
+      action={BREVO_FORM_ACTION}
+      data-type="subscription"
+    >
+      <div class="newsletter-cta__field">
+        <label for={emailId} class="newsletter-cta__label">Tu e-mail</label>
+        <input
+          type="email"
+          id={emailId}
+          name="EMAIL"
+          autocomplete="email"
+          placeholder="nombre@email.com"
+          required
+          class="newsletter-cta__input"
+        />
+        <p class="newsletter-cta__hint">Ej.: nombre@email.com</p>
+      </div>
+
+      <input
+        type="text"
+        name="email_address_check"
+        value=""
+        class="newsletter-cta__honeypot"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+      />
+      <input type="hidden" name="locale" value="es" />
+
+      <button type="submit" class="newsletter-cta__button">Quiero recibir la newsletter</button>
+    </form>
+
+    <p class="newsletter-cta__feedback newsletter-cta__feedback--success" role="status" hidden>
+      ¡Listo! Revisa tu correo para confirmar la suscripción.
+    </p>
+    <p class="newsletter-cta__feedback newsletter-cta__feedback--error" role="alert" hidden>
+      No hemos podido validar tu suscripción. Inténtalo de nuevo.
+    </p>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    // Brevo's own main.js binds via a global document.querySelector("#sib-form"),
+    // which only supports one instance per page. This component can render
+    // several times on the same page, so instead each instance scopes itself
+    // via document.currentScript, valid only synchronously at parse time —
+    // this must stay a classic (non-module) inline script.
+    var script = document.currentScript;
+    var root = script.closest(".newsletter-cta");
+    if (!root) return;
+
+    var form = root.querySelector("form");
+    var button = form.querySelector(".newsletter-cta__button");
+    var successMessage = root.querySelector(".newsletter-cta__feedback--success");
+    var errorMessage = root.querySelector(".newsletter-cta__feedback--error");
+    var originalButtonText = button.textContent;
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      errorMessage.hidden = true;
+      button.disabled = true;
+      button.textContent = "Enviando...";
+
+      var formData = new FormData(form);
+
+      // Brevo's endpoint expects a full-page form POST, not a CORS-enabled
+      // fetch, so a normal "cors" request would reject even on success.
+      // "no-cors" avoids that; the response is opaque and unreadable, which
+      // is fine here since we show success optimistically — with double
+      // opt-in, the real confirmation happens via the email click, not this
+      // POST's result.
+      fetch(form.action, { method: "POST", mode: "no-cors", body: formData })
+        .then(function () {
+          form.hidden = true;
+          successMessage.hidden = false;
+        })
+        .catch(function () {
+          button.disabled = false;
+          button.textContent = originalButtonText;
+          errorMessage.hidden = false;
+        });
+    });
+  })();
+</script>
+
+<style>
+  .newsletter-cta {
+    background: var(--ev-bg-accent);
+    border-radius: 16px;
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ev-text-on-image);
+  }
+
+  .newsletter-cta__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .newsletter-cta__title {
+    font-family: var(--font-heading);
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.2;
+    color: inherit;
+    letter-spacing: -0.01em;
+  }
+
+  .newsletter-cta__text {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .newsletter-cta__form {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .newsletter-cta__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    text-align: left;
+  }
+
+  .newsletter-cta__label {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .newsletter-cta__input {
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    background: var(--ev-text-on-image);
+    color: var(--ev-bg-accent);
+  }
+
+  .newsletter-cta__input::placeholder {
+    color: var(--ev-bg-accent);
+    opacity: 0.5;
+  }
+
+  .newsletter-cta__input:focus {
+    outline: none;
+    border-color: var(--ev-text-on-image);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ev-text-on-image) 40%, transparent);
+  }
+
+  .newsletter-cta__hint {
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: inherit;
+    opacity: 0.65;
+  }
+
+  /* Honeypot: hidden from sighted users and assistive tech, but present and
+     fillable for naive bots that don't render CSS. */
+  .newsletter-cta__honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .newsletter-cta__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 28px;
+    background: var(--ev-text-on-image);
+    color: var(--ev-bg-accent);
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .newsletter-cta__button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .newsletter-cta__button:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .newsletter-cta__feedback {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .newsletter-cta__feedback--error {
+    color: #ffb4b4;
+  }
+
+  @media (max-width: 640px) {
+    .newsletter-cta__form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .newsletter-cta__button {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .newsletter-cta {
+      padding: 32px 24px;
+    }
+
+    .newsletter-cta__title {
+      font-size: 26px;
+    }
+
+    .newsletter-cta__text {
+      font-size: 15px;
+    }
+  }
+</style>
