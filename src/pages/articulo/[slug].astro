@@ -15,6 +15,7 @@ import { getOwnArticles } from "@/lib/own-articles";
 import { stripHtml } from "@/lib/html-utils";
 import { isAdminRequest } from "@/lib/admin-session";
 import AdminEditButton from "@/components/AdminEditButton.astro";
+import NewsletterCTA from "@/components/NewsletterCTA.astro";
 
 const { slug } = Astro.params;
 
@@ -205,6 +206,11 @@ const relatedArticles = ownArticles
 
       <!-- Share buttons (hidden in preview: the clean URL would 404 for a draft) -->
       {!isDraft && <ShareButtons url={canonicalUrl} title={v.title} />}
+
+      <NewsletterCTA
+        title="¿Te ha gustado este artículo?"
+        text="Cada domingo comparto mi visión sobre el mundo eléctrico en tu correo. Sin spam, date de baja cuando quieras."
+      />
 
       <!-- Related articles -->
       {
