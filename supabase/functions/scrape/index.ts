@@ -217,16 +217,11 @@ serve(async (req) => {
             let title = article.title;
             let excerpt = article.excerpt;
 
-            // Cache image to Cloudinary (YouTube thumbnails included)
-            let imageUrl = article.image_url;
-            if (imageUrl) {
-              const articleId = crypto.randomUUID();
-              imageUrl = await cacheImage(imageUrl, articleId);
-            }
-
-            // Generate AI summary + transparency warnings. For non-Spanish
-            // sources, Gemini also returns Spanish translations of title and
-            // excerpt so the article can be stored fully in Spanish.
+            // Generate AI summary + transparency warnings FIRST (before
+            // cacheImage) so the powertrain verdict arrives before we upload
+            // anything to Cloudinary. For non-Spanish sources, Gemini also
+            // returns Spanish translations of title and excerpt so the article
+            // can be stored fully in Spanish.
             const {
               summary: aiSummary,
               warnings: aiWarnings,
@@ -235,6 +230,7 @@ serve(async (req) => {
               headlineTone,
               translatedTitle,
               translatedExcerpt,
+              powertrain,
             } = await generateSummary(
               title,
               excerpt,
@@ -247,6 +243,26 @@ serve(async (req) => {
             // original (coherent: original language remains throughout).
             if (translatedTitle) title = translatedTitle;
             if (translatedExcerpt) excerpt = translatedExcerpt;
+
+            // BEV-only filter (Fase 2): if Gemini classifies the powertrain
+            // as non-BEV, insert the row with archived=true so the dedup
+            // prevents re-evaluation on future runs. The row is visible in
+            // the admin for monitoring. Cache is skipped for archived rows
+            // (trade-off: image stays remote; acceptable at ~1-2/day).
+            const AI_ARCHIVED_POWERTRAINS = new Set(['phev', 'erev', 'hev', 'ice']);
+            const aiArchived = powertrain !== undefined && AI_ARCHIVED_POWERTRAINS.has(powertrain);
+
+            if (aiArchived) {
+              console.log(`AI filter: archived ${article.article_url} (${powertrain})`);
+            }
+
+            // Cache image to Cloudinary (YouTube thumbnails included).
+            // Skip for AI-archived rows to avoid unnecessary uploads.
+            let imageUrl = article.image_url;
+            if (!aiArchived && imageUrl) {
+              const articleId = crypto.randomUUID();
+              imageUrl = await cacheImage(imageUrl, articleId);
+            }
 
             // Categorize and slugify with the final (translated when applicable)
             // values so the slug, category, and DB row are consistent.
@@ -286,6 +302,7 @@ serve(async (req) => {
               ai_generated_at: aiSummary ? new Date().toISOString() : null,
               seo_title: seoTitle ?? null,
               headline_tone: headlineTone ?? null,
+              archived: aiArchived,
             };
 
             if (youtubeVideoId) {

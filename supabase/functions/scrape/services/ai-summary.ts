@@ -7,7 +7,6 @@
  * inserts the article without AI fields rather than aborting the row.
  */
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -33,6 +32,11 @@ export interface SummaryWarning {
 // the app, never by the model.
 export type HeadlineTone = 'green' | 'amber' | 'red';
 
+// Powertrain classification used by the BEV-only filter (Fase 2). Values map
+// directly to the Gemini response enum; 'na' means the article is not about
+// any specific powertrain (infrastructure, policy, etc.).
+export type Powertrain = 'bev' | 'phev' | 'erev' | 'hev' | 'ice' | 'na';
+
 export interface SummaryResult {
   summary: string | null;
   warnings: SummaryWarning[];
@@ -46,6 +50,8 @@ export interface SummaryResult {
   translatedExcerpt?: string;
   /** Traffic-light sensationalism of the ORIGINAL headline (green/amber/red). */
   headlineTone?: HeadlineTone;
+  /** Powertrain classification for BEV-only filter. Undefined on validation failure (fail-open). */
+  powertrain?: Powertrain;
 }
 
 const VALID_WARNING_TYPES: ReadonlySet<WarningType> = new Set<WarningType>([
@@ -61,6 +67,15 @@ const VALID_HEADLINE_TONES: ReadonlySet<HeadlineTone> = new Set<HeadlineTone>([
   'green',
   'amber',
   'red',
+]);
+
+export const VALID_POWERTRAINS: ReadonlySet<Powertrain> = new Set<Powertrain>([
+  'bev',
+  'phev',
+  'erev',
+  'hev',
+  'ice',
+  'na',
 ]);
 
 const EMPTY: SummaryResult = { summary: null, warnings: [] };
@@ -174,17 +189,33 @@ Reglas del headline_tone:
 - Juzga SOLO el sensacionalismo (honestidad titular-vs-contenido), no si la noticia es importante ni si el coche es bueno.
 - En la duda entre dos niveles, elige el MENOS severo: nadie debe acabar en rojo por azar.`;
 
+  const powertrainSection = `
+
+6. Un "powertrain": clasifica el powertrain del vehículo protagonista de la noticia. Devuelve SOLO una de estas cadenas exactas:
+- "bev": batería, eléctrico puro. Es el único powertrain que PUBLICAMOS.
+- "phev": híbrido enchufable (plug-in hybrid).
+- "erev": extended range electric vehicle (Range Extender, electricidad + motor de combustión como generador).
+- "hev": híbrido no enchufable (microhíbrido, mild hybrid, híbrido convencional).
+- "ice": combustión interna, diésel, gasolina, gas, e-fuel, combustible sintético.
+- "na": el powertrain NO es el tema de la noticia (infraestructura de carga, política energética, empresa sin un vehículo protagonista, legislación, mercado general).
+
+REGLAS DE CLASIFICACIÓN:
+a) Clasifica según el ENFOQUE PRINCIPAL de la noticia, no según apariciones secundarias.
+b) "na" SOLO cuando el powertrain no es el tema: infraestructura, carga, política, empresa sin vehículo protagonista, legislación, mercado general. Si la noticia va DE híbridos, PHEV o vehículos de combustión aunque sea sectorial o de industria ("las ventas de PHEV crecen un 40%", un recall de híbridos, un comparativo de híbridos enchufables), clasifica "phev" o "hev". Coherente con la decisión editorial de no publicar noticias de industria sobre powertrains no-BEV.
+c) EXCEPCIÓN a la regla anti-alucinaciones: para este campo SOLO, usa tu conocimiento del modelo. Aunque el texto no mencione el powertrain, si conoces el vehículo por su nombre y modelo (ej. Xpeng G6, Denza Bao 5, BYD Seal, Tesla Model 3), clasifícalo con tu conocimiento. Esta exención es intencional y SOLO aplica a este campo.
+d) Desempate conservador: si el modelo existe en variante BEV y no-BEV (BYD Seal U DM-i/EV, Leapmotor C10 BEV/REEV, Deepal S07, etc.) y el texto no aclara cuál es, clasifica "bev" o "na"; NUNCA descartes por duda. Las dudas se resuelven siempre a favor de publicar.`;
+
   const translationSections = isEnglish
     ? `
 
-6. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
+7. Un "translated_title": traducción al español de España del título original. Periodística, natural, NO literal. Preserva el sentido y el matiz. Sin negritas, sin Markdown.
 
-7. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
+8. Un "translated_excerpt": traducción al español de España del extracto original. Mismo tono que el del original. Sin negritas, sin Markdown.`
     : '';
 
   const outputExample = isEnglish
-    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "amber", "translated_title": "...", "translated_excerpt": "..."}`
-    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "green"}`;
+    ? `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "amber", "powertrain": "bev", "translated_title": "...", "translated_excerpt": "..."}`
+    : `{"summary": ["Párrafo 1...", "Párrafo 2...", "Párrafo 3...", "Párrafo 4...", "Párrafo 5..."], "warnings": [{"type": "autonomy_cltc"}, {"type": "launch_non_european"}], "discussion_prompt": "...", "seo_title": "...", "headline_tone": "green", "powertrain": "bev"}`;
 
   const inputBlock = isEnglish
     ? `Título original (inglés): ${title}
@@ -196,7 +227,7 @@ URL fuente: ${articleUrl}`;
 
   return `${intro}
 
-${sharedBody}${seoTitleSection}${headlineToneSection}${translationSections}
+${sharedBody}${seoTitleSection}${headlineToneSection}${powertrainSection}${translationSections}
 
 Formato de salida (ejemplo):
 ${outputExample}
@@ -218,8 +249,9 @@ function buildResponseSchema(isEnglish: boolean) {
     discussion_prompt: { type: 'STRING' },
     seo_title: { type: 'STRING' },
     headline_tone: { type: 'STRING', enum: ['green', 'amber', 'red'] },
+    powertrain: { type: 'STRING', enum: ['bev', 'phev', 'erev', 'hev', 'ice', 'na'] },
   };
-  const required = ['summary', 'warnings', 'discussion_prompt', 'seo_title', 'headline_tone'];
+  const required = ['summary', 'warnings', 'discussion_prompt', 'seo_title', 'headline_tone', 'powertrain'];
 
   // For non-Spanish sources, also require Spanish translations of title/excerpt
   // so the article can be stored in Spanish in the database.
@@ -276,7 +308,7 @@ function parseSeoTitle(raw: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function parseAndValidate(raw: unknown): SummaryResult | null {
+export function parseAndValidate(raw: unknown): SummaryResult | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
@@ -315,6 +347,9 @@ function parseAndValidate(raw: unknown): SummaryResult | null {
   if (typeof obj.headline_tone === 'string' && VALID_HEADLINE_TONES.has(obj.headline_tone as HeadlineTone)) {
     result.headlineTone = obj.headline_tone as HeadlineTone;
   }
+  if (typeof obj.powertrain === 'string' && VALID_POWERTRAINS.has(obj.powertrain as Powertrain)) {
+    result.powertrain = obj.powertrain as Powertrain;
+  }
   if (typeof obj.translated_title === 'string' && obj.translated_title.trim()) {
     result.translatedTitle = normalizeCurrency(obj.translated_title.trim());
   }
@@ -341,7 +376,8 @@ export async function generateSummary(
 ): Promise<SummaryResult> {
   if (!title || !excerpt) return EMPTY;
 
-  if (!GEMINI_API_KEY) {
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!apiKey) {
     console.error('GEMINI_API_KEY missing; skipping AI summary');
     return EMPTY;
   }
@@ -370,7 +406,7 @@ export async function generateSummary(
     let response: Response | null = null;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+      response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
@@ -456,7 +492,8 @@ export async function generateSeoTitle(
 ): Promise<string | null> {
   if (!title || !excerpt) return null;
 
-  if (!GEMINI_API_KEY) {
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!apiKey) {
     console.error('GEMINI_API_KEY missing; skipping SEO title');
     return null;
   }
@@ -485,7 +522,7 @@ export async function generateSeoTitle(
     let response: Response | null = null;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+      response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
