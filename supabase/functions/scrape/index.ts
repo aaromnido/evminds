@@ -24,7 +24,7 @@ import { parseRSS } from './parsers/rss-parser.ts';
 import { parseYouTube } from './parsers/youtube-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
 import { isYouTubeEVRelated } from './parsers/youtube-ev-filter.ts';
-import { isNotHEV } from './parsers/hev-filter.ts';
+import { excludedPowertrainMatch } from './parsers/powertrain-filter.ts';
 import { isNotEBike } from './parsers/ebike-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
@@ -119,7 +119,6 @@ serve(async (req) => {
         if (source.name === 'motor.es') {
           const originalCount = articles.length;
           articles = articles.filter(a => isEVRelated(a.categories));
-          articles = articles.slice(0, 5);
           console.log(`Filtered motor.es: ${originalCount} -> ${articles.length} (EV only)`);
         }
 
@@ -127,16 +126,23 @@ serve(async (req) => {
         if (isEVFiltered) {
           const originalCount = articles.length;
           articles = articles.filter(a => isYouTubeEVRelated(a.title, a.excerpt));
-          articles = articles.slice(0, 5);
           console.log(`EV filter ${source.name}: ${originalCount} -> ${articles.length} (EV only)`);
         }
 
-        // Filter out conventional hybrids (HEV) from all sources
+        // Filter out non-BEV powertrains from all sources, logging the term
+        // that matched: keyword discards are never inserted, so this log is
+        // their only trace.
         {
-          const beforeHEV = articles.length;
-          articles = articles.filter(a => isNotHEV(a.title, a.excerpt));
-          if (beforeHEV > articles.length) {
-            console.log(`HEV filter ${source.name}: ${beforeHEV} -> ${articles.length} (removed ${beforeHEV - articles.length} HEV)`);
+          const beforeFilter = articles.length;
+          articles = articles.filter(a => {
+            const matched = excludedPowertrainMatch(a.title, a.excerpt);
+            if (matched) {
+              console.log(`Powertrain filter ${source.name}: discarded "${a.title}" (matched "${matched}")`);
+            }
+            return matched === null;
+          });
+          if (beforeFilter > articles.length) {
+            console.log(`Powertrain filter ${source.name}: ${beforeFilter} -> ${articles.length} (removed ${beforeFilter - articles.length} non-BEV)`);
           }
         }
 
@@ -147,6 +153,13 @@ serve(async (req) => {
           if (beforeEBike > articles.length) {
             console.log(`E-bike filter ${source.name}: ${beforeEBike} -> ${articles.length} (removed ${beforeEBike - articles.length} e-bike)`);
           }
+        }
+
+        // Cap generalist sources AFTER the powertrain/e-bike filters so
+        // excluded articles don't burn slots (these sources fetch 30 items
+        // precisely so enough survive the filtering).
+        if (source.name === 'motor.es' || isEVFiltered) {
+          articles = articles.slice(0, 5);
         }
 
         let processedCount = 0;

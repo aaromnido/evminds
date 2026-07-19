@@ -25,10 +25,6 @@ const EV_KEYWORDS = [
   'battery pack', 'range anxiety',
   'supercharger', 'fast charging', 'dc charging',
   'zero emission',
-  // PHEV / REEV (also relevant)
-  'phev', 'híbrido enchufable', 'hibrido enchufable',
-  'plug-in hybrid', 'plug in hybrid',
-  'reev', 'erev', 'rango extendido', 'range extender',
 ];
 
 /**
