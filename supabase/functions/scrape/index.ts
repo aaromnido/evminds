@@ -24,7 +24,7 @@ import { parseRSS } from './parsers/rss-parser.ts';
 import { parseYouTube } from './parsers/youtube-parser.ts';
 import { isEVRelated } from './parsers/motor-filter.ts';
 import { isYouTubeEVRelated } from './parsers/youtube-ev-filter.ts';
-import { isNotHEV } from './parsers/hev-filter.ts';
+import { excludedPowertrainMatch } from './parsers/powertrain-filter.ts';
 import { isNotEBike } from './parsers/ebike-filter.ts';
 import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
@@ -119,7 +119,6 @@ serve(async (req) => {
         if (source.name === 'motor.es') {
           const originalCount = articles.length;
           articles = articles.filter(a => isEVRelated(a.categories));
-          articles = articles.slice(0, 5);
           console.log(`Filtered motor.es: ${originalCount} -> ${articles.length} (EV only)`);
         }
 
@@ -127,16 +126,23 @@ serve(async (req) => {
         if (isEVFiltered) {
           const originalCount = articles.length;
           articles = articles.filter(a => isYouTubeEVRelated(a.title, a.excerpt));
-          articles = articles.slice(0, 5);
           console.log(`EV filter ${source.name}: ${originalCount} -> ${articles.length} (EV only)`);
         }
 
-        // Filter out conventional hybrids (HEV) from all sources
+        // Filter out non-BEV powertrains from all sources, logging the term
+        // that matched: keyword discards are never inserted, so this log is
+        // their only trace.
         {
-          const beforeHEV = articles.length;
-          articles = articles.filter(a => isNotHEV(a.title, a.excerpt));
-          if (beforeHEV > articles.length) {
-            console.log(`HEV filter ${source.name}: ${beforeHEV} -> ${articles.length} (removed ${beforeHEV - articles.length} HEV)`);
+          const beforeFilter = articles.length;
+          articles = articles.filter(a => {
+            const matched = excludedPowertrainMatch(a.title, a.excerpt);
+            if (matched) {
+              console.log(`Powertrain filter ${source.name}: discarded "${a.title}" (matched "${matched}")`);
+            }
+            return matched === null;
+          });
+          if (beforeFilter > articles.length) {
+            console.log(`Powertrain filter ${source.name}: ${beforeFilter} -> ${articles.length} (removed ${beforeFilter - articles.length} non-BEV)`);
           }
         }
 
@@ -147,6 +153,13 @@ serve(async (req) => {
           if (beforeEBike > articles.length) {
             console.log(`E-bike filter ${source.name}: ${beforeEBike} -> ${articles.length} (removed ${beforeEBike - articles.length} e-bike)`);
           }
+        }
+
+        // Cap generalist sources AFTER the powertrain/e-bike filters so
+        // excluded articles don't burn slots (these sources fetch 30 items
+        // precisely so enough survive the filtering).
+        if (source.name === 'motor.es' || isEVFiltered) {
+          articles = articles.slice(0, 5);
         }
 
         let processedCount = 0;
@@ -204,16 +217,11 @@ serve(async (req) => {
             let title = article.title;
             let excerpt = article.excerpt;
 
-            // Cache image to Cloudinary (YouTube thumbnails included)
-            let imageUrl = article.image_url;
-            if (imageUrl) {
-              const articleId = crypto.randomUUID();
-              imageUrl = await cacheImage(imageUrl, articleId);
-            }
-
-            // Generate AI summary + transparency warnings. For non-Spanish
-            // sources, Gemini also returns Spanish translations of title and
-            // excerpt so the article can be stored fully in Spanish.
+            // Generate AI summary + transparency warnings FIRST (before
+            // cacheImage) so the powertrain verdict arrives before we upload
+            // anything to Cloudinary. For non-Spanish sources, Gemini also
+            // returns Spanish translations of title and excerpt so the article
+            // can be stored fully in Spanish.
             const {
               summary: aiSummary,
               warnings: aiWarnings,
@@ -222,6 +230,7 @@ serve(async (req) => {
               headlineTone,
               translatedTitle,
               translatedExcerpt,
+              powertrain,
             } = await generateSummary(
               title,
               excerpt,
@@ -234,6 +243,26 @@ serve(async (req) => {
             // original (coherent: original language remains throughout).
             if (translatedTitle) title = translatedTitle;
             if (translatedExcerpt) excerpt = translatedExcerpt;
+
+            // BEV-only filter (Fase 2): if Gemini classifies the powertrain
+            // as non-BEV, insert the row with archived=true so the dedup
+            // prevents re-evaluation on future runs. The row is visible in
+            // the admin for monitoring. Cache is skipped for archived rows
+            // (trade-off: image stays remote; acceptable at ~1-2/day).
+            const AI_ARCHIVED_POWERTRAINS = new Set(['phev', 'erev', 'hev', 'ice']);
+            const aiArchived = powertrain !== undefined && AI_ARCHIVED_POWERTRAINS.has(powertrain);
+
+            if (aiArchived) {
+              console.log(`AI filter: archived ${article.article_url} (${powertrain})`);
+            }
+
+            // Cache image to Cloudinary (YouTube thumbnails included).
+            // Skip for AI-archived rows to avoid unnecessary uploads.
+            let imageUrl = article.image_url;
+            if (!aiArchived && imageUrl) {
+              const articleId = crypto.randomUUID();
+              imageUrl = await cacheImage(imageUrl, articleId);
+            }
 
             // Categorize and slugify with the final (translated when applicable)
             // values so the slug, category, and DB row are consistent.
@@ -273,6 +302,7 @@ serve(async (req) => {
               ai_generated_at: aiSummary ? new Date().toISOString() : null,
               seo_title: seoTitle ?? null,
               headline_tone: headlineTone ?? null,
+              archived: aiArchived,
             };
 
             if (youtubeVideoId) {
