@@ -1,0 +1,11 @@
+-- Migration 52: hard-delete a single article at Fer's explicit request
+-- (not an archive — a real DELETE from the articles table).
+--
+-- Article: "Por si el mercado chino de coches eléctricos no estuviera ya lo
+-- suficientemente saturado, una nueva marca entra en la carrera"
+-- id: d2ca4dc0-9c50-45de-a2c8-cf781c7a2f04
+-- (already archived; a duplicate of the article hard-deleted in migration 51,
+-- same title, different id/source_id)
+--
+-- Idempotent: re-running is safe, the second run simply deletes 0 rows.
+DELETE FROM articles WHERE id = 'd2ca4dc0-9c50-45de-a2c8-cf781c7a2f04';
