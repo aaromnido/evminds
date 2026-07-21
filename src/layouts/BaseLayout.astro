@@ -471,44 +471,5 @@ if (breadcrumbs && breadcrumbs.length > 0) {
         window.addEventListener("load", initDisqusCounts);
       }
     </script>
-
-    <!-- World Cup celebration: brief red/gold confetti falling from the top on
-         every page load/navigation (most visitors arrive via Google straight
-         to an article, not the homepage — so this lives here, not on a single
-         page). Temporary — delete this block (and the matching CSS in
-         global.css) when the campaign ends; nothing else depends on it. Skips
-         under prefers-reduced-motion. Runs immediately (no astro:page-load
-         listener): the public site has no <ClientRouter /> — that's only
-         mounted in AdminLayout.astro — so that event never fires here. This
-         script sits right before </body>, so the DOM above it is already
-         parsed by the time it runs. -->
-    <script is:inline>
-      (() => {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-        var COLORS = ["#DD0707", "#DDAB07"];
-        var PIECE_COUNT = 120;
-
-        var overlay = document.createElement("div");
-        overlay.className = "confetti-overlay";
-
-        for (var i = 0; i < PIECE_COUNT; i++) {
-          var piece = document.createElement("span");
-          piece.className = "confetti-piece";
-          piece.style.left = Math.random() * 100 + "vw";
-          piece.style.backgroundColor = COLORS[i % 2];
-          piece.style.setProperty("--drift", Math.random() * 30 - 15 + "vw");
-          piece.style.setProperty("--spin", Math.random() * 720 + "deg");
-          piece.style.animationDelay = Math.random() * 2 + "s";
-          piece.style.animationDuration = 2.5 + Math.random() * 1.5 + "s";
-          overlay.appendChild(piece);
-        }
-
-        document.body.appendChild(overlay);
-        setTimeout(function () {
-          overlay.remove();
-        }, 6500);
-      })();
-    </script>
   </body>
 </html>
