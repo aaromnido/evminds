@@ -30,6 +30,7 @@ import { categorize } from './services/categorizer.ts';
 // import { translateToSpanish } from './services/translator.ts'; // Disabled: translation feature removed
 import { cacheImage } from './services/image-cache.ts';
 import { generateSummary } from './services/ai-summary.ts';
+import { purgeNetlifyTags } from './services/netlify-purge.ts';
 import type { Source, RawArticle, ScraperResult } from './types.ts';
 import { YOUTUBE_EV_FILTERED_SOURCES } from './types.ts';
 
@@ -347,6 +348,15 @@ serve(async (req) => {
         });
       }
     }
+
+    // Purge the edge cache so new/removed articles show up without waiting for
+    // the listings TTL. Unconditional (even on a zero-new-articles run) — cheap
+    // revalidation, and the alternative (conditioning on processedCount) risks
+    // missing a purge if a later source in the loop did insert something.
+    await purgeNetlifyTags(['listings', 'feeds'], {
+      token: Deno.env.get('NETLIFY_PURGE_TOKEN'),
+      siteId: Deno.env.get('NETLIFY_SITE_ID'),
+    });
 
     // Return results
     return new Response(
