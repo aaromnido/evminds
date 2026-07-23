@@ -7,6 +7,12 @@ import { decideCacheHeaders } from "@/lib/cache-policy";
 
 const LOGIN_PATH = "/admin/login";
 
+// Supabase's auth cookie name embeds the project ref (`sb-<ref>-auth-token`).
+// Derived from the env var (not hardcoded) so this keeps working if the
+// Supabase project ever changes — computed once at module load, since the URL
+// is a build-time/static env var, not a per-request value.
+const AUTH_COOKIE_BASE_NAME = `sb-${new URL(import.meta.env.PUBLIC_SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+
 /**
  * Applies edge/browser cache headers to public (non-/admin) responses, per the
  * route→policy table in cache-policy.ts (the actual decision logic — kept
@@ -15,9 +21,13 @@ const LOGIN_PATH = "/admin/login";
  * Default-deny: a non-200 response (redirects, 404s, errors) or a route the
  * policy doesn't recognize gets no headers at all — identical to today's
  * (uncached) behavior. Never touches Set-Cookie or any other response header.
+ *
+ * Skips prerendered routes (Group C statics): they're static files with no
+ * per-request headers of their own, and `context.request.headers` isn't
+ * available for them at build time (Astro warns if it's read regardless).
  */
 function applyCacheHeaders(context: APIContext, response: Response): Response {
-  if (response.status !== 200) return response;
+  if (response.status !== 200 || context.isPrerendered) return response;
 
   const cookieHeader = context.request.headers.get("Cookie");
   const headers = decideCacheHeaders({
@@ -25,6 +35,7 @@ function applyCacheHeaders(context: APIContext, response: Response): Response {
     hasPrefsCookie: hasPrefsCookie(cookieHeader),
     hasAuthCookie: hasSupabaseAuthCookie(cookieHeader),
     isPreview: context.url.searchParams.has("preview"),
+    authCookieBaseName: AUTH_COOKIE_BASE_NAME,
   });
 
   if (headers) {
