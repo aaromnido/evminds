@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readPrefsFromCookie } from "./preferences";
+import { readPrefsFromCookie, hasPrefsCookie } from "./preferences";
 
 const EMPTY = { excludedSources: [], excludedCategories: [], onlyWithComments: false };
 
@@ -48,5 +48,23 @@ describe("readPrefsFromCookie", () => {
 
   it("returns empty defaults on malformed JSON", () => {
     expect(readPrefsFromCookie("evminds-prefs=%7Bnot-json")).toEqual(EMPTY);
+  });
+});
+
+describe("hasPrefsCookie", () => {
+  it("returns false for a null header", () => {
+    expect(hasPrefsCookie(null)).toBe(false);
+  });
+
+  it("returns false when the cookie is absent", () => {
+    expect(hasPrefsCookie("other=1; another=2")).toBe(false);
+  });
+
+  it("returns true when the cookie is present, regardless of its value", () => {
+    expect(hasPrefsCookie("evminds-prefs=%7Bnot-json")).toBe(true);
+  });
+
+  it("finds the cookie among others", () => {
+    expect(hasPrefsCookie(`foo=bar; ${cookie({ excludedSources: ["x"] })}; baz=qux`)).toBe(true);
   });
 });

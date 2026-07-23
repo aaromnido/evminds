@@ -1,7 +1,40 @@
 import { defineMiddleware } from "astro:middleware";
+import type { APIContext } from "astro";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { hasSupabaseAuthCookie } from "@/lib/admin-session";
+import { hasPrefsCookie } from "@/lib/preferences";
+import { decideCacheHeaders } from "@/lib/cache-policy";
 
 const LOGIN_PATH = "/admin/login";
+
+/**
+ * Applies edge/browser cache headers to public (non-/admin) responses, per the
+ * route→policy table in cache-policy.ts (the actual decision logic — kept
+ * there as a pure function so it's unit-testable without an Astro request).
+ *
+ * Default-deny: a non-200 response (redirects, 404s, errors) or a route the
+ * policy doesn't recognize gets no headers at all — identical to today's
+ * (uncached) behavior. Never touches Set-Cookie or any other response header.
+ */
+function applyCacheHeaders(context: APIContext, response: Response): Response {
+  if (response.status !== 200) return response;
+
+  const cookieHeader = context.request.headers.get("Cookie");
+  const headers = decideCacheHeaders({
+    pathname: context.url.pathname,
+    hasPrefsCookie: hasPrefsCookie(cookieHeader),
+    hasAuthCookie: hasSupabaseAuthCookie(cookieHeader),
+    isPreview: context.url.searchParams.has("preview"),
+  });
+
+  if (headers) {
+    for (const [name, value] of Object.entries(headers)) {
+      response.headers.set(name, value);
+    }
+  }
+
+  return response;
+}
 
 /**
  * Gates the /admin area. Public pages are untouched (early return), so there is
@@ -13,7 +46,7 @@ const LOGIN_PATH = "/admin/login";
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   if (!context.url.pathname.startsWith("/admin")) {
-    return next();
+    return applyCacheHeaders(context, await next());
   }
 
   const supabase = createSupabaseServerClient({

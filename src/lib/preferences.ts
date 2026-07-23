@@ -20,6 +20,19 @@ const COOKIE_NAME = "evminds-prefs";
  * Parse preferences from a cookie header string (for SSR).
  * Returns excluded source slugs and category slugs.
  */
+/**
+ * Cheap, non-authoritative check for whether the prefs cookie is present.
+ * Used by the cache middleware to decide bypass without parsing the value —
+ * presence alone is what matters there, not what the preferences say.
+ */
+export function hasPrefsCookie(cookieHeader: string | null): boolean {
+  if (!cookieHeader) return false;
+  return cookieHeader
+    .split(";")
+    .map((c) => c.trim())
+    .some((c) => c.startsWith(`${COOKIE_NAME}=`));
+}
+
 export function readPrefsFromCookie(cookieHeader: string | null): FeedPreferences {
   const empty: FeedPreferences = {
     excludedSources: [],
