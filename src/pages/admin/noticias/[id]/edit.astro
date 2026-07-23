@@ -1,6 +1,7 @@
 ---
 import AdminShell from "@/layouts/AdminShell.astro";
 import NewsEditor, { type NewsFormValues } from "@/components/admin/NewsEditor.tsx";
+import { purgeTags } from "@/lib/cache-purge";
 
 const supabase = Astro.locals.supabase;
 const { id } = Astro.params;
@@ -13,6 +14,11 @@ let categories: string[] = [];
 if (!supabase || !id) {
   notFound = true;
 } else if (Astro.request.method === "POST") {
+  // Slug is immutable for news articles (not part of either update payload
+  // below), so one fetch up front covers both branches' purge tag.
+  const { data: current } = await supabase.from("articles").select("slug").eq("id", id).single();
+  const purgeTagsForThis = current?.slug ? [`noticia-${current.slug}`, "listings"] : ["listings"];
+
   const form = await Astro.request.formData();
   const action = String(form.get("_action") ?? "");
 
@@ -21,7 +27,10 @@ if (!supabase || !id) {
       .from("articles")
       .update({ archived: action === "archive" })
       .eq("id", id);
-    if (!error) return Astro.redirect("/admin/noticias");
+    if (!error) {
+      await purgeTags(purgeTagsForThis);
+      return Astro.redirect("/admin/noticias");
+    }
     errorMsg = `No se pudo ${action === "archive" ? "archivar" : "desarchivar"}: ${error.message}`;
   } else {
     const get = (k: string) => String(form.get(k) ?? "").trim();
@@ -68,8 +77,12 @@ if (!supabase || !id) {
           ai_discussion_prompt: aiDiscussionPrompt || null,
         })
         .eq("id", id);
-      if (error) errorMsg = `No se pudo guardar: ${error.message}`;
-      else return Astro.redirect("/admin/noticias");
+      if (error) {
+        errorMsg = `No se pudo guardar: ${error.message}`;
+      } else {
+        await purgeTags(purgeTagsForThis);
+        return Astro.redirect("/admin/noticias");
+      }
     }
   }
 }

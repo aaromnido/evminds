@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { purgeTags } from "@/lib/cache-purge";
 
 /**
  * POST /admin/noticias/{id}/regenerate
@@ -7,7 +8,7 @@ import type { APIRoute } from "astro";
  * the middleware protects it; holds SCRAPE_SECRET server-side (never shipped to
  * the browser) and forwards the article id to the function.
  */
-export const POST: APIRoute = async ({ params, request }) => {
+export const POST: APIRoute = async ({ params, request, locals }) => {
   const id = params.id;
   if (!id) return json({ error: "Falta el id." }, 400);
 
@@ -35,6 +36,18 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (!res.ok) {
       return json({ error: data.error || "La regeneración falló." }, res.status);
     }
+
+    // Regeneration can change the title/tone shown on listing cards too, so
+    // purge both the detail page and listings — not just the detail page.
+    if (locals.supabase) {
+      const { data: article } = await locals.supabase
+        .from("articles")
+        .select("slug")
+        .eq("id", id)
+        .single();
+      if (article?.slug) await purgeTags([`noticia-${article.slug}`, "listings"]);
+    }
+
     return json(data);
   } catch (err) {
     console.error("regenerate proxy error:", err);

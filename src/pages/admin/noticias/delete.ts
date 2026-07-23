@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { ARCHIVED_DELETE_MIN_AGE_DAYS } from "@/lib/article-utils";
+import { purgeTags } from "@/lib/cache-purge";
 
 /**
  * POST /admin/noticias/delete
@@ -56,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .eq("content_type", "news")
       .eq("archived", true as never)
       .lt("published_at", cutoffISO)
-      .select("id");
+      .select("id, slug");
 
     if (!all) {
       query = query.in("id", ids as string[]);
@@ -71,6 +72,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const deleted = (data ?? []).length;
     const requested = all ? "all" : (ids as string[]).length;
+
+    if (deleted > 0) {
+      await purgeTags([...(data ?? []).map((row) => `noticia-${row.slug}`), "listings"]);
+    }
 
     if (deleted === 0) {
       console.warn(

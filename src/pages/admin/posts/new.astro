@@ -2,6 +2,7 @@
 import AdminShell from "@/layouts/AdminShell.astro";
 import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
 import { parsePostForm, validatePostForm } from "@/lib/post-form";
+import { purgeTags } from "@/lib/cache-purge";
 
 // Authed admin client set by the middleware. Insert is validated by the
 // posts_admin_all RLS policy (WITH CHECK is_admin()).
@@ -27,6 +28,7 @@ if (Astro.request.method === "POST" && supabase) {
           ? "Ya existe un artículo con ese slug. Cámbialo."
           : `No se pudo guardar: ${error.message}`;
     } else {
+      await purgeTags([`articulo-${parsed.payload.slug}`, "listings"]);
       return Astro.redirect("/admin/posts");
     }
   }

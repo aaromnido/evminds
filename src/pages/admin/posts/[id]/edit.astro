@@ -2,6 +2,7 @@
 import AdminShell from "@/layouts/AdminShell.astro";
 import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
 import { parsePostForm, validatePostForm } from "@/lib/post-form";
+import { purgeTags } from "@/lib/cache-purge";
 
 const supabase = Astro.locals.supabase;
 const { id } = Astro.params;
@@ -13,13 +14,21 @@ let notFound = false;
 if (!supabase || !id) {
   notFound = true;
 } else if (Astro.request.method === "POST") {
+  // Slug is editable here (unlike news), so fetch the pre-edit slug up front —
+  // the purge must reach the old URL (→ 404 if renamed) as well as the new one.
+  const { data: current } = await supabase.from("posts").select("slug").eq("id", id).single();
+
   // The request body (formData) can only be read once.
   const form = await Astro.request.formData();
   const action = String(form.get("_action") ?? "");
 
   if (action === "delete") {
     const { error } = await supabase.from("posts").delete().eq("id", id);
-    if (!error) return Astro.redirect("/admin/posts");
+    if (!error) {
+      const tags = current?.slug ? [`articulo-${current.slug}`, "listings"] : ["listings"];
+      await purgeTags(tags);
+      return Astro.redirect("/admin/posts");
+    }
     errorMsg = `No se pudo eliminar: ${error.message}`;
   } else {
     const parsed = parsePostForm(form);
@@ -39,6 +48,12 @@ if (!supabase || !id) {
             ? "Ya existe un artículo con ese slug. Cámbialo."
             : `No se pudo guardar: ${error.message}`;
       } else {
+        const tags = new Set(["listings"]);
+        if (current?.slug) tags.add(`articulo-${current.slug}`);
+        if (parsed.payload.slug && parsed.payload.slug !== current?.slug) {
+          tags.add(`articulo-${parsed.payload.slug}`);
+        }
+        await purgeTags([...tags]);
         return Astro.redirect("/admin/posts");
       }
     }
