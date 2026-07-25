@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import AiAssistButton from "./AiAssistButton";
 import FieldError from "./FieldError";
-import { SEO_TITLE_MAX } from "@/lib/editorial-mocks";
+import SeoTitleField from "./SeoTitleField";
 import type { BriefErrors } from "@/lib/editorial-validation";
 
 interface Props {
@@ -60,81 +58,25 @@ export default function TopicFields({
   const [touched, setTouched] = useState({ title: false, angle: false });
 
   const canExpand = title.trim().length > 0 || angle.trim().length > 0;
-  const titleLength = title.trim().length;
-  const tooLong = titleLength > SEO_TITLE_MAX;
 
   const titleError = touched.title ? errors.title : null;
   const angleError = touched.angle ? errors.angle : null;
 
   return (
     <div className="grid gap-5">
-      <div className="grid gap-1.5">
-        <Label htmlFor="brief-title">Titular de partida</Label>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            id="brief-title"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            onBlur={() => setTouched((prev) => ({ ...prev, title: true }))}
-            disabled={disabled}
-            required
-            aria-invalid={titleError ? true : undefined}
-            aria-describedby={titleError ? "brief-title-error" : undefined}
-            placeholder="Ej.: Lo que nadie te cuenta de cargar en autopista en agosto"
-            className="min-w-[16rem] flex-1"
-          />
-          <AiAssistButton
-            label="Mejorar SEO"
-            runningLabel="Mejorando…"
-            running={improvingSeo}
-            disabled={disabled || titleLength === 0}
-            onClick={onImproveSeo}
-            minWidth="8.75rem"
-            buttonClassName="h-8"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <p className="text-xs text-muted-foreground">
-            Orienta al redactor. Podrás retocarlo en el paso siguiente.
-          </p>
-          {titleLength > 0 && (
-            // Google cuts the headline around 60 characters, so the count is
-            // what makes "Mejorar SEO" checkable instead of an act of faith.
-            // It is a warning, never a blocker: a long headline is worse SEO,
-            // not an invalid brief.
-            //
-            // Over the limit it becomes an amber pill rather than amber text.
-            // Amber text alone reads as dark brown once mixed toward
-            // `--foreground` for contrast — the same problem the expiry labels
-            // had before they became pills, solved the same way.
-            <span
-              className={cn(
-                "text-xs tabular-nums text-muted-foreground",
-                tooLong && "rounded-full px-2 py-0.5 font-medium",
-              )}
-              style={
-                tooLong
-                  ? {
-                      backgroundColor: `color-mix(in oklab, var(--ev-tone-amber) 18%, var(--background))`,
-                      color: `color-mix(in oklab, var(--ev-tone-amber) 45%, var(--foreground))`,
-                    }
-                  : undefined
-              }
-              title={
-                tooLong
-                  ? "Google suele cortar el titular por aquí en los resultados de búsqueda."
-                  : undefined
-              }
-            >
-              {titleLength}/{SEO_TITLE_MAX}
-            </span>
-          )}
-        </div>
-
-        <FieldError id="brief-title-error" message={titleError} />
-      </div>
+      <SeoTitleField
+        id="brief-title"
+        label="Titular de partida"
+        hint="Orienta al redactor. Podrás retocarlo en el paso siguiente."
+        placeholder="Ej.: Lo que nadie te cuenta de cargar en autopista en agosto"
+        value={title}
+        onChange={onTitleChange}
+        onBlur={() => setTouched((prev) => ({ ...prev, title: true }))}
+        improving={improvingSeo}
+        onImprove={onImproveSeo}
+        error={titleError}
+        disabled={disabled}
+      />
 
       <div className="grid gap-1.5">
         <Label htmlFor="brief-angle">Qué quieres contar</Label>

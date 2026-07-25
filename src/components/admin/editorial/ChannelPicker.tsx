@@ -1,24 +1,6 @@
 import ChannelOption from "./ChannelOption";
+import { CHANNELS, orderChannels } from "@/lib/editorial-channels";
 import type { PublishChannel } from "@/lib/editorial-types";
-
-interface ChannelSpec {
-  value: PublishChannel;
-  name: string;
-  description: string;
-}
-
-const CHANNELS: ChannelSpec[] = [
-  {
-    value: "motor",
-    name: "Motor.es",
-    description: "Tu colaboración. Se genera el texto y lo copias a su CMS con la imagen.",
-  },
-  {
-    value: "evminds",
-    name: "EVminds",
-    description: "Tu propio sitio. Texto e imagen, y lo dejas programado desde aquí.",
-  },
-];
 
 interface Props {
   value: PublishChannel[];
@@ -37,7 +19,8 @@ interface Props {
  */
 export default function ChannelPicker({ value, onChange, disabled }: Props) {
   function toggle(channel: PublishChannel, checked: boolean) {
-    onChange(checked ? [...value, channel] : value.filter((c) => c !== channel));
+    // Ordered on the way out so the wizard steps never depend on click order.
+    onChange(orderChannels(checked ? [...value, channel] : value.filter((c) => c !== channel)));
   }
 
   return (

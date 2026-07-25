@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Wand2 } from "lucide-react";
 import BackStepButton from "./BackStepButton";
 import ChannelPicker from "./ChannelPicker";
-import DefineAngleActions from "./DefineAngleActions";
+import StepActions from "./StepActions";
 import PickedIdeaNote from "./PickedIdeaNote";
 import ReferenceLinksField from "./ReferenceLinksField";
 import StepSection from "./StepSection";
@@ -243,7 +244,23 @@ export default function DefineAngleStep({ idea }: Props) {
           <ChannelPicker value={channels} onChange={setChannels} disabled={busy} />
         </StepSection>
 
-        <DefineAngleActions missing={missing} generating={generating} onGenerate={handleGenerate} />
+        {/* One action and nothing else. There is deliberately no "skip this
+            step" button — arriving from a picked idea everything is prefilled
+            and the channel defaulted, so this button already IS the one-click
+            shortcut — and no "guardar y seguir luego", which was built and then
+            dropped: saving half a brief needs a durable row and a list of pieces
+            in progress, and the MVP has neither (Fer, 2026-07-25). */}
+        <StepActions
+          label="Generar el borrador"
+          runningLabel="Escribiendo el borrador…"
+          running={generating}
+          onClick={handleGenerate}
+          icon={<Wand2 />}
+          trailingIcon={<ArrowRight data-icon="inline-end" />}
+          missing={missing}
+          missingPrefix="Antes de generar"
+          readyHint="Tardará un momento. Podrás editar el texto entero antes de publicar nada."
+        />
       </div>
     </div>
   );

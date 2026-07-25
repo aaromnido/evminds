@@ -1,48 +1,48 @@
 ---
 /**
- * Redacción — step ③ (and ④): the per-channel screens.
+ * Redacción — steps ③ and ④: one screen per channel chosen in step ②.
  *
- * PLACEHOLDER, same role `enfoque.astro` had before it was designed: it keeps
- * the prototype clickable end to end so step ② can be tried for real. It already
- * reads the channel choice made in step ②, which is what decides whether there
- * is one screen here or two.
+ * Which channel this screen is for comes from `?canal=`, and `?canales=` carries
+ * the whole selection so the step indicator and the "next channel" hand-off know
+ * how long the wizard is. Defaults to the first chosen channel.
  *
- * Blocked on an open question before it can be designed: is there an integration
- * with Motor.es' CMS, or does Fer paste the text there by hand? See
- * `.claude/design/ai-editorial-agent-ui.md`.
+ * PROTOTYPE (task A3, UI-first phase): the draft, the AI image edit and the
+ * hand-off are all simulated in `editorial-mocks.ts`. There is no
+ * `external_collaboration_drafts` row yet, and — confirmed by Fer, 2026-07-25 —
+ * there is no integration with Motor.es' CMS either: the text is copied by hand.
+ * See `.claude/design/ai-editorial-agent-ui.md`.
  */
 import AdminShell from "@/layouts/AdminShell.astro";
-import WizardSteps, { buildWizardSteps } from "@/components/admin/editorial/WizardSteps.tsx";
-import type { PublishChannel } from "@/lib/editorial-types";
+import PublishChannelStep from "@/components/admin/editorial/PublishChannelStep.tsx";
+import { getChannel, parseChannels } from "@/lib/editorial-channels";
+import { buildMockIdeas } from "@/lib/editorial-mocks";
 
-const raw = Astro.url.searchParams.get("canales") ?? "motor";
-const channels = raw
-  .split(",")
-  .filter((c): c is PublishChannel => c === "motor" || c === "evminds");
-const steps = buildWizardSteps(channels.length ? channels : ["motor"]);
+const params = Astro.url.searchParams;
+const channels = parseChannels(params.get("canales"));
+const requested = params.get("canal");
+const channel = channels.find((c) => c === requested) ?? channels[0];
+const spec = getChannel(channel);
+
+// The brief would travel in the draft row; until that exists, it is rebuilt from
+// the idea so the generated text is about the right thing.
+const ideaId = params.get("idea");
+const nowIso = new Date().toISOString();
+const idea = ideaId ? buildMockIdeas(nowIso).find((i) => i.id === ideaId) : undefined;
 ---
 
 <AdminShell
-  title="Texto · Admin"
-  pageTitle="Texto y publicación"
-  pageDescription="Revisa el borrador, elige la imagen y programa la publicación."
+  title={`${spec.name} · Admin`}
+  pageTitle={`Texto para ${spec.name}`}
+  pageDescription={spec.handoff === "copy"
+    ? "Revisa el texto, elige la imagen y cópialo a su CMS."
+    : "Revisa el texto, elige la imagen y programa la publicación."}
 >
-  <div class="flex flex-col gap-6">
-    <WizardSteps steps={steps} current={3} />
-
-    <div class="rounded-xl border border-dashed border-border p-8">
-      <p class="text-sm text-muted-foreground">
-        Paso ③ todavía sin diseñar. El borrador se habría generado con el enfoque del paso anterior{
-          channels.length > 1 ? ", y habría una pantalla por cada medio elegido." : "."
-        }
-      </p>
-
-      <a
-        href="/admin/redaccion/enfoque"
-        class="mt-4 inline-block text-sm underline underline-offset-4 hover:no-underline"
-      >
-        ← Volver al enfoque
-      </a>
-    </div>
-  </div>
+  <PublishChannelStep
+    client:load
+    channel={channel}
+    channels={channels}
+    briefTitle={idea?.proposed_title_es ?? ""}
+    briefAngle={idea?.angle ?? ""}
+    ideaId={ideaId}
+  />
 </AdminShell>

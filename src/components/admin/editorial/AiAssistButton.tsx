@@ -46,12 +46,28 @@ export default function AiAssistButton({
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       <Button
         type="button"
-        variant="secondary"
+        // `outline` and not `secondary` (Fer, 2026-07-25): secondary is a soft
+        // grey fill with no border, and these buttons sit on tinted panels
+        // (`bg-muted/40`), where it melts into the background. Outline brings a
+        // border *and* its own background, so the button reads as a button
+        // wherever it lands.
+        variant="outline"
         size="sm"
         onClick={onClick}
         disabled={disabled || running}
         aria-live="polite"
-        className={cn("justify-center", buttonClassName)}
+        className={cn(
+          "justify-center",
+          // These buttons spend most of their life disabled — there is nothing
+          // to send until a prompt is written — and the global
+          // `disabled:opacity-50` washed the border out with the rest, so they
+          // read as barely-there instead of as buttons waiting for input
+          // (Fer, 2026-07-25). The border keeps its full strength and the
+          // inactive state is carried by the text colour, which is enough to
+          // tell them apart without making them disappear.
+          "disabled:opacity-100 disabled:text-muted-foreground",
+          buttonClassName,
+        )}
         style={{ minWidth }}
       >
         {running ? <Loader2 className="animate-spin" /> : <Sparkles />}

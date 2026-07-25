@@ -45,6 +45,22 @@ export function formatExpiry(nowIso: string, expiresAtIso: string): ExpiryInfo {
   return { label: `caduca en ${hoursLeft} h`, urgency: "calm", hoursLeft };
 }
 
+/**
+ * The publish date and time as they read in Spanish: `12/08/2026, 09:00`.
+ *
+ * Built by rearranging the strings the native `date` / `time` inputs give us
+ * (`YYYY-MM-DD` and `HH:MM`) instead of going through `Date`. That avoids the
+ * timezone shift a parsed date would introduce — the user picked a wall clock
+ * time, not an instant — and keeps the output identical on the server and after
+ * hydration.
+ */
+export function formatPublishSchedule(date: string, time: string): string {
+  const [year, month, day] = date.split("-");
+  if (!year || !month || !day) return "";
+  const dayText = `${day}/${month}/${year}`;
+  return time ? `${dayText}, ${time}` : dayText;
+}
+
 /** Hostname of a source URL, for the "ver fuente" affordance. */
 export function sourceHostname(url: string): string {
   try {

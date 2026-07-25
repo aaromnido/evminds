@@ -12,12 +12,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const HREF = "/admin/redaccion";
-
 interface Props {
+  /** Where "back" lands. Defaults to the start of the wizard. */
+  href?: string;
   /**
    * True when there is typed work that leaving would throw away. Nothing is
-   * persisted in this step, so this is the only thing standing between a
+   * persisted in these steps, so this is the only thing standing between a
    * mis-click and a rewritten brief.
    */
   dirty: boolean;
@@ -38,11 +38,11 @@ interface Props {
  * It confirms only when something would be lost: with nothing typed it just
  * goes, and asking anyway would train the reflex of dismissing dialogs unread.
  */
-export default function BackStepButton({ dirty, disabled }: Props) {
+export default function BackStepButton({ href = "/admin/redaccion", dirty, disabled }: Props) {
   const [open, setOpen] = useState(false);
 
   function leave() {
-    window.location.href = HREF;
+    window.location.href = href;
   }
 
   return (
@@ -63,7 +63,7 @@ export default function BackStepButton({ dirty, disabled }: Props) {
             <AlertDialogTitle>¿Salir sin generar el texto?</AlertDialogTitle>
             <AlertDialogDescription>
               Lo que has escrito en este paso todavía no se guarda en ningún sitio, así que se
-              perderá. La idea de la que partiste sigue en la lista.
+              perderá. La idea de la que partiste sigue en su lista.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

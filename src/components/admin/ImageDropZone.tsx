@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import { ImagePlus, UploadCloud, X } from "lucide-react";
+import { Download, ImagePlus, UploadCloud, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { downloadableImageUrl } from "@/lib/image-utils";
 
 interface Props {
   value: string;
@@ -9,6 +10,12 @@ interface Props {
   name?: string;
   uploadEndpoint?: string;
   folder?: string;
+  /**
+   * CSS `filter` applied to the preview only. Used by the editorial wizard to
+   * show the AI variation you picked on the big image, without touching the
+   * stored URL. Left unset everywhere else.
+   */
+  previewFilter?: string;
 }
 
 export default function ImageDropZone({
@@ -17,6 +24,7 @@ export default function ImageDropZone({
   name = "image_url",
   uploadEndpoint = "/admin/posts/upload-image",
   folder = "news",
+  previewFilter,
 }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,8 +79,26 @@ export default function ImageDropZone({
 
       {value ? (
         <div className="relative overflow-hidden rounded-md border border-input">
-          <img src={value} alt="Vista previa" className="aspect-video w-full object-cover" />
+          <img
+            src={value}
+            alt="Vista previa"
+            className="aspect-video w-full object-cover transition-[filter] duration-200"
+            style={previewFilter ? { filter: previewFilter } : undefined}
+          />
           <div className="absolute right-2 top-2 flex gap-1">
+            {/* Cloudinary has to be told to send the file as an attachment;
+                a bare `download` attribute is ignored cross-origin. */}
+            <a
+              href={downloadableImageUrl(value)}
+              download
+              target="_blank"
+              rel="noreferrer noopener"
+              title="Descargar la imagen"
+              className="flex items-center justify-center rounded-md bg-background/90 p-1.5 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="sr-only">Descargar la imagen</span>
+            </a>
             <button
               type="button"
               disabled={uploading}

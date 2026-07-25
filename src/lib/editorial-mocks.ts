@@ -369,6 +369,81 @@ export function mockReadReferenceLink(
   return { ok: true, title: `Artículo de ${host}` };
 }
 
+/**
+ * Hero image the prototype starts from, so the image block can be judged with
+ * something in it instead of only as an empty drop zone. It is a real image
+ * already in the repo; the real flow starts empty and Fer uploads his own.
+ */
+export const MOCK_HERO_IMAGE = "/images/articulos/0002/hero-nissan-micra.png";
+
+/**
+ * Fake redactor: the draft that step ② would have produced.
+ *
+ * In the real build this is one Gemini call with the style guide, the editorial
+ * line, the brief and whatever the reference links returned. Here it is canned
+ * text, long enough that the editing workspace can be judged at a realistic
+ * size.
+ */
+export function mockGenerateDraft(title: string, angle: string): { title: string; body: string } {
+  const topic = title.trim() || "El coche eléctrico en España";
+
+  return {
+    title: topic,
+    body: [
+      `Llevo seis años conduciendo eléctrico a diario y hay una cosa que no aparece en ninguna ficha técnica: lo que de verdad cambia no son las cifras, son las rutinas. ${angle.trim() ? "" : ""}Esto es lo que he visto, con números de aquí y sin adornos.`,
+      "",
+      "## Qué dicen las cifras oficiales",
+      "",
+      "Sobre el papel todo cuadra. Los datos homologados salen de un ciclo de laboratorio que sirve para comparar coches entre sí, no para saber cuánto vas a gastar tú el martes que viene camino del trabajo. Por eso la distancia entre el folleto y el cuentakilómetros no es un engaño, es que miden cosas distintas.",
+      "",
+      "## Qué se ve en uso",
+      "",
+      "En trayecto urbano la diferencia es pequeña y a menudo favorable. En autopista a 120 km/h se abre, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior, bastante menos en la costa mediterránea. Nada de esto impide hacer vida normal, pero conviene saberlo antes de firmar y no después.",
+      "",
+      "Traducido a euros: cargando en casa con tarifa valle, el coste por cada 100 kilómetros se queda en unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre las dos situaciones es mucho mayor que la diferencia entre dos coches distintos.",
+      "",
+      "## Para quién tiene sentido hoy",
+      "",
+      "Si puedes enchufar donde duermes, la respuesta es fácil. Si no puedes, la pregunta deja de ser sobre el coche y pasa a ser sobre tu barrio: qué cargadores hay, a qué precio y con qué fiabilidad. Ese es el cálculo que casi nadie hace y el que más disgustos evita.",
+      "",
+      "Lo que sí puedo decir después de seis años es que la parte que más me preocupaba al principio, la autonomía, dejó de importarme el primer mes. Y la que ni me planteaba, la carga pública fuera de casa, es la que sigue dando trabajo.",
+    ].join("\n"),
+  };
+}
+
+/**
+ * Fake "editar la imagen con IA": three variations to choose from.
+ *
+ * PROTOTYPE SHORTCUT — the variations are the same image with a CSS filter on
+ * top, because the point right now is designing the pick-one-of-three flow, not
+ * generating pixels. The real version calls Higgsfield with the prompt and
+ * returns three genuine URLs, at which point `filter` disappears from this type.
+ */
+export interface MockImageVariant {
+  id: string;
+  url: string;
+  /** CSS `filter` value that fakes the difference between variations. */
+  filter: string;
+  /** For screen readers only. Never shown: see `ImageVariantPicker`. */
+  label: string;
+}
+
+export function mockImageVariants(url: string, prompt: string): MockImageVariant[] {
+  const hint = prompt.trim().toLowerCase();
+  const warm = hint.includes("cálid") || hint.includes("atardecer") || hint.includes("calid");
+
+  return [
+    {
+      id: "v1",
+      url,
+      filter: warm ? "saturate(1.35) sepia(0.25)" : "saturate(1.2) contrast(1.05)",
+      label: "Opción 1",
+    },
+    { id: "v2", url, filter: "contrast(1.15) brightness(1.05)", label: "Opción 2" },
+    { id: "v3", url, filter: "saturate(0.55) brightness(1.08)", label: "Opción 3" },
+  ];
+}
+
 /** Turn a freshly filled form into an idea ready to show in the list. */
 export function buildOwnIdea(input: IdeaDraftInput, nowIso: string, id: string): IdeaCandidate {
   return {
