@@ -1,5 +1,6 @@
 import { Check, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PublishChannel } from "@/lib/editorial-types";
 
 /**
  * The editorial wizard's steps. Step 4 (EVminds) only exists once the
@@ -19,6 +20,29 @@ export const MVP_STEPS: WizardStep[] = [
   { n: 2, label: "Enfoque" },
   { n: 3, label: "Texto y publicación" },
 ];
+
+const CHANNEL_LABEL: Record<PublishChannel, string> = {
+  motor: "Motor.es",
+  evminds: "EVminds",
+};
+
+/**
+ * The steps for a given channel choice: one screen per channel, after the two
+ * fixed ones. Publishing to both is what turns the wizard into four steps, so
+ * ticking the second channel in step ② visibly grows the map above it — the
+ * consequence of the choice is shown, not explained.
+ *
+ * With nothing chosen yet the generic third step stands in, so the indicator
+ * never collapses to two while the user is deciding.
+ */
+export function buildWizardSteps(channels: PublishChannel[]): WizardStep[] {
+  const ordered = (["motor", "evminds"] as const).filter((c) => channels.includes(c));
+  const tail: WizardStep[] = ordered.length
+    ? ordered.map((c, i) => ({ n: 3 + i, label: CHANNEL_LABEL[c] }))
+    : [{ n: 3, label: "Texto y publicación" }];
+
+  return [{ n: 1, label: "Tema", href: "/admin/redaccion" }, { n: 2, label: "Enfoque" }, ...tail];
+}
 
 /** Circle diameter, in px. The connector sits at exactly half of it. */
 const BUBBLE_PX = 28;

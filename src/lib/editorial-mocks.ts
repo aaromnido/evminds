@@ -12,6 +12,7 @@
  */
 
 import type { IdeaCandidate, IdeaDraftInput } from "./editorial-types";
+import { sourceHostname } from "./editorial-utils";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -301,6 +302,71 @@ export function mockExpandIdea(input: IdeaDraftInput): { angle: string; rational
       "para una pieza con criterio propio. Además conecta con las dudas que más repiten los " +
       "lectores, lo que le da recorrido en búsquedas más allá de la actualidad inmediata.",
   };
+}
+
+/**
+ * Fake "Desarrollar con IA" for step ②, where only the angle is on screen.
+ * Same idea as `mockExpandIdea`, minus the "por qué ahora" half.
+ */
+export function mockExpandAngle(title: string, angle: string): string {
+  const seed = (angle || title).trim().replace(/\.$/, "");
+  return (
+    `${seed}. Cuéntalo desde la experiencia real de conducir un eléctrico a diario en España y ` +
+    "no desde la ficha técnica: qué cambia para quien ya tiene uno y para quien se lo está " +
+    "pensando. Contrasta las cifras oficiales con lo que se ve en uso y aterriza cada dato en " +
+    "euros y kilómetros de aquí."
+  );
+}
+
+/** Google truncates around here, so it is what the counter in the UI aims at. */
+export const SEO_TITLE_MAX = 60;
+
+/**
+ * Fake "Mejorar SEO": rewrite the headline so the searchable part goes first and
+ * the whole thing fits in a results page.
+ *
+ * The real version is one structured Gemini call with the style guide plus the
+ * house rules on headlines. This mock only has to be deterministic and to
+ * visibly *change* the field, which is what the screen needs to be judged.
+ */
+export function mockImproveSeoTitle(title: string): string {
+  const clean = title
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.:;,–—-]+$/, "");
+  // Keep the part before the colon: in a headline that is almost always the
+  // subject, and the tail is the hook, which is what SEO wants replaced.
+  const subject = clean.split(/[:—–]/)[0].trim() || clean;
+  const improved = `${subject}: precios, datos reales y qué esperar en España`;
+  return improved.length <= SEO_TITLE_MAX ? improved : `${subject}: datos reales en España`;
+}
+
+/**
+ * Fake link reader for requirement R1.
+ *
+ * Deterministic on purpose (a hash of the URL, no randomness) so a given link
+ * always behaves the same and the screen can be demoed twice with the same
+ * result. Roughly one in four fails on the first attempt and then succeeds on a
+ * retry, which is what a real fetch against a slow or protective site looks
+ * like — and it is the only way to see the failed state without hunting for a
+ * paywalled URL.
+ */
+export function mockReadReferenceLink(
+  url: string,
+  attempt: number,
+): { ok: true; title: string } | { ok: false; error: string } {
+  const host = sourceHostname(url);
+  let hash = 0;
+  for (const char of url) hash = (hash * 31 + char.charCodeAt(0)) % 100000;
+
+  if (attempt === 1 && hash % 4 === 0) {
+    return {
+      ok: false,
+      error: "La página no ha dejado leer el contenido (muro de pago o carga por JavaScript).",
+    };
+  }
+
+  return { ok: true, title: `Artículo de ${host}` };
 }
 
 /** Turn a freshly filled form into an idea ready to show in the list. */

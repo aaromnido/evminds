@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import AiAssistButton from "./AiAssistButton";
 import { mockExpandIdea } from "@/lib/editorial-mocks";
 import type { IdeaDraftInput } from "@/lib/editorial-types";
 
@@ -114,21 +114,15 @@ export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props
                 rows={5}
                 placeholder="Una frase basta. Qué quieres contar y desde qué mirada."
               />
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleExpand}
-                  disabled={!canExpand || expanding}
-                >
-                  {expanding ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                  {expanding ? "Desarrollando…" : "Desarrollar con IA"}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Amplía tu frase y le añade matices. Puedes editarlo todo después.
-                </span>
-              </div>
+              <AiAssistButton
+                label="Desarrollar con IA"
+                runningLabel="Desarrollando…"
+                running={expanding}
+                disabled={!canExpand}
+                onClick={handleExpand}
+                hint="Amplía tu frase y le añade matices. Puedes editarlo todo después."
+                className="pt-1"
+              />
             </div>
 
             <div className="grid gap-1.5">

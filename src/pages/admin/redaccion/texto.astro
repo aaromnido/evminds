@@ -1,0 +1,48 @@
+---
+/**
+ * Redacción — step ③ (and ④): the per-channel screens.
+ *
+ * PLACEHOLDER, same role `enfoque.astro` had before it was designed: it keeps
+ * the prototype clickable end to end so step ② can be tried for real. It already
+ * reads the channel choice made in step ②, which is what decides whether there
+ * is one screen here or two.
+ *
+ * Blocked on an open question before it can be designed: is there an integration
+ * with Motor.es' CMS, or does Fer paste the text there by hand? See
+ * `.claude/design/ai-editorial-agent-ui.md`.
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import WizardSteps, { buildWizardSteps } from "@/components/admin/editorial/WizardSteps.tsx";
+import type { PublishChannel } from "@/lib/editorial-types";
+
+const raw = Astro.url.searchParams.get("canales") ?? "motor";
+const channels = raw
+  .split(",")
+  .filter((c): c is PublishChannel => c === "motor" || c === "evminds");
+const steps = buildWizardSteps(channels.length ? channels : ["motor"]);
+---
+
+<AdminShell
+  title="Texto · Admin"
+  pageTitle="Texto y publicación"
+  pageDescription="Revisa el borrador, elige la imagen y programa la publicación."
+>
+  <div class="flex flex-col gap-6">
+    <WizardSteps steps={steps} current={3} />
+
+    <div class="rounded-xl border border-dashed border-border p-8">
+      <p class="text-sm text-muted-foreground">
+        Paso ③ todavía sin diseñar. El borrador se habría generado con el enfoque del paso anterior{
+          channels.length > 1 ? ", y habría una pantalla por cada medio elegido." : "."
+        }
+      </p>
+
+      <a
+        href="/admin/redaccion/enfoque"
+        class="mt-4 inline-block text-sm underline underline-offset-4 hover:no-underline"
+      >
+        ← Volver al enfoque
+      </a>
+    </div>
+  </div>
+</AdminShell>

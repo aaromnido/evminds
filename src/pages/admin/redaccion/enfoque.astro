@@ -1,15 +1,20 @@
 ---
 /**
- * Step ② of the editorial wizard: define the angle.
+ * Redacción — step ② of the writing wizard: define the angle.
  *
- * PLACEHOLDER — this is the next screen to design (see
- * `.claude/design/ai-editorial-agent-ui.md`). It already handles both entry
- * routes so the prototype flow is clickable end to end:
+ * Serves both entry routes:
  *   - `?idea=<id>` → arrived from a picked curator proposal (route A)
  *   - no params    → Fer's own topic, starting from scratch (route B)
+ *
+ * PROTOTYPE (task A3, UI-first phase): fed by `editorial-mocks.ts`, not by
+ * Supabase. To wire this up for real, replace `buildMockIdeas(nowIso)` with the
+ * query. See `.claude/design/ai-editorial-agent-ui.md`.
+ *
+ * The step indicator is rendered inside the island here (unlike step ①), because
+ * choosing a second channel adds a fourth step to it live.
  */
 import AdminShell from "@/layouts/AdminShell.astro";
-import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
+import DefineAngleStep from "@/components/admin/editorial/DefineAngleStep.tsx";
 import { buildMockIdeas } from "@/lib/editorial-mocks";
 
 const ideaId = Astro.url.searchParams.get("idea");
@@ -21,41 +26,8 @@ const idea = ideaId ? buildMockIdeas(nowIso).find((i) => i.id === ideaId) : unde
   title="Enfoque · Admin"
   pageTitle="Definir el enfoque"
   pageDescription={idea
-    ? "Ajusta qué quieres contar antes de generar el texto."
-    : "Cuéntanos de qué quieres escribir."}
+    ? "Ajusta qué quieres contar y dónde se publica antes de generar el texto."
+    : "Cuenta de qué quieres escribir y dónde se publica."}
 >
-  <div class="flex flex-col gap-6">
-    <WizardSteps current={2} />
-
-    <div class="rounded-xl border border-dashed border-border p-8">
-      {
-        idea ? (
-          <>
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tema elegido
-            </p>
-            <h2 class="mb-4 max-w-[68ch] text-lg font-semibold leading-snug">
-              {idea.proposed_title_es}
-            </h2>
-            <p class="max-w-[68ch] text-sm leading-relaxed text-muted-foreground">{idea.angle}</p>
-          </>
-        ) : (
-          <p class="text-sm text-muted-foreground">
-            Entrada directa sin candidato: aquí irá el formulario para describir tu propio tema.
-          </p>
-        )
-      }
-
-      <p class="mt-6 text-sm text-muted-foreground">
-        Paso ② todavía sin diseñar. Es la siguiente pantalla del diálogo.
-      </p>
-
-      <a
-        href="/admin/redaccion"
-        class="mt-4 inline-block text-sm underline underline-offset-4 hover:no-underline"
-      >
-        ← Volver al paso anterior
-      </a>
-    </div>
-  </div>
+  <DefineAngleStep client:load idea={idea ?? null} />
 </AdminShell>
