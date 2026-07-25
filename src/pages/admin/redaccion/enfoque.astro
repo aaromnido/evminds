@@ -1,0 +1,61 @@
+---
+/**
+ * Step ② of the editorial wizard: define the angle.
+ *
+ * PLACEHOLDER — this is the next screen to design (see
+ * `.claude/design/ai-editorial-agent-ui.md`). It already handles both entry
+ * routes so the prototype flow is clickable end to end:
+ *   - `?idea=<id>` → arrived from a picked curator proposal (route A)
+ *   - no params    → Fer's own topic, starting from scratch (route B)
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
+import { buildMockIdeas } from "@/lib/editorial-mocks";
+
+const ideaId = Astro.url.searchParams.get("idea");
+const nowIso = new Date().toISOString();
+const idea = ideaId ? buildMockIdeas(nowIso).find((i) => i.id === ideaId) : undefined;
+---
+
+<AdminShell
+  title="Enfoque · Admin"
+  pageTitle="Definir el enfoque"
+  pageDescription={idea
+    ? "Ajusta qué quieres contar antes de generar el texto."
+    : "Cuéntanos de qué quieres escribir."}
+>
+  <div class="flex flex-col gap-6">
+    <WizardSteps current={2} />
+
+    <div class="rounded-xl border border-dashed border-border p-8">
+      {
+        idea ? (
+          <>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Tema elegido
+            </p>
+            <h2 class="mb-4 max-w-[68ch] text-lg font-semibold leading-snug">
+              {idea.proposed_title_es}
+            </h2>
+            <p class="max-w-[68ch] text-sm leading-relaxed text-muted-foreground">{idea.angle}</p>
+          </>
+        ) : (
+          <p class="text-sm text-muted-foreground">
+            Entrada directa sin candidato: aquí irá el formulario para describir tu propio tema.
+          </p>
+        )
+      }
+
+      <p class="mt-6 text-sm text-muted-foreground">
+        Paso ② todavía sin diseñar. Es la siguiente pantalla del diálogo.
+      </p>
+
+      <a
+        href="/admin/redaccion"
+        class="mt-4 inline-block text-sm underline underline-offset-4 hover:no-underline"
+      >
+        ← Volver al paso anterior
+      </a>
+    </div>
+  </div>
+</AdminShell>

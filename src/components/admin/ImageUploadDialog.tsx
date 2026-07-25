@@ -44,7 +44,9 @@ export default function ImageUploadDialog({ open, onOpenChange, onInsert }: Prop
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
-      <AlertDialogContent className="max-w-lg! gap-6 p-6">
+      {/* No padding override: it has to stay in sync with AlertDialogFooter's
+          negative margins, which are tied to the content's default padding. */}
+      <AlertDialogContent className="max-w-lg! gap-6">
         <AlertDialogHeader className="place-items-start text-left">
           <AlertDialogTitle className="text-lg">Insertar imagen</AlertDialogTitle>
         </AlertDialogHeader>

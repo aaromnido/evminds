@@ -1,4 +1,12 @@
-import { LayoutDashboard, FilePenLine, Newspaper, LogOut, Plus } from "lucide-react";
+import {
+  LayoutDashboard,
+  FilePenLine,
+  Newspaper,
+  Lightbulb,
+  PenLine,
+  LogOut,
+  Plus,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +39,11 @@ const NAV_ITEMS: NavItem[] = [
     ready: true,
   },
   { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: true },
+  // Editorial (task A3). "Redacción" holds the writing wizard, whose first step
+  // is picking a topic. "Ideas" is a separate section — the bank of saved ideas —
+  // and is not designed yet. See `.claude/design/ai-editorial-agent-ui.md`.
+  { title: "Ideas", href: "/admin/ideas", icon: Lightbulb, ready: false },
+  { title: "Redacción", href: "/admin/redaccion", icon: PenLine, ready: true },
 ];
 
 interface Props {
