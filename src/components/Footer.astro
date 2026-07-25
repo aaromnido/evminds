@@ -1,6 +1,6 @@
 ---
 import { CATEGORIES } from "@/lib/categories";
-import LogoMundial2026 from "./LogoMundial2026.astro";
+import Logo from "./Logo.astro";
 
 interface Props {
   availableCategorySlugs?: string[];
@@ -18,7 +18,7 @@ const visibleCategories = availableCategorySlugs
   <div class="footer__columns">
     <!-- Column 1: Brand & Social -->
     <div class="footer__column">
-      <LogoMundial2026 />
+      <Logo />
       <p class="footer__tagline">Un punto de encuentro para mentes inquietas y eléctricas</p>
       <div class="footer__social">
         <a
