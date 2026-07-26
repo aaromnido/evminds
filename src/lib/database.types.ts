@@ -177,10 +177,17 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
+        /** Columns with a DB default are optional here, so an insert can omit them. */
         Insert: Omit<
           Database["public"]["Tables"]["editorial_pieces"]["Row"],
-          "id" | "created_at" | "updated_at"
-        >;
+          "id" | "created_at" | "updated_at" | "brief_angle" | "reference_urls" | "status"
+        > &
+          Partial<
+            Pick<
+              Database["public"]["Tables"]["editorial_pieces"]["Row"],
+              "brief_angle" | "reference_urls" | "status"
+            >
+          >;
         Update: Partial<Database["public"]["Tables"]["editorial_pieces"]["Insert"]>;
         Relationships: [];
       };
@@ -212,10 +219,21 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
+        /**
+         * `post_id` is optional on purpose: it is set later, when the channel
+         * actually creates its `posts` row (phase 4), so an autosave must not be
+         * forced to say anything about it.
+         */
         Insert: Omit<
           Database["public"]["Tables"]["editorial_channel_drafts"]["Row"],
-          "id" | "created_at" | "updated_at"
-        >;
+          "id" | "created_at" | "updated_at" | "title" | "body" | "payload" | "status" | "post_id"
+        > &
+          Partial<
+            Pick<
+              Database["public"]["Tables"]["editorial_channel_drafts"]["Row"],
+              "title" | "body" | "payload" | "status" | "post_id"
+            >
+          >;
         Update: Partial<Database["public"]["Tables"]["editorial_channel_drafts"]["Insert"]>;
         Relationships: [];
       };
