@@ -10,6 +10,14 @@ interface Props {
   schedule: string;
   /** "Programada" for what we publish, "Prevista" for what someone else does. */
   scheduleLabel: string;
+  /**
+   * The article's future URL, on the channel where we host it.
+   *
+   * Shown because it is the one field on this screen that cannot be changed for
+   * free once published: everything else is editable later, a live URL is not.
+   * This card exists to catch mistakes while going back still costs one click.
+   */
+  url?: string;
   /** Back to the draft, with everything exactly as it was left. */
   onEdit: () => void;
 }
@@ -33,6 +41,7 @@ export default function ChannelResultCard({
   imageFilter,
   schedule,
   scheduleLabel,
+  url,
   onEdit,
 }: Props) {
   return (
@@ -52,6 +61,7 @@ export default function ChannelResultCard({
             {scheduleLabel}: {schedule}
           </p>
         )}
+        {url && <p className="truncate text-xs text-muted-foreground">{url}</p>}
       </div>
 
       <Button variant="outline" onClick={onEdit} className="ml-auto shrink-0">

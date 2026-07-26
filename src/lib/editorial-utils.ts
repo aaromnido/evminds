@@ -61,6 +61,21 @@ export function formatPublishSchedule(date: string, time: string): string {
   return time ? `${dayText}, ${time}` : dayText;
 }
 
+/**
+ * A `YYYY-MM-DD` date shifted by whole days, still as `YYYY-MM-DD`.
+ *
+ * `Date.UTC` is used purely as a calendar: it handles month and year boundaries
+ * and leap years, which plain string maths does not. It reads no clock and no
+ * local timezone, so the same input always gives the same output — on the server
+ * and after hydration alike. Returns `""` on anything that isn't a date, so a
+ * half-typed input can't produce a bogus one.
+ */
+export function shiftDateByDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  if (!year || !month || !day) return "";
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
 /** Hostname of a source URL, for the "ver fuente" affordance. */
 export function sourceHostname(url: string): string {
   try {

@@ -1,5 +1,6 @@
 import ImageDropZone from "@/components/admin/ImageDropZone";
 import GenerateImagePanel from "./GenerateImagePanel";
+import ImageAltField from "./ImageAltField";
 import ImagePromptField from "./ImagePromptField";
 import ImageVariantPicker from "./ImageVariantPicker";
 import type { MockImageVariant } from "@/lib/editorial-mocks";
@@ -24,6 +25,20 @@ interface Props {
   previewFilter?: string;
   onSelectVariant: (variant: MockImageVariant) => void;
   onDiscardVariants: () => void;
+  /**
+   * Alt text handlers, set only on a channel that stores the image itself.
+   *
+   * Their absence is how the caller says "this channel has no alt text to fill
+   * in" — Motor.es uploads the image into their own CMS and writes it there.
+   */
+  alt?: {
+    value: string;
+    onChange: (value: string) => void;
+    onBlur?: () => void;
+    describing: boolean;
+    onDescribe: () => void;
+    error?: string | null;
+  };
   disabled?: boolean;
 }
 
@@ -58,6 +73,7 @@ export default function HeroImageBlock({
   previewFilter,
   onSelectVariant,
   onDiscardVariants,
+  alt,
   disabled,
 }: Props) {
   const dropZone = (
@@ -74,6 +90,22 @@ export default function HeroImageBlock({
   // their bottom edges line up (Fer, 2026-07-25). The panel's own content stays
   // pinned to the top (`content-start` inside it), so the extra height goes
   // below the button instead of spreading the fields apart.
+  // The alt text lives with the image, never in the record block further down:
+  // separated from what it describes is how alt text ends up describing the
+  // previous photo. It only shows once there IS an image — nothing to describe
+  // before that.
+  const altField = alt && value && (
+    <ImageAltField
+      value={alt.value}
+      onChange={alt.onChange}
+      onBlur={alt.onBlur}
+      describing={alt.describing}
+      onDescribe={alt.onDescribe}
+      error={alt.error}
+      disabled={disabled}
+    />
+  );
+
   if (!value) {
     return (
       <div className="grid gap-4 md:grid-cols-2">
@@ -92,11 +124,12 @@ export default function HeroImageBlock({
   return (
     <div className="grid gap-4">
       {dropZone}
+      {altField}
 
       <div className="grid gap-2 rounded-lg border border-border bg-muted/40 px-4 py-3">
         <ImagePromptField
           id="image-edit-prompt"
-          label="Retocarla con IA"
+          label="Editar la imagen con IA"
           placeholder="Ej.: luz de atardecer más cálida, fondo más limpio, sin la matrícula y con el coche un poco más centrado."
           value={editPrompt}
           onChange={onEditPromptChange}

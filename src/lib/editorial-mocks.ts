@@ -11,8 +11,9 @@
  * server-rendered and hydrated output byte-identical.
  */
 
-import type { IdeaCandidate, IdeaDraftInput } from "./editorial-types";
+import type { IdeaCandidate, IdeaDraftInput, PublishChannel } from "./editorial-types";
 import { sourceHostname } from "./editorial-utils";
+import { VALID_POST_CATEGORIES, type PostCategory } from "./post-categories";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -377,15 +378,80 @@ export function mockReadReferenceLink(
 export const MOCK_HERO_IMAGE = "/images/articulos/0002/hero-nissan-micra.png";
 
 /**
- * Fake redactor: the draft that step ② would have produced.
+ * Fake redactor: the draft for one channel.
  *
- * In the real build this is one Gemini call with the style guide, the editorial
- * line, the brief and whatever the reference links returned. Here it is canned
- * text, long enough that the editing workspace can be judged at a realistic
- * size.
+ * **One brief, two different drafts** (Fer, 2026-07-26 — and already the product
+ * decision in the task doc, 2026-07-17). It takes the channel because the two
+ * texts are genuinely different pieces, not the same text pasted twice: same
+ * facts and same angle, different structure, different opening and a different
+ * headline. Publishing one text in both places would put Fer competing against
+ * himself in search results, and that cost never shows up on screen.
+ *
+ * In the real build this is one Gemini call per channel with the shared brief
+ * plus that channel's voice note. Here it is canned text, long enough that the
+ * editing workspace can be judged at a realistic size.
  */
-export function mockGenerateDraft(title: string, angle: string): { title: string; body: string } {
+/**
+ * Reframe a headline under EVminds' own voice, without going over the SEO limit.
+ *
+ * **The headline has to differ too, automatically** (Fer, 2026-07-26). It is the
+ * most visible half of duplicate content: the headline is what a reader actually
+ * sees side by side in a results page, so two identical ones are worse than two
+ * similar bodies. The frame goes **in front**, not appended as a tail, because a
+ * tail keeps the first words identical and that is precisely what gets compared.
+ *
+ * The subject is trimmed at a word boundary so the result still fits what Google
+ * shows, instead of being flagged amber by the counter the moment it lands.
+ */
+function evmindsHeadline(subject: string): string {
+  const frame = "Seis años en eléctrico";
+  const room = SEO_TITLE_MAX - frame.length - 2;
+
+  let tail = subject;
+  if (tail.length > room) {
+    tail = tail.slice(0, room).replace(/[\s,;:]+\S*$/, "");
+    // Cutting at a word boundary alone leaves things like "…Supercargadores en",
+    // which reads broken. Dropping trailing function words is enough to land on
+    // something that still parses as Spanish.
+    tail = tail.replace(
+      /(\s+(?:a|de|del|en|con|por|para|y|o|que|su|sus|el|la|los|las|un|una|al))+$/i,
+      "",
+    );
+  }
+
+  return `${frame}: ${tail.replace(/[\s,;:]+$/, "")}`;
+}
+
+export function mockGenerateDraft(
+  channel: PublishChannel,
+  title: string,
+  angle: string,
+): { title: string; body: string } {
   const topic = title.trim() || "El coche eléctrico en España";
+  const subject = topic.split(/[:—–]/)[0].trim() || topic;
+
+  if (channel === "evminds") {
+    return {
+      title: evmindsHeadline(subject),
+      body: [
+        "Cuando me preguntan por esto, casi siempre esperan que hable de autonomía. Y casi siempre acabamos hablando de otra cosa: de dónde duermes, de a qué hora enchufas y de cuánto te cuesta el kilovatio en tu casa. Después de seis años con un eléctrico como único coche, esa es la conversación que de verdad importa.",
+        "",
+        "## Lo que cambia el primer mes",
+        "",
+        "La rutina, antes que las cifras. Dejas de pensar en gasolineras y empiezas a pensar en enchufes, y esa sustitución es casi todo el aprendizaje. El resto son detalles que se colocan solos.",
+        "",
+        "## Los números, con precios de aquí",
+        "",
+        "Cargando en casa con tarifa valle, cada 100 kilómetros salen por unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre esas dos situaciones es mucho mayor que la que hay entre dos coches distintos, y por eso comparar fichas técnicas sin mirar dónde vas a cargar no sirve de nada.",
+        "",
+        "En autopista a 120 km/h el consumo se abre respecto al homologado, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior y bastante menos en la costa. Nada de eso impide hacer vida normal; solo conviene saberlo antes de firmar.",
+        "",
+        "## Y lo que sigue sin estar resuelto",
+        "",
+        "La autonomía dejó de preocuparme el primer mes. La carga pública fuera de casa, que ni me planteaba, es la que sigue dando trabajo: precios opacos, aplicaciones que fallan y postes ocupados por coches que ya han terminado. Ahí es donde queda margen de mejora, y no en la batería.",
+      ].join("\n"),
+    };
+  }
 
   return {
     title: topic,
@@ -408,6 +474,88 @@ export function mockGenerateDraft(title: string, angle: string): { title: string
       "",
       "Lo que sí puedo decir después de seis años es que la parte que más me preocupaba al principio, la autonomía, dejó de importarme el primer mes. Y la que ni me planteaba, la carga pública fuera de casa, es la que sigue dando trabajo.",
     ].join("\n"),
+  };
+}
+
+/**
+ * Fake vision call: the alt text, written from the image (Fer, 2026-07-26).
+ *
+ * The real version passes the image to the multimodal redactor model and asks for
+ * one plain sentence. That it can be done at all is the reason this field is
+ * automatic and not manual: an alt text is exactly the patient, descriptive work
+ * a model does better than a person at the bottom of a long screen.
+ *
+ * Deterministic, derived from the file name, so the prototype always describes
+ * the same picture the same way.
+ */
+export function mockDescribeImage(url: string): string {
+  const file =
+    url
+      .split("/")
+      .pop()
+      ?.replace(/\.\w+$/, "") ?? "";
+
+  if (file.includes("micra")) {
+    return "Un Nissan Micra eléctrico blanco aparcado en un camino de tierra al atardecer, visto de tres cuartos delantero.";
+  }
+
+  const words = file
+    .split(/[-_]/)
+    .filter((w) => w && !/^\d+$/.test(w))
+    .join(" ");
+
+  return words
+    ? `Fotografía de ${words}, en exterior y con luz natural.`
+    : "Fotografía de un coche eléctrico en exterior, con luz natural.";
+}
+
+/**
+ * Fake "the AI fills in the article's record": excerpt, category and tags.
+ *
+ * Fer's call (2026-07-26): the three arrive **proposed and editable**. They are
+ * all derivable from the text the model just wrote, and a pre-filled record is
+ * never a blank page — which matters most for the excerpt, since `posts`
+ * requires it and an empty one guarantees a blocked button at the finish line.
+ *
+ * The alt text is proposed too, but from a different call — see
+ * `mockDescribeImage`: it comes from the image, not from the text.
+ */
+export interface MockPostRecord {
+  excerpt: string;
+  category: PostCategory;
+  tags: string[];
+}
+
+export function mockPostRecord(title: string, body: string): MockPostRecord {
+  const lead = body
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line && !line.startsWith("#"));
+
+  // Pick the category from words that actually appear, falling back to the one
+  // that fits an owner's first-hand account.
+  const haystack = `${title} ${body}`.toLowerCase();
+  const category: PostCategory =
+    haystack.includes("ruta") || haystack.includes("viaje")
+      ? "Viaje"
+      : haystack.includes("guía") || haystack.includes("cómo")
+        ? "Guía"
+        : haystack.includes("prueba") || haystack.includes("probado")
+          ? "Review"
+          : VALID_POST_CATEGORIES[0];
+
+  const candidateTags = [
+    ["coche eléctrico", haystack.includes("eléctric")],
+    ["autonomía", haystack.includes("autonom")],
+    ["carga", haystack.includes("carga") || haystack.includes("cargar")],
+    ["consumo", haystack.includes("consumo") || haystack.includes("km/h")],
+    ["España", haystack.includes("españa")],
+  ] as const;
+
+  return {
+    excerpt: lead ? (lead.length > 240 ? `${lead.slice(0, 237).trimEnd()}…` : lead) : "",
+    category,
+    tags: candidateTags.filter(([, hit]) => hit).map(([tag]) => tag),
   };
 }
 

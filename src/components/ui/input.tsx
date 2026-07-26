@@ -17,4 +17,15 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
+/**
+ * Border/focus treatment of `Input`, for native controls the primitive does not
+ * wrap — `<select>` and the tag-chips box, mainly.
+ *
+ * It lives here, next to the component it mirrors, so a `<select>` never drifts
+ * away from the inputs beside it. It used to be a private copy inside
+ * `PostEditor`; two copies is exactly how that drift happens.
+ */
+export const nativeFieldClass =
+  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
+
 export { Input };

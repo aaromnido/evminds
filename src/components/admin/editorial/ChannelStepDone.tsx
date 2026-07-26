@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CircleCheck } from "lucide-react";
+import { CircleCheck, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChannelResultCard from "./ChannelResultCard";
 
@@ -12,11 +12,11 @@ interface Props {
     imageFilter?: string;
     schedule: string;
     scheduleLabel: string;
+    /** Future URL, only where we host the piece. */
+    url?: string;
   };
   /** Reopens the draft from the summary card. */
   onEdit: () => void;
-  /** Where the finished piece can be seen, when this channel hosts one. */
-  result?: { label: string; href: string };
 }
 
 /**
@@ -31,17 +31,20 @@ interface Props {
  * vanish in the page transition and nobody would read the one message that says
  * what to do next.
  *
- * **Which button is primary depends on there being somewhere to go.** When the
- * channel hosts the piece (EVminds), seeing it is the natural next move, so it
- * takes the primary and "Volver a Redacción" steps back to `outline`. When it
- * does not (Motor.es, where the piece lives in someone else's CMS), going back
- * is the only move left and stays primary rather than leaving the screen
- * without one.
+ * **One action, and it starts the next piece** (Fer, 2026-07-26). Two earlier
+ * versions were both wrong and for related reasons:
  *
- * "Volver" always carries a **leading** left arrow: a back action with a
- * trailing right arrow points the wrong way and reads as going forward.
+ * - "Volver a Redacción" read as *going back a step*, because the wizard's own
+ *   secondary button is called "Volver atrás". The word "volver" is already
+ *   spoken for in this flow, and the destination is not a step back — it is the
+ *   start of a new article. Hence **"Crear nuevo artículo"**, with the same
+ *   `PenLine` icon the sidebar uses for Redacción, so the destination is
+ *   recognisable before the click.
+ * - "Versión EVminds", pointing at Artículos, stopped making sense once step ④
+ *   became the screen that *creates* that very article: it offered to go and see
+ *   the thing already summarised in the card right above it.
  */
-export default function ChannelStepDone({ title, hint, piece, onEdit, result }: Props) {
+export default function ChannelStepDone({ title, hint, piece, onEdit }: Props) {
   return (
     <div className="flex flex-col items-center rounded-xl border border-dashed border-border p-12 text-center">
       <CircleCheck
@@ -55,21 +58,10 @@ export default function ChannelStepDone({ title, hint, piece, onEdit, result }: 
       <ChannelResultCard {...piece} onEdit={onEdit} />
 
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button
-          variant={result ? "outline" : "default"}
-          size="lg"
-          render={<a href="/admin/redaccion" />}
-        >
-          <ArrowLeft data-icon="inline-start" />
-          Volver a Redacción
+        <Button size="lg" render={<a href="/admin/redaccion" />}>
+          <PenLine />
+          Crear nuevo artículo
         </Button>
-
-        {result && (
-          <Button size="lg" render={<a href={result.href} />}>
-            {result.label}
-            <ArrowRight data-icon="inline-end" />
-          </Button>
-        )}
       </div>
     </div>
   );

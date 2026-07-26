@@ -15,9 +15,16 @@ interface Props {
   onTitleChange: (value: string) => void;
   onBodyChange: (value: string) => void;
   /** True right after the text was copied, so the button can say so. */
-  copied: boolean;
-  /** Receives what should go to the clipboard, already in the active format. */
-  onCopy: (text: string) => void;
+  copied?: boolean;
+  /**
+   * Receives what should go to the clipboard, already in the active format.
+   *
+   * Optional, and its absence hides the button: copying is the hand-off on
+   * Motor.es, and on a channel we publish ourselves a prominent "Copiar el HTML"
+   * invites exactly the misunderstanding the completion screen fights — that
+   * something has to be pasted somewhere for the piece to go out.
+   */
+  onCopy?: (text: string) => void;
   onPreview: () => void;
   /** Set when previewing isn't possible yet, and says why. */
   previewBlockedReason?: string | null;
@@ -100,16 +107,18 @@ export default function DraftTextBlock({
               Previsualizar
             </Button>
             {/* Reserved width: the label swaps and nothing beside it may move. */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onCopy(visual ? html : body)}
-              disabled={disabled || !body.trim()}
-              className="min-w-[9.5rem] justify-center"
-            >
-              {copied ? <Check /> : <Copy />}
-              {copied ? "Copiado" : visual ? "Copiar el HTML" : "Copiar el texto"}
-            </Button>
+            {onCopy && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCopy(visual ? html : body)}
+                disabled={disabled || !body.trim()}
+                className="min-w-[9.5rem] justify-center"
+              >
+                {copied ? <Check /> : <Copy />}
+                {copied ? "Copiado" : visual ? "Copiar el HTML" : "Copiar el texto"}
+              </Button>
+            )}
           </div>
         </div>
 

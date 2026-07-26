@@ -26,26 +26,35 @@ export interface ChannelSpec {
   /** One line on what publishing there involves. Shown in the step ② picker. */
   description: string;
   handoff: ChannelHandoff;
+  /**
+   * Whether finishing this channel creates a row in our own `posts` table.
+   *
+   * Only true for EVminds, and it is what makes step ④ more than a clone of step
+   * ③: `posts` needs a slug, an excerpt, a category, tags and an alt text that
+   * handing a text over to someone else's CMS simply does not.
+   */
+  needsPostRecord?: boolean;
+  /** Line under the text block's title, saying what this channel's text IS. */
+  draftHint: string;
   /** Label and hint of the date field on that channel's screen. Always required. */
   dateLabel: string;
   dateHint: string;
+  /**
+   * The wall-clock hour the piece goes out at, `HH:MM`, where we control it.
+   *
+   * Set only for EVminds. Fer's call (2026-07-26): the panel stopped asking for a
+   * time on either channel, because on Motor.es the hour is decided by their
+   * system and on ours nobody writing an article has an opinion about the minute.
+   * So it is fixed here instead of being one more required field with no real
+   * answer. Absent on Motor.es, where the hour is genuinely not ours to know.
+   */
+  publishHour?: string;
   /** The screen's single primary action. */
   finalLabel: string;
   finalRunningLabel: string;
   /** What the completion state says once that action succeeded. */
   doneTitle: string;
   doneHint: string;
-  /**
-   * Where the finished piece can be seen for this channel, if anywhere.
-   *
-   * Only set where we actually host it: an EVminds article lands in "Artículos
-   * propios" and can be opened. A Motor.es piece lives in someone else's CMS
-   * and all we keep is the backup copy, which has no screen of its own yet — so
-   * that channel has no result link and its completion screen keeps "Volver a
-   * Redacción" as its single action.
-   */
-  resultLabel?: string;
-  resultHref?: string;
 }
 
 export const CHANNELS: ChannelSpec[] = [
@@ -54,9 +63,11 @@ export const CHANNELS: ChannelSpec[] = [
     name: "Motor.es",
     description: "Tu colaboración. Se genera el texto y lo copias a su CMS con la imagen.",
     handoff: "copy",
-    dateLabel: "Fecha prevista de publicación",
+    draftHint:
+      "Escrito con tu enfoque. Edítalo todo lo que quieras: lo que se copia es lo que ves aquí.",
+    dateLabel: "Día previsto de publicación",
     dateHint:
-      "Su ritmo editorial no lo controlamos desde aquí. Apunta cuándo esperas que salga para cuadrar la tuya, y cámbialo luego si se mueve.",
+      "Su ritmo editorial no lo controlamos desde aquí, y la hora la pone su sistema. Apunta el día que esperas para cuadrar el tuyo, y cámbialo luego si se mueve.",
     finalLabel: "Copiar el texto",
     finalRunningLabel: "Copiando…",
     doneTitle: "Texto copiado",
@@ -71,14 +82,24 @@ export const CHANNELS: ChannelSpec[] = [
     name: "EVminds",
     description: "Tu propio sitio. Texto e imagen, y lo dejas programado desde aquí.",
     handoff: "schedule",
-    dateLabel: "Fecha de publicación",
-    dateHint: "Se publicará solo a esa hora. Puedes cambiarla después desde Artículos.",
+    needsPostRecord: true,
+    // Fer, 2026-07-26: EVminds gets its OWN version, generated on arrival — not
+    // the Motor.es text with a rewrite button. Two drafts from one pipeline was
+    // already the product decision (task doc, 2026-07-17); what this line adds
+    // is saying it out loud, because publishing the same piece twice costs SEO
+    // and that cost is invisible on screen.
+    // Kept to one line on purpose (Fer, 2026-07-26): the hint is capped at 68ch
+    // in `StepSection`, so a 140-character version wrapped to two lines however
+    // wide the screen was. A hint that needs a paragraph is not a hint.
+    draftHint: "Versión propia, reescrita para no competir con la de Motor.es en Google.",
+    dateLabel: "Día de publicación",
+    dateHint:
+      "Se publicará solo, a las 8:00 de la mañana (hora de Madrid). Puedes cambiar el día después desde Artículos.",
+    publishHour: "08:00",
     finalLabel: "Programar la publicación",
     finalRunningLabel: "Programando…",
     doneTitle: "Publicación programada",
-    doneHint: "El artículo queda en borrador y saldrá solo a la hora que has puesto.",
-    resultLabel: "Versión EVminds",
-    resultHref: "/admin/posts",
+    doneHint: "El artículo queda en borrador y se publicará en EVminds en la fecha prevista.",
   },
 ];
 

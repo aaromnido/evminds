@@ -53,6 +53,16 @@ interface Props {
   steps?: WizardStep[];
   /** 1-based index of the step the user is on. */
   current: number;
+  /**
+   * The whole flow is finished: every step reads as done, none as active.
+   *
+   * Set by the completion screen (Fer, 2026-07-26). Without it the last step kept
+   * its pencil and its filled-in label while the screen underneath said the piece
+   * was already scheduled — the map contradicted the message right above it. An
+   * explicit flag beats passing `current = steps.length + 1`, which would work but
+   * read like an off-by-one.
+   */
+  complete?: boolean;
   className?: string;
 }
 
@@ -88,13 +98,18 @@ function Connector({ side, filled }: ConnectorProps) {
  * happens through each screen's own primary action. Completed steps stay
  * clickable so you can go back (see `.claude/design/ai-editorial-agent-ui.md`).
  */
-export default function WizardSteps({ steps = MVP_STEPS, current, className }: Props) {
+export default function WizardSteps({
+  steps = MVP_STEPS,
+  current,
+  complete = false,
+  className,
+}: Props) {
   return (
     <nav aria-label="Progreso" className={className}>
       <ol className="flex items-start">
         {steps.map((step, i) => {
-          const done = step.n < current;
-          const active = step.n === current;
+          const done = complete || step.n < current;
+          const active = !complete && step.n === current;
           const isLast = i === steps.length - 1;
           const clickable = Boolean(step.href) && !active;
 
@@ -133,8 +148,8 @@ export default function WizardSteps({ steps = MVP_STEPS, current, className }: P
 
           return (
             <li key={step.n} className="relative flex flex-1 flex-col items-center gap-2">
-              {i > 0 && <Connector side="left" filled={step.n <= current} />}
-              {!isLast && <Connector side="right" filled={step.n < current} />}
+              {i > 0 && <Connector side="left" filled={complete || step.n <= current} />}
+              {!isLast && <Connector side="right" filled={complete || step.n < current} />}
 
               {clickable ? (
                 <a

@@ -28,19 +28,40 @@ export function isBriefValid(errors: BriefErrors): boolean {
 /** A draft shorter than this is not a piece, it is a note. */
 export const BODY_MIN = 200;
 
+/**
+ * Below this an excerpt is not a summary, and it is also the text that ends up
+ * as the article's meta description and card teaser — where too short simply
+ * gets no clicks.
+ */
+export const EXCERPT_MIN = 80;
+
 export interface ChannelDraftErrors {
   title: string | null;
   body: string | null;
   image: string | null;
   schedule: string | null;
+  /** The `posts`-only fields. Always null on a channel we don't host. */
+  slug: string | null;
+  excerpt: string | null;
+  imageAlt: string | null;
 }
 
 export interface ChannelDraftInput {
   title: string;
   body: string;
   imageUrl: string;
+  /** `YYYY-MM-DD`. The hour is no longer asked for — see `ScheduleField`. */
   publishDate: string;
-  publishTime: string;
+  /**
+   * Set only on a channel whose finish line creates a `posts` row (EVminds).
+   * Its absence is how the input says "this channel has no article record",
+   * which reads better than a boolean flag beside optional fields.
+   */
+  postRecord?: {
+    slug: string;
+    excerpt: string;
+    imageAlt: string;
+  };
 }
 
 /**
@@ -50,14 +71,42 @@ export interface ChannelDraftInput {
  * cannot be closed without one and the reason is said out loud instead of
  * showing up as an error after the click.
  *
- * The date and time are **always required**, on both channels (Fer,
- * 2026-07-26) — even Motor.es, where it is a prediction rather than a
- * commitment, needs one filled in so the two channels' dates can be lined up.
+ * The date is **always required**, on both channels (Fer, 2026-07-26) — even
+ * Motor.es, where it is a prediction rather than a commitment, needs one filled
+ * in so the two channels' dates can be lined up. The **time** is no longer asked
+ * for at all: Motor.es' system decides it and ours is fixed at 8:00 Madrid.
+ *
+ * `postRecord` adds the fields `posts` needs and Motor.es does not: the URL, the
+ * excerpt and the image's alt text. Category and tags are absent on purpose —
+ * the category always has a valid default, and tags are optional in `posts`
+ * today, so requiring either here would invent a rule Artículos does not have.
  */
 export function validateChannelDraft(input: ChannelDraftInput): ChannelDraftErrors {
   const body = input.body.trim();
+  const record = input.postRecord;
+  const excerpt = record?.excerpt.trim() ?? "";
 
   return {
+    slug: !record
+      ? null
+      : record.slug.trim()
+        ? null
+        : "La URL del artículo no puede quedarse vacía.",
+    excerpt: !record
+      ? null
+      : !excerpt
+        ? "Escribe un extracto: es lo que se lee en las tarjetas y en Google."
+        : excerpt.length < EXCERPT_MIN
+          ? `Demasiado corto para resumir la pieza: al menos ${EXCERPT_MIN} caracteres.`
+          : null,
+    // Required here even though Artículos leaves it optional: this is the piece's
+    // hero image, the alt text is what a screen reader and Google get instead of
+    // it, and nobody writes it unless they are asked.
+    imageAlt: !record
+      ? null
+      : record.imageAlt.trim()
+        ? null
+        : "Describe la imagen en una frase, para quien no puede verla.",
     title: input.title.trim() ? null : "El titular no puede quedarse vacío.",
     body: !body
       ? "No hay texto que publicar."
@@ -65,13 +114,37 @@ export function validateChannelDraft(input: ChannelDraftInput): ChannelDraftErro
         ? "El texto se ha quedado demasiado corto. Revísalo antes de darlo por bueno."
         : null,
     image: input.imageUrl.trim() ? null : "Hace falta una imagen de cabecera para publicar.",
-    schedule:
-      !input.publishDate || !input.publishTime ? "Elige la fecha y la hora de publicación." : null,
+    schedule: input.publishDate ? null : "Elige el día de publicación.",
   };
 }
 
+/**
+ * Whether scheduling for this day would not actually schedule anything.
+ *
+ * With a fixed publishing hour, picking **today** once that hour has passed means
+ * "publish in the past", which any sane backend turns into "publish now". That is
+ * a real surprise on the one screen whose entire promise is *programar*, so it is
+ * said out loud — as a warning, never as a block: publishing immediately is a
+ * legitimate thing to want, just not something to get by accident.
+ *
+ * Everything here is **string comparison on wall-clock values**, deliberately. The
+ * two "now" values come from the page, already expressed in Madrid time (see
+ * `texto.astro`), so no `Date` is parsed, no timezone shifts, and the result is
+ * identical on the server and after hydration.
+ */
+export function isPublishDatePast(
+  publishDate: string,
+  publishHour: string | undefined,
+  todayInMadrid: string,
+  nowHourInMadrid: string,
+): boolean {
+  if (!publishDate || !publishHour) return false;
+  if (publishDate < todayInMadrid) return true;
+  return publishDate === todayInMadrid && nowHourInMadrid >= publishHour;
+}
+
 export function isChannelDraftValid(errors: ChannelDraftErrors): boolean {
-  return !errors.title && !errors.body && !errors.image && !errors.schedule;
+  return Object.values(errors).every((error) => !error);
 }
 
 /**
