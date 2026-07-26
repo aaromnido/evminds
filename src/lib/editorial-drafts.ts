@@ -46,6 +46,14 @@ export interface EvmindsChannelPayload {
 
 export type ChannelPayload = MotorChannelPayload | EvmindsChannelPayload;
 
+/**
+ * Lifecycle of one channel. Both terminal values are closed and they do NOT mean
+ * the same thing (see migration 53): `done` is Motor.es finished on our side —
+ * publishing it is typing it into their CMS — and `scheduled` means a `posts` row
+ * exists. Mirrored in `database.types.ts`.
+ */
+export type ChannelDraftStatus = "draft" | "done" | "scheduled";
+
 /** Reads a string field out of raw jsonb, whatever it turns out to be. */
 function str(source: Record<string, unknown>, key: string): string {
   const value = source[key];

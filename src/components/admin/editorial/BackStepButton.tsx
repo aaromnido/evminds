@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -32,6 +32,15 @@ interface Props {
    */
   confirmTitle?: string;
   confirmDescription?: string;
+  /**
+   * Run before leaving, returning whether it is safe to go.
+   *
+   * This is how the channel screens stopped needing to warn about losing work:
+   * they flush their autosave here, and only if that fails does the confirmation
+   * appear — now describing something that is actually true. Without the prop the
+   * button behaves as before, deciding from `dirty` alone.
+   */
+  onBeforeLeave?: () => Promise<boolean>;
   disabled?: boolean;
 }
 
@@ -58,23 +67,35 @@ export default function BackStepButton({
   dirty,
   confirmTitle = "¿Salir sin generar el texto?",
   confirmDescription = "Lo que has escrito en este paso todavía no se guarda en ningún sitio, así que se perderá. La idea de la que partiste sigue en su lista.",
+  onBeforeLeave,
   disabled,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   function leave() {
     window.location.href = href;
   }
 
+  async function handleClick() {
+    if (!onBeforeLeave) {
+      if (dirty) setOpen(true);
+      else leave();
+      return;
+    }
+
+    setLeaving(true);
+    const safe = await onBeforeLeave();
+    setLeaving(false);
+    // Only ask when there is something real to warn about.
+    if (safe) leave();
+    else setOpen(true);
+  }
+
   return (
     <>
-      <Button
-        variant="outline"
-        size="lg"
-        disabled={disabled}
-        onClick={() => (dirty ? setOpen(true) : leave())}
-      >
-        <ArrowLeft />
+      <Button variant="outline" size="lg" disabled={disabled || leaving} onClick={handleClick}>
+        {leaving ? <Loader2 className="animate-spin" /> : <ArrowLeft />}
         Volver atrás
       </Button>
 

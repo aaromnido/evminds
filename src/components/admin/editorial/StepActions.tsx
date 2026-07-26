@@ -1,5 +1,6 @@
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /** "a", "a y b", "a, b y c" — a list that reads like a sentence, not like a form. */
 function joinInSpanish(items: string[]): string {
@@ -38,6 +39,17 @@ interface Props {
     running: boolean;
     onClick: () => void;
     minWidth?: string;
+    /**
+     * Everything on screen is already stored, so there is nothing to save.
+     *
+     * Same three-state shape as `SaveIdeaButton`: the finished state gets a
+     * dashed border and a check, not just lowered opacity, because opacity alone
+     * reads as "not available now" when the message is "already done". Any edit
+     * flips it back to the actionable label, which is what keeps it honest with
+     * an autosave running underneath.
+     */
+    done?: boolean;
+    doneLabel?: string;
   };
 }
 
@@ -88,13 +100,21 @@ export default function StepActions({
             variant="outline"
             size="lg"
             onClick={secondary.onClick}
-            disabled={running || secondary.running}
+            disabled={running || secondary.running || secondary.done}
             aria-live="polite"
-            className="justify-center"
+            className={cn(
+              "justify-center",
+              secondary.done && "border-dashed text-muted-foreground disabled:opacity-100",
+            )}
             style={{ minWidth: secondary.minWidth ?? "12rem" }}
           >
             {secondary.running && <Loader2 className="animate-spin" />}
-            {secondary.running ? secondary.runningLabel : secondary.label}
+            {!secondary.running && secondary.done && <Check />}
+            {secondary.running
+              ? secondary.runningLabel
+              : secondary.done
+                ? (secondary.doneLabel ?? secondary.label)
+                : secondary.label}
           </Button>
         )}
       </div>

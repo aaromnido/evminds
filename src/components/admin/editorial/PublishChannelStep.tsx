@@ -30,6 +30,14 @@ import {
   type MockImageVariant,
 } from "@/lib/editorial-mocks";
 import { getChannel, type ChannelSpec } from "@/lib/editorial-channels";
+import type {
+  ChannelDraftState,
+  ChannelDraftStatus,
+  ChannelPayload,
+  EvmindsChannelPayload,
+  MotorChannelPayload,
+} from "@/lib/editorial-drafts";
+import { useDraftAutosave } from "@/lib/use-draft-autosave";
 import { formatPublishSchedule, shiftDateByDays } from "@/lib/editorial-utils";
 import {
   isChannelDraftValid,
@@ -38,20 +46,41 @@ import {
 } from "@/lib/editorial-validation";
 import { copyPlain, copyRich } from "@/lib/clipboard";
 import { markdownToHtml } from "@/lib/markdown";
-import type { PostCategory } from "@/lib/post-categories";
+import { VALID_POST_CATEGORIES, type PostCategory } from "@/lib/post-categories";
 import { slugify } from "@/lib/slugify";
 import type { PublishChannel } from "@/lib/editorial-types";
 
-/** Fake latencies (prototype only). */
+/**
+ * Fake latencies (prototype only).
+ *
+ * The hand-off one is gone: finishing and saving a draft are real requests now,
+ * so their waiting time is the network's and inventing one on top would be a
+ * loading state that lies.
+ */
 const EDIT_IMAGE_DELAY_MS = 1600;
 const DESCRIBE_IMAGE_DELAY_MS = 1100;
-const HANDOFF_DELAY_MS = 900;
 
 interface Props {
   /** Channel this screen is for. */
   channel: PublishChannel;
   /** Every channel chosen in step ②, in order, to build the step indicator. */
   channels: PublishChannel[];
+  /**
+   * The durable piece this screen writes into, created when step ② was left.
+   *
+   * Null only when the wizard is entered directly at this step with no piece
+   * behind it. Nothing is autosaved then, which is honest: there is nowhere to
+   * save to.
+   */
+  pieceId: string | null;
+  /**
+   * What was already stored for this channel, if anything. Its presence is what
+   * turns arrival into a **resume** instead of a generation: the screen comes
+   * back exactly as it was left, image and dates included.
+   */
+  initialDraft: ChannelDraftState | null;
+  /** Lifecycle of this channel's draft, so finishing it twice does not undo it. */
+  initialStatus: ChannelDraftStatus;
   /** Brief carried over from step ②. */
   briefTitle: string;
   briefAngle: string;
@@ -87,6 +116,108 @@ interface Props {
 /** How long after the previous channel this one publishes, in days. */
 const CHANNEL_GAP_DAYS = 7;
 
+interface SeedInput {
+  channel: PublishChannel;
+  initialDraft: ChannelDraftState | null;
+  briefTitle: string;
+  briefAngle: string;
+  briefSourceName?: string | null;
+  briefSourceUrl?: string | null;
+  previousChannelDate?: string | null;
+}
+
+/**
+ * The screen's starting values, from a stored draft or from a fresh generation.
+ *
+ * Kept out of the component because it is the one piece of arrival logic with
+ * real branching in it, and because the "edited by hand" flags have to be
+ * **derived** when resuming: they are not stored, and getting them wrong is
+ * silent. A restored `Título Listados` that still equals the headline is still
+ * following it; one that differs was changed on purpose and must stop being
+ * overwritten. Same for the slug and the alt text.
+ */
+function buildSeed({
+  channel,
+  initialDraft,
+  briefTitle,
+  briefAngle,
+  briefSourceName,
+  briefSourceUrl,
+  previousChannelDate,
+}: SeedInput) {
+  // A week after the previous channel, when there was one. Prefilled and not
+  // merely suggested: the rule is fixed, so making it the starting value is one
+  // decision less, and it stays editable for the exceptions.
+  const defaultPublishDate = previousChannelDate
+    ? shiftDateByDays(previousChannelDate, CHANNEL_GAP_DAYS)
+    : "";
+
+  if (initialDraft) {
+    const { title, body, imageUrl, publishDate } = initialDraft;
+    const motor = channel === "motor" ? (initialDraft.payload as MotorChannelPayload) : null;
+    const evminds = channel === "evminds" ? (initialDraft.payload as EvmindsChannelPayload) : null;
+
+    return {
+      title,
+      body,
+      imageUrl: imageUrl ?? "",
+      publishDate: publishDate ?? defaultPublishDate,
+      listTitle: motor?.listTitle || title,
+      listTitleEdited: Boolean(motor?.listTitle && motor.listTitle !== title),
+      discoverTitle: motor?.discoverTitle ?? "",
+      metaTitle: motor?.metaTitle ?? "",
+      metaDescription: motor?.metaDescription ?? "",
+      lead: motor?.lead ?? "",
+      brand: motor?.brand ?? "",
+      model: motor?.model ?? "",
+      sourceName: motor?.sourceName ?? briefSourceName ?? "",
+      sourceUrl: motor?.sourceUrl ?? briefSourceUrl ?? "",
+      cmsTags: motor?.tags ?? [],
+      slug: evminds?.slug || slugify(title),
+      slugEdited: Boolean(evminds?.slug && evminds.slug !== slugify(title)),
+      excerpt: evminds?.excerpt ?? "",
+      category: evminds?.category ?? VALID_POST_CATEGORIES[0],
+      tags: evminds?.tags ?? [],
+      imageAlt: evminds?.imageAlt ?? "",
+      // A restored alt was already written (by the AI or by hand), so it must not
+      // be regenerated on arrival over an image that has not changed.
+      altEdited: Boolean(evminds?.imageAlt),
+    };
+  }
+
+  // The draft was already generated at the end of step ②, so it is here on
+  // arrival: making the user wait a second time for the same work would be a
+  // fake loading state. It is generated PER CHANNEL — one brief, two different
+  // texts — so the two pieces don't compete with each other in search results.
+  const draft = mockGenerateDraft(channel, briefTitle, briefAngle);
+  const record = mockPostRecord(draft.title, draft.body);
+
+  return {
+    title: draft.title,
+    body: draft.body,
+    imageUrl: MOCK_HERO_IMAGE,
+    publishDate: defaultPublishDate,
+    listTitle: draft.cms?.listTitle || draft.title,
+    listTitleEdited: Boolean(draft.cms?.listTitle),
+    discoverTitle: draft.cms?.discoverTitle ?? "",
+    metaTitle: draft.cms?.metaTitle ?? "",
+    metaDescription: draft.cms?.metaDescription ?? "",
+    lead: draft.cms?.lead ?? "",
+    brand: draft.cms?.brand ?? "",
+    model: draft.cms?.model ?? "",
+    sourceName: briefSourceName ?? "",
+    sourceUrl: briefSourceUrl ?? "",
+    cmsTags: draft.cms?.tags ?? [],
+    slug: slugify(draft.title),
+    slugEdited: false,
+    excerpt: record.excerpt,
+    category: record.category,
+    tags: record.tags,
+    imageAlt: "",
+    altEdited: false,
+  };
+}
+
 /**
  * Steps ③ and ④ of the editorial wizard: one screen per chosen channel.
  *
@@ -115,6 +246,9 @@ const CHANNEL_GAP_DAYS = 7;
 export default function PublishChannelStep({
   channel,
   channels,
+  pieceId,
+  initialDraft,
+  initialStatus,
   briefTitle,
   briefAngle,
   briefSourceName,
@@ -129,13 +263,33 @@ export default function PublishChannelStep({
   const index = channels.indexOf(channel);
   const nextChannel = channels[index + 1];
 
-  // The draft was already generated at the end of step ②, so it is here on
-  // arrival: making the user wait a second time for the same work would be a
-  // fake loading state. It is generated PER CHANNEL — one brief, two different
-  // texts — so the two pieces don't compete with each other in search results.
-  const [draft] = useState(() => mockGenerateDraft(channel, briefTitle, briefAngle));
-  const [title, setTitle] = useState(draft.title);
-  const [body, setBody] = useState(draft.body);
+  /**
+   * Where this screen starts from.
+   *
+   * Two ways in, one shape out: a **resume**, when the piece already has a row
+   * for this channel, or a **fresh generation** when it does not. Resolving that
+   * once here is what keeps every field below from having to ask again which of
+   * the two it came from — and asking twice is how half a screen ends up restored
+   * and the other half regenerated.
+   *
+   * The generated path is still the prototype's canned text (phase 3 replaces it
+   * with the redactor call); the resumed path is real.
+   */
+  const [seed] = useState(() =>
+    buildSeed({
+      channel,
+      initialDraft,
+      briefTitle,
+      briefAngle,
+      briefSourceName,
+      briefSourceUrl,
+      previousChannelDate,
+    }),
+  );
+
+  const [title, setTitle] = useState(seed.title);
+  const [body, setBody] = useState(seed.body);
+  const [status, setStatus] = useState<ChannelDraftStatus>(initialStatus);
 
   // --- Motor.es' own CMS columns -------------------------------------------
   // `Título Listados` falls back to a copy of `Título` when the model has nothing
@@ -143,19 +297,19 @@ export default function PublishChannelStep({
   // while it is that copy it keeps following the headline, exactly like the slug
   // does on step ④ — a copy that silently goes stale would be worse than no
   // prefill at all. The moment it is edited by hand, it stops following.
-  const [listTitle, setListTitle] = useState(draft.cms?.listTitle || draft.title);
-  const [listTitleEdited, setListTitleEdited] = useState(Boolean(draft.cms?.listTitle));
-  const [discoverTitle, setDiscoverTitle] = useState(draft.cms?.discoverTitle ?? "");
-  const [metaTitle, setMetaTitle] = useState(draft.cms?.metaTitle ?? "");
-  const [metaDescription, setMetaDescription] = useState(draft.cms?.metaDescription ?? "");
-  const [lead, setLead] = useState(draft.cms?.lead ?? "");
-  const [brand, setBrand] = useState(draft.cms?.brand ?? "");
-  const [model, setModel] = useState(draft.cms?.model ?? "");
+  const [listTitle, setListTitle] = useState(seed.listTitle);
+  const [listTitleEdited, setListTitleEdited] = useState(seed.listTitleEdited);
+  const [discoverTitle, setDiscoverTitle] = useState(seed.discoverTitle);
+  const [metaTitle, setMetaTitle] = useState(seed.metaTitle);
+  const [metaDescription, setMetaDescription] = useState(seed.metaDescription);
+  const [lead, setLead] = useState(seed.lead);
+  const [brand, setBrand] = useState(seed.brand);
+  const [model, setModel] = useState(seed.model);
   // Prefilled from the idea's source when there is one, empty when writing from
   // scratch. We already know this from step ①.
-  const [sourceName, setSourceName] = useState(briefSourceName ?? "");
-  const [sourceUrl, setSourceUrl] = useState(briefSourceUrl ?? "");
-  const [cmsTags, setCmsTags] = useState<string[]>(draft.cms?.tags ?? []);
+  const [sourceName, setSourceName] = useState(seed.sourceName);
+  const [sourceUrl, setSourceUrl] = useState(seed.sourceUrl);
+  const [cmsTags, setCmsTags] = useState<string[]>(seed.cmsTags);
 
   /**
    * What each field held the last time it was copied.
@@ -172,25 +326,24 @@ export default function PublishChannelStep({
   // category and tags arrive proposed by the AI and editable (Fer, 2026-07-26):
   // they are all derivable from the text it just wrote, and a pre-filled record
   // is never a blank page.
-  const [record] = useState(() => mockPostRecord(draft.title, draft.body));
-  const [excerpt, setExcerpt] = useState(record.excerpt);
-  const [category, setCategory] = useState<PostCategory>(record.category);
-  const [tags, setTags] = useState<string[]>(record.tags);
+  const [excerpt, setExcerpt] = useState(seed.excerpt);
+  const [category, setCategory] = useState<PostCategory>(seed.category);
+  const [tags, setTags] = useState<string[]>(seed.tags);
   // The alt text is written by the AI from the image itself, and rewritten
   // whenever the image changes — unless it has been edited by hand, in which case
   // the person's words win and the button is there to redo it on purpose.
-  const [imageAlt, setImageAlt] = useState("");
-  const [altEdited, setAltEdited] = useState(false);
+  const [imageAlt, setImageAlt] = useState(seed.imageAlt);
+  const [altEdited, setAltEdited] = useState(seed.altEdited);
   const [describingAlt, setDescribingAlt] = useState(false);
-  const [slug, setSlug] = useState(() => slugify(draft.title));
-  const [slugEdited, setSlugEdited] = useState(false);
+  const [slug, setSlug] = useState(seed.slug);
+  const [slugEdited, setSlugEdited] = useState(seed.slugEdited);
   // Errors on these show on blur, like step ②: complaining about an empty field
   // on arrival would be scolding someone for not having typed yet.
   const [excerptTouched, setExcerptTouched] = useState(false);
   const [altTouched, setAltTouched] = useState(false);
   const [leadTouched, setLeadTouched] = useState(false);
 
-  const [imageUrl, setImageUrl] = useState(MOCK_HERO_IMAGE);
+  const [imageUrl, setImageUrl] = useState(seed.imageUrl);
   const [editPrompt, setEditPrompt] = useState("");
   const [generatePrompt, setGeneratePrompt] = useState("");
   const [editing, setEditing] = useState(false);
@@ -199,19 +352,53 @@ export default function PublishChannelStep({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   const [improvingSeo, setImprovingSeo] = useState(false);
-  // A week after the previous channel, when there was one. Prefilled and not
-  // merely suggested: the rule is fixed, so making it the starting value is one
-  // decision less, and it stays editable for the exceptions.
-  const defaultPublishDate = previousChannelDate
-    ? shiftDateByDays(previousChannelDate, CHANNEL_GAP_DAYS)
-    : "";
-  const [publishDate, setPublishDate] = useState(defaultPublishDate);
+  const [publishDate, setPublishDate] = useState(seed.publishDate);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [handingOff, setHandingOff] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const [done, setDone] = useState(false);
   const { toast, showToast, dismiss } = useToast();
+
+  /**
+   * Everything this screen persists, in the shape the row expects.
+   *
+   * Only one of the two payloads applies, and it is chosen by the same flags that
+   * decide which fields are on screen — so a channel can never store a field it
+   * does not show.
+   */
+  const payload: ChannelPayload = spec.needsCmsFields
+    ? {
+        listTitle,
+        discoverTitle,
+        metaTitle,
+        metaDescription,
+        lead,
+        brand,
+        model,
+        sourceName,
+        sourceUrl,
+        tags: cmsTags,
+      }
+    : { slug, excerpt, category, tags, imageAlt };
+
+  const { state: saveState, saveNow } = useDraftAutosave({
+    pieceId,
+    channel,
+    draft: {
+      title,
+      body,
+      imageUrl: imageUrl || null,
+      publishDate: publishDate || null,
+      payload,
+      status,
+    },
+    // A resumed draft is already what the database holds; a freshly generated one
+    // is not, so its first autosave is what materializes it.
+    savedOnMount: Boolean(initialDraft),
+    onError: () =>
+      showToast("No se ha podido guardar. Se reintentará con el siguiente cambio.", "error"),
+  });
 
   const errors = validateChannelDraft({
     title,
@@ -273,6 +460,7 @@ export default function PublishChannelStep({
   const backHref = (() => {
     if (!previousSpec) return "/admin/redaccion/enfoque";
     const params = new URLSearchParams({ canales: channels.join(","), canal: previousSpec.value });
+    if (pieceId) params.set("pieza", pieceId);
     if (ideaId) params.set("idea", ideaId);
     return `/admin/redaccion/texto?${params}`;
   })();
@@ -416,13 +604,17 @@ export default function PublishChannelStep({
   /**
    * Saving a draft is the one thing that works with an incomplete piece: an
    * image is required to publish, never to keep what you have written.
+   *
+   * With the autosave running underneath, this button is no longer the only way
+   * the work survives — it is the **commit point you can point at**. Both are
+   * needed: automatic saving keeps the promise, and a button you pressed is what
+   * makes it believable.
    */
-  function handleSaveDraft() {
+  async function handleSaveDraft() {
     setSavingDraft(true);
-    window.setTimeout(() => {
-      setSavingDraft(false);
-      showToast("Borrador guardado. Puedes seguir cuando quieras.");
-    }, HANDOFF_DELAY_MS);
+    const ok = await saveNow();
+    setSavingDraft(false);
+    if (ok) showToast("Borrador guardado. Puedes seguir cuando quieras.");
   }
 
   /**
@@ -472,28 +664,37 @@ export default function PublishChannelStep({
    * Either way it is gated on the same validation, because "seguir" without a
    * finished piece would just push an incomplete draft one step further.
    */
-  function handlePrimary() {
+  async function handlePrimary() {
     if (!isChannelDraftValid(errors)) return;
 
     if (nextSpec) {
       setNavigating(true);
-      window.setTimeout(() => {
-        const params = new URLSearchParams({ canales: channels.join(","), canal: nextSpec.value });
-        if (ideaId) params.set("idea", ideaId);
-        // So the next channel can start a week after this one. It travels in the
-        // URL because each channel is a separate page, and that also means a
-        // reload of that page keeps the right default.
-        if (publishDate) params.set("fecha", publishDate);
-        window.location.href = `/admin/redaccion/texto?${params}`;
-      }, HANDOFF_DELAY_MS);
+      // Flushed rather than left to the timer: navigating away mid-debounce is
+      // exactly the window that would lose the last edits.
+      await saveNow();
+      const params = new URLSearchParams({ canales: channels.join(","), canal: nextSpec.value });
+      if (pieceId) params.set("pieza", pieceId);
+      if (ideaId) params.set("idea", ideaId);
+      // So the next channel can start a week after this one. Redundant once the
+      // piece exists (the next screen reads this channel's stored date), and kept
+      // for the case where it does not.
+      if (publishDate) params.set("fecha", publishDate);
+      window.location.href = `/admin/redaccion/texto?${params}`;
       return;
     }
 
     setHandingOff(true);
-    window.setTimeout(() => {
-      setHandingOff(false);
-      setDone(true);
-    }, HANDOFF_DELAY_MS);
+    // Terminal state, and the two channels' are NOT the same thing: Motor.es is
+    // finished on our side, EVminds is scheduled. Phase 4 is what turns the
+    // second one into an actual `posts` row and fills `post_id`.
+    const finalStatus: ChannelDraftStatus = spec.handoff === "copy" ? "done" : "scheduled";
+    // Without a piece there is nothing to write into, and that must not stop the
+    // wizard from finishing: entering this step directly is a supported route.
+    const ok = pieceId ? await saveNow({ status: finalStatus }) : true;
+    setHandingOff(false);
+    if (!ok) return;
+    setStatus(finalStatus);
+    setDone(true);
   }
 
   if (done) {
@@ -617,19 +818,22 @@ export default function PublishChannelStep({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BackStepButton
           href={backHref}
-          dirty
-          confirmTitle={
-            previousSpec ? `¿Volver al texto de ${previousSpec.name}?` : "¿Volver al enfoque?"
-          }
-          // Honest about what is lost, which is not the same in the two cases.
-          // Nothing is persisted yet in this phase (see the "Guardar y seguir
-          // luego" note in the design log), so going back really does discard
-          // this screen's work.
+          // Only relevant without a piece; with one, `onBeforeLeave` decides.
+          dirty={!pieceId}
+          // **This dialog used to warn that going back lost the text, the image
+          // and the date, and that was true: there was no durable row.** Now
+          // there is, so leaving saves and goes — and the only thing left worth
+          // interrupting for is a save that failed. Leaving the old wording in
+          // place would have been worse than never having it: a dialog that
+          // warns about something that cannot happen teaches people not to read
+          // dialogs.
+          confirmTitle={pieceId ? "No se han podido guardar los cambios" : "¿Volver atrás?"}
           confirmDescription={
-            previousSpec
-              ? `Se perderá el texto de ${spec.name}, la imagen y la fecha que has puesto aquí: todavía no se guardan en ningún sitio. Al volver, ${previousSpec.name} se generará de nuevo desde tu enfoque.`
-              : `Se perderá el texto de ${spec.name}, la imagen y la fecha que has puesto aquí: todavía no se guardan en ningún sitio. Tu enfoque sigue como lo dejaste.`
+            pieceId
+              ? `Los últimos cambios de ${spec.name} no han llegado a guardarse, así que se perderían al salir. Puedes seguir aquí e intentarlo otra vez, o salir de todas formas.`
+              : `Esta pieza no se está guardando en ningún sitio, así que se perderá el texto de ${spec.name}, la imagen y la fecha.`
           }
+          onBeforeLeave={pieceId ? () => saveNow() : undefined}
           disabled={busy}
         />
       </div>
@@ -835,12 +1039,24 @@ export default function PublishChannelStep({
                 : "Quedará programado y podrás cambiar la fecha después desde Artículos."
           }
           minWidth="16rem"
-          secondary={{
-            label: "Guardar borrador",
-            runningLabel: "Guardando…",
-            running: savingDraft,
-            onClick: handleSaveDraft,
-          }}
+          // No piece, nowhere to save: offering the button anyway would be the
+          // same empty promise that got it removed from step ② in the first place.
+          secondary={
+            pieceId
+              ? {
+                  label: "Guardar borrador",
+                  runningLabel: "Guardando…",
+                  running: savingDraft || saveState === "saving",
+                  onClick: handleSaveDraft,
+                  // Nothing pending: the button says so and goes inert, which is
+                  // also how the autosave becomes visible without a second widget
+                  // saying the same thing in different words.
+                  done: saveState === "clean",
+                  doneLabel: "Borrador guardado",
+                  minWidth: "13rem",
+                }
+              : undefined
+          }
         />
       </div>
 
