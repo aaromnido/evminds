@@ -13,13 +13,24 @@
  */
 import AdminShell from "@/layouts/AdminShell.astro";
 import PickIdeaStep from "@/components/admin/editorial/PickIdeaStep.tsx";
+import PiecesInProgress from "@/components/admin/editorial/PiecesInProgress.tsx";
 import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
 import { buildMockIdeas } from "@/lib/editorial-mocks";
+import { fetchPieceSummaries } from "@/lib/editorial-pieces";
 
 // Single clock reference shared with the island, so the relative labels ("hace
 // 6 h") render identically on the server and after hydration.
 const nowIso = new Date().toISOString();
 const ideas = buildMockIdeas(nowIso);
+
+// What is still unfinished, capped like "Guardadas y propias" below: this block
+// is real data on a screen that is still mock ideas, which is exactly the seam
+// phase 2 was supposed to close first.
+const PIECES_SHOWN = 3;
+const supabase = Astro.locals.supabase;
+const { pieces, total } = supabase
+  ? await fetchPieceSummaries(supabase, { status: "in_progress", limit: PIECES_SHOWN })
+  : { pieces: [], total: 0 };
 ---
 
 <AdminShell
@@ -29,6 +40,13 @@ const ideas = buildMockIdeas(nowIso);
 >
   <div class="flex flex-col gap-6">
     <WizardSteps current={1} />
+    {
+      /* Above everything, and rendered with no `client:` directive — cards and
+        links only, so it costs zero JavaScript. First because a piece in progress
+        is work you owe: buried under the proposals, you start writing the same
+        thing twice. */
+    }
+    <PiecesInProgress pieces={pieces} total={total} nowIso={nowIso} />
     <PickIdeaStep client:load ideas={ideas} nowIso={nowIso} />
   </div>
 </AdminShell>

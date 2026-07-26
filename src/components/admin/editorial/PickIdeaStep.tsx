@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import IdeaCard from "./IdeaCard";
 import IdeasEmptyState from "./IdeasEmptyState";
-import IdeasSection from "./IdeasSection";
+import CardsSection from "./CardsSection";
 import CreateIdeaDrawer from "./CreateIdeaDrawer";
 import RegenerateIdeasDialog from "./RegenerateIdeasDialog";
 import Toast from "@/components/ui/toast";
@@ -181,7 +181,7 @@ export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
         <div className={cn("grid gap-8", (pickingId || regenerating) && "pointer-events-none")}>
           {view === "pending" ? (
             <>
-              <IdeasSection
+              <CardsSection
                 title="Guardadas y propias"
                 hint="Tus ideas. Siguen aquí hasta que escribas sobre ellas."
                 count={kept.length}
@@ -205,9 +205,9 @@ export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
                     </Button>
                   </div>
                 )}
-              </IdeasSection>
+              </CardsSection>
 
-              <IdeasSection
+              <CardsSection
                 title="Propuestas de hoy"
                 hint="No se guardan: si no eliges ni guardas, desaparecen."
                 count={proposals.length}
@@ -224,14 +224,14 @@ export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
                     onDismiss={handleDismiss}
                   />
                 ))}
-              </IdeasSection>
+              </CardsSection>
             </>
           ) : (
-            <IdeasSection title="Ya escritas o caducadas" count={history.length}>
+            <CardsSection title="Ya escritas o caducadas" count={history.length}>
               {history.map((idea) => (
                 <IdeaCard key={idea.id} idea={idea} nowIso={nowIso} variant="history" />
               ))}
-            </IdeasSection>
+            </CardsSection>
           )}
         </div>
       )}

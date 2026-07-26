@@ -12,7 +12,12 @@
  */
 
 import type { IdeaCandidate, IdeaDraftInput, PublishChannel } from "./editorial-types";
-import { CMS_TAGS_MAX, CMS_TITLE_MAX, SEO_TITLE_MAX } from "./editorial-validation";
+import {
+  CMS_META_DESCRIPTION_MAX,
+  CMS_TAGS_MAX,
+  CMS_TITLE_MAX,
+  SEO_TITLE_MAX,
+} from "./editorial-validation";
 import { sourceHostname } from "./editorial-utils";
 import { VALID_POST_CATEGORIES, type PostCategory } from "./post-categories";
 
@@ -403,21 +408,61 @@ export const MOCK_HERO_IMAGE = "/images/articulos/0002/hero-nissan-micra.png";
  */
 function evmindsHeadline(subject: string): string {
   const frame = "Seis años en eléctrico";
-  const room = SEO_TITLE_MAX - frame.length - 2;
+  return `${frame}: ${trimToWords(subject, SEO_TITLE_MAX - frame.length - 2)}`;
+}
 
-  let tail = subject;
-  if (tail.length > room) {
-    tail = tail.slice(0, room).replace(/[\s,;:]+\S*$/, "");
-    // Cutting at a word boundary alone leaves things like "…Supercargadores en",
-    // which reads broken. Dropping trailing function words is enough to land on
-    // something that still parses as Spanish.
-    tail = tail.replace(
+/**
+ * Cuts a phrase to fit, at a word boundary and without a dangling preposition.
+ *
+ * Cutting at a word boundary alone leaves things like "…Supercargadores en",
+ * which reads broken, so trailing function words go too. Shared by the headline
+ * reframe and the meta fields, which all need to land inside someone's limit and
+ * still parse as Spanish.
+ */
+function trimToWords(text: string, max: number): string {
+  let out = text.trim();
+  if (out.length > max) {
+    out = out.slice(0, max).replace(/[\s,;:]+\S*$/, "");
+    out = out.replace(
       /(\s+(?:a|de|del|en|con|por|para|y|o|que|su|sus|el|la|los|las|un|una|al))+$/i,
       "",
     );
   }
+  return out.replace(/[\s,;:]+$/, "");
+}
 
-  return `${frame}: ${tail.replace(/[\s,;:]+$/, "")}`;
+/**
+ * Fake "escribir la meta descripción con IA".
+ *
+ * **Written on demand, never prefilled** (Fer, 2026-07-26). Their CMS calls this
+ * an override — "solo lo utilizamos si queremos modificar la descripción en las
+ * búsquedas" — so a field that arrived filled on every piece would quietly
+ * override their default every time, without the decision ever being made. The
+ * button keeps the default empty and removes the blank page on the pieces where
+ * you do want one.
+ *
+ * It is built from the headline and NOT from the entradilla, which is the whole
+ * point of the two being different asks: one sentence for a search result versus
+ * a paragraph that opens the article. A mock that copied the lead would model the
+ * exact mistake the prompt has to avoid in phase 3.
+ */
+export function mockWriteMetaDescription(title: string): string {
+  const subject = (title.split(/[:—–]/)[0] || title).trim() || "El coche eléctrico en España";
+  const sentence = `${subject}: qué cambia de verdad para quien conduce eléctrico en España, con precios y consumos reales.`;
+  return sentence.length <= CMS_META_DESCRIPTION_MAX
+    ? sentence
+    : `${trimToWords(sentence, CMS_META_DESCRIPTION_MAX - 1)}.`;
+}
+
+/**
+ * Fake "acortar el titular para el meta título".
+ *
+ * Only ever offered when the headline overruns Motor.es' recommended 65, because
+ * that is the one case their own hint describes: "si sobrepasa mucho esta cifra
+ * usar 'metatítulo'". With a short headline there would be nothing to solve.
+ */
+export function mockShortenTitleForSearch(title: string): string {
+  return trimToWords(title, CMS_TITLE_MAX);
 }
 
 /**

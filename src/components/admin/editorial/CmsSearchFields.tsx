@@ -13,6 +13,21 @@ interface Props {
     metaTitle: CopyBinding;
     metaDescription: CopyBinding;
   };
+  /**
+   * Write the meta description with the AI (Fer, 2026-07-26).
+   *
+   * On demand and never prefilled: see the block comment below on why these two
+   * arrive empty. The button is what removes the blank page on the pieces where
+   * you do decide to write one.
+   */
+  writingMetaDescription: boolean;
+  onWriteMetaDescription: () => void;
+  /**
+   * Shorten the headline for search. Absent when the headline already fits, since
+   * the meta title only exists for the case where it does not.
+   */
+  shorteningTitle?: boolean;
+  onShortenTitle?: () => void;
   disabled?: boolean;
 }
 
@@ -41,6 +56,10 @@ export default function CmsSearchFields({
   onMetaDescriptionChange,
   fallbackTitle,
   copy,
+  writingMetaDescription,
+  onWriteMetaDescription,
+  shorteningTitle = false,
+  onShortenTitle,
   disabled,
 }: Props) {
   return (
@@ -55,6 +74,19 @@ export default function CmsSearchFields({
         max={CMS_TITLE_MAX}
         counterOverTitle="Motor.es recomienda 65 caracteres."
         copy={{ what: "el meta título", ...copy.metaTitle }}
+        // Only where their hint puts it: when the headline overruns 65. Offering
+        // it on a short headline would propose fixing a problem you do not have.
+        assist={
+          onShortenTitle
+            ? {
+                label: "Acortar con IA",
+                runningLabel: "Acortando…",
+                running: shorteningTitle,
+                onClick: onShortenTitle,
+                allowEmpty: true,
+              }
+            : undefined
+        }
         disabled={disabled}
       />
 
@@ -69,6 +101,17 @@ export default function CmsSearchFields({
         max={CMS_META_DESCRIPTION_MAX}
         counterOverTitle="Google suele cortar la descripción por aquí en los resultados de búsqueda."
         copy={{ what: "la meta descripción", ...copy.metaDescription }}
+        assist={{
+          label: "Escribir con IA",
+          runningLabel: "Escribiendo…",
+          running: writingMetaDescription,
+          onClick: onWriteMetaDescription,
+          // Its normal state is empty, so requiring text before offering to write
+          // it would leave the button permanently off in exactly the case it
+          // exists for.
+          allowEmpty: true,
+          minWidth: "9.5rem",
+        }}
         disabled={disabled}
       />
     </div>

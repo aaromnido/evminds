@@ -26,6 +26,8 @@ import {
   mockDescribeImage,
   mockImproveSeoTitle,
   mockPostRecord,
+  mockShortenTitleForSearch,
+  mockWriteMetaDescription,
   MOCK_HERO_IMAGE,
   type MockImageVariant,
 } from "@/lib/editorial-mocks";
@@ -40,6 +42,7 @@ import type {
 import { useDraftAutosave } from "@/lib/use-draft-autosave";
 import { formatPublishSchedule, shiftDateByDays } from "@/lib/editorial-utils";
 import {
+  CMS_TITLE_MAX,
   isChannelDraftValid,
   isPublishDatePast,
   validateChannelDraft,
@@ -352,6 +355,8 @@ export default function PublishChannelStep({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   const [improvingSeo, setImprovingSeo] = useState(false);
+  const [writingMetaDescription, setWritingMetaDescription] = useState(false);
+  const [shorteningTitle, setShorteningTitle] = useState(false);
   const [publishDate, setPublishDate] = useState(seed.publishDate);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -578,6 +583,32 @@ export default function PublishChannelStep({
     window.setTimeout(() => {
       applyTitle(mockImproveSeoTitle(title));
       setImprovingSeo(false);
+    }, EDIT_IMAGE_DELAY_MS);
+  }
+
+  /**
+   * Writes the meta description on demand (Fer, 2026-07-26).
+   *
+   * PROTOTYPE: `mockWriteMetaDescription`. The real version is one more
+   * structured call in phase 3, and it has to be told explicitly that this is one
+   * sentence for a search result and NOT the entradilla — asking twice for "a
+   * summary" with two different lengths is how you get the same text truncated
+   * differently.
+   */
+  function handleWriteMetaDescription() {
+    setWritingMetaDescription(true);
+    window.setTimeout(() => {
+      setMetaDescription(mockWriteMetaDescription(title));
+      setWritingMetaDescription(false);
+    }, EDIT_IMAGE_DELAY_MS);
+  }
+
+  /** Shortens the headline into the meta title. Only offered when it overruns 65. */
+  function handleShortenTitle() {
+    setShorteningTitle(true);
+    window.setTimeout(() => {
+      setMetaTitle(mockShortenTitleForSearch(title));
+      setShorteningTitle(false);
     }, EDIT_IMAGE_DELAY_MS);
   }
 
@@ -892,6 +923,12 @@ export default function PublishChannelStep({
                   metaTitle: bindCopy("metaTitle", metaTitle),
                   metaDescription: bindCopy("metaDescription", metaDescription),
                 }}
+                writingMetaDescription={writingMetaDescription}
+                onWriteMetaDescription={handleWriteMetaDescription}
+                // Their own hint is the rule: the meta title is for when the
+                // headline overruns, so the helper only exists in that case.
+                shorteningTitle={shorteningTitle}
+                onShortenTitle={title.length > CMS_TITLE_MAX ? handleShortenTitle : undefined}
                 disabled={busy}
               />
             </StepSection>

@@ -38,6 +38,13 @@ interface Props {
     running: boolean;
     onClick: () => void;
     minWidth?: string;
+    /**
+     * The helper **writes** the field instead of improving what is there, so an
+     * empty field is its normal starting point rather than a reason to be
+     * disabled. True for `Meta descripción`, whose whole point is that it is
+     * usually empty until you decide the piece needs one.
+     */
+    allowEmpty?: boolean;
   };
   error?: string | null;
   disabled?: boolean;
@@ -133,7 +140,7 @@ export default function CountedTextField({
             label={assist.label}
             runningLabel={assist.runningLabel}
             running={assist.running}
-            disabled={disabled || value.trim().length === 0}
+            disabled={disabled || (!assist.allowEmpty && value.trim().length === 0)}
             onClick={assist.onClick}
             minWidth={assist.minWidth ?? "8.75rem"}
             buttonClassName="h-8"

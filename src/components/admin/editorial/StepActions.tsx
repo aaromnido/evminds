@@ -50,6 +50,8 @@ interface Props {
      */
     done?: boolean;
     doneLabel?: string;
+    /** Blocked for its own reasons, independently of the primary action. */
+    disabled?: boolean;
   };
 }
 
@@ -100,7 +102,7 @@ export default function StepActions({
             variant="outline"
             size="lg"
             onClick={secondary.onClick}
-            disabled={running || secondary.running || secondary.done}
+            disabled={running || secondary.running || secondary.done || secondary.disabled}
             aria-live="polite"
             className={cn(
               "justify-center",
