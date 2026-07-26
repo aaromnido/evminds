@@ -18,10 +18,31 @@ import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/markdown";
 import { htmlToMarkdown } from "@/lib/html-to-markdown";
 
+/**
+ * Which formatting is on offer.
+ *
+ * - `full` — the article body: headings included.
+ * - `lead` — Motor.es' entradilla, whose own toolbar over there is bold, italic,
+ *   list, link and quote. **No headings**, and that is not a simplification: a
+ *   subtitle inside a 45-word opening paragraph would break their template,
+ *   which prints the entradilla above the article as one block.
+ */
+export type EditorTools = "full" | "lead";
+
 interface Props {
   /** Markdown, which stays the stored format whichever view is open. */
   value: string;
   onChange: (markdown: string) => void;
+  tools?: EditorTools;
+  /** Short box for a one-paragraph field, instead of the article-sized one. */
+  compact?: boolean;
+  /**
+   * Names the editable area for a screen reader.
+   *
+   * A `<Label htmlFor>` cannot do it here: the editable region is a
+   * contenteditable `div`, not a form control, so `for` never associates with it.
+   */
+  ariaLabel?: string;
   disabled?: boolean;
 }
 
@@ -45,7 +66,14 @@ interface Props {
  * `immediatelyRender: false` is required inside a hydrated Astro island, same as
  * in `RichTextEditor`.
  */
-export default function VisualDraftEditor({ value, onChange, disabled }: Props) {
+export default function VisualDraftEditor({
+  value,
+  onChange,
+  tools = "full",
+  compact,
+  ariaLabel,
+  disabled,
+}: Props) {
   /**
    * Last Markdown this editor produced. Incoming `value` equal to it means the
    * change came from here, so the document must NOT be reset — doing that on
@@ -76,7 +104,12 @@ export default function VisualDraftEditor({ value, onChange, disabled }: Props) 
         lastEmitted.current = markdown;
         onChange(markdown);
       },
-      editorProps: { attributes: { class: "tiptap focus:outline-none" } },
+      editorProps: {
+        attributes: {
+          class: "tiptap focus:outline-none",
+          ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
+        },
+      },
     },
     [],
   );
@@ -97,6 +130,21 @@ export default function VisualDraftEditor({ value, onChange, disabled }: Props) 
 
   if (!editor) return null;
 
+  const headingButtons = [
+    {
+      label: "Subtítulo",
+      icon: <Heading2 />,
+      run: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+      active: editor.isActive("heading", { level: 2 }),
+    },
+    {
+      label: "Subtítulo menor",
+      icon: <Heading3 />,
+      run: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+      active: editor.isActive("heading", { level: 3 }),
+    },
+  ];
+
   const buttons = [
     {
       label: "Negrita",
@@ -110,18 +158,7 @@ export default function VisualDraftEditor({ value, onChange, disabled }: Props) 
       run: () => editor.chain().focus().toggleItalic().run(),
       active: editor.isActive("italic"),
     },
-    {
-      label: "Subtítulo",
-      icon: <Heading2 />,
-      run: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-      active: editor.isActive("heading", { level: 2 }),
-    },
-    {
-      label: "Subtítulo menor",
-      icon: <Heading3 />,
-      run: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-      active: editor.isActive("heading", { level: 3 }),
-    },
+    ...(tools === "full" ? headingButtons : []),
     {
       label: "Lista",
       icon: <List />,
@@ -210,7 +247,8 @@ export default function VisualDraftEditor({ value, onChange, disabled }: Props) 
 
       <div
         className={cn(
-          "max-h-[36rem] min-h-[24rem] overflow-y-auto rounded-lg border border-input bg-background px-5 py-4",
+          "overflow-y-auto rounded-lg border border-input bg-background px-5 py-4",
+          compact ? "max-h-[14rem] min-h-[7rem]" : "max-h-[36rem] min-h-[24rem]",
           "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
           disabled && "pointer-events-none opacity-60",
         )}

@@ -34,6 +34,19 @@ export interface ChannelSpec {
    * handing a text over to someone else's CMS simply does not.
    */
   needsPostRecord?: boolean;
+  /**
+   * Whether this channel's piece is transcribed by hand into someone else's CMS,
+   * and therefore carries that CMS's own columns.
+   *
+   * Only true for Motor.es. It is what turns step ③ from "text + image + date"
+   * into a **reference sheet** for their form: their labels, their order, their
+   * help text, and a copy button per field.
+   *
+   * It could have been derived from `handoff === "copy"`, but that would tie two
+   * separate facts together — how the piece leaves and which fields it carries —
+   * and a future third channel could easily be one without the other.
+   */
+  needsCmsFields?: boolean;
   /** Line under the text block's title, saying what this channel's text IS. */
   draftHint: string;
   /** Label and hint of the date field on that channel's screen. Always required. */
@@ -63,14 +76,21 @@ export const CHANNELS: ChannelSpec[] = [
     name: "Motor.es",
     description: "Tu colaboración. Se genera el texto y lo copias a su CMS con la imagen.",
     handoff: "copy",
+    needsCmsFields: true,
     draftHint:
       "Escrito con tu enfoque. Edítalo todo lo que quieras: lo que se copia es lo que ves aquí.",
-    dateLabel: "Día previsto de publicación",
+    dateLabel: "Fecha",
     dateHint:
       "Su ritmo editorial no lo controlamos desde aquí, y la hora la pone su sistema. Apunta el día que esperas para cuadrar el tuyo, y cámbialo luego si se mueve.",
-    finalLabel: "Copiar el texto",
-    finalRunningLabel: "Copiando…",
-    doneTitle: "Texto copiado",
+    // Fer, 2026-07-26: "Copiar el texto" stopped being true the moment the piece
+    // started being copied field by field, and nothing on this screen publishes
+    // anything. What the button does is bookkeeping — the piece is finished on
+    // our side and the backup copy is kept — so that is what it says. The verb
+    // is shared with "Guardar borrador" beside it, and "y terminar" is what
+    // separates them: one keeps working, the other closes the piece.
+    finalLabel: "Guardar y terminar",
+    finalRunningLabel: "Guardando…",
+    doneTitle: "Pieza terminada",
     // Fer, 2026-07-26: it has to be explicit that nothing has been published.
     // The previous wording described the steps ("pégalo, sube la imagen") but
     // left the state implicit, and the green check on top reads as "done".

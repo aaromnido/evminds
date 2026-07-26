@@ -15,6 +15,25 @@ export const TITLE_MIN = 15;
 /** Below this the angle is not an instruction, it is a wish. */
 export const ANGLE_MIN = 30;
 
+/** Google truncates a headline around here, so it is what step ② aims at. */
+export const SEO_TITLE_MAX = 60;
+
+/**
+ * Motor.es' own recommended lengths, taken verbatim from their CMS help text
+ * (screenshot, 2026-07-26) rather than from the mapping document, which guessed
+ * bands (50–65, 135–155) their form does not state.
+ *
+ * They are **single recommended targets**, which is why the counters warn past
+ * the number instead of shading a range: "Recomendables 65", "Recomendables 155",
+ * "Recomendadas entre 40 y 45 palabras. 50 Máximo".
+ */
+export const CMS_TITLE_MAX = 65;
+export const CMS_META_DESCRIPTION_MAX = 155;
+/** Counted in **words**, unlike every other field on the screen. */
+export const CMS_LEAD_WORDS_MAX = 50;
+/** "Recomendado entre 2 y 5 como máximo." */
+export const CMS_TAGS_MAX = 5;
+
 export interface BriefErrors {
   title: string | null;
   angle: string | null;
@@ -44,6 +63,8 @@ export interface ChannelDraftErrors {
   slug: string | null;
   excerpt: string | null;
   imageAlt: string | null;
+  /** The other CMS's required fields. Always null on a channel we host. */
+  lead: string | null;
 }
 
 export interface ChannelDraftInput {
@@ -61,6 +82,20 @@ export interface ChannelDraftInput {
     slug: string;
     excerpt: string;
     imageAlt: string;
+  };
+  /**
+   * Set only on a channel transcribed into someone else's CMS (Motor.es). Same
+   * presence-activates-the-rules shape as `postRecord`.
+   *
+   * **Only the entradilla is in here, and that is deliberate.** Motor.es marks
+   * exactly two fields required in their form, `Título` and `Entradilla`, and the
+   * rest — meta title, meta description, marca, modelo, fuente, tags — are
+   * optional there. Requiring any of them here would invent a rule their own CMS
+   * does not have, and would block the button over a field Fer is allowed to
+   * leave empty. Same reasoning that keeps category and tags out of `postRecord`.
+   */
+  cmsRecord?: {
+    lead: string;
   };
 }
 
@@ -107,6 +142,14 @@ export function validateChannelDraft(input: ChannelDraftInput): ChannelDraftErro
       : record.imageAlt.trim()
         ? null
         : "Describe la imagen en una frase, para quien no puede verla.",
+    // The lead is `Entradilla` in Motor.es' form, one of only two fields they
+    // mark required. It is a separate field from the body on purpose: their
+    // template prints it above the article, and the body must not repeat it.
+    lead: !input.cmsRecord
+      ? null
+      : input.cmsRecord.lead.trim()
+        ? null
+        : "Escribe la entradilla: es el párrafo con el que abre la pieza en Motor.es.",
     title: input.title.trim() ? null : "El titular no puede quedarse vacío.",
     body: !body
       ? "No hay texto que publicar."

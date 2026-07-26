@@ -12,6 +12,7 @@
  */
 
 import type { IdeaCandidate, IdeaDraftInput, PublishChannel } from "./editorial-types";
+import { CMS_TAGS_MAX, CMS_TITLE_MAX, SEO_TITLE_MAX } from "./editorial-validation";
 import { sourceHostname } from "./editorial-utils";
 import { VALID_POST_CATEGORIES, type PostCategory } from "./post-categories";
 
@@ -319,9 +320,6 @@ export function mockExpandAngle(title: string, angle: string): string {
   );
 }
 
-/** Google truncates around here, so it is what the counter in the UI aims at. */
-export const SEO_TITLE_MAX = 60;
-
 /**
  * Fake "Mejorar SEO": rewrite the headline so the searchable part goes first and
  * the whole thing fits in a results page.
@@ -422,11 +420,93 @@ function evmindsHeadline(subject: string): string {
   return `${frame}: ${tail.replace(/[\s,;:]+$/, "")}`;
 }
 
+/**
+ * The Motor.es-only half of a draft: their CMS's extra columns.
+ *
+ * `fuente` and `url fuente` are NOT here — they come from the idea's source when
+ * there is one (step ①), so the model would only ever be guessing at something we
+ * already know. See `PublishChannelStep`.
+ */
+export interface MockCmsDraft {
+  /**
+   * Empty when the model has nothing genuinely different to propose, which is
+   * the documented default: the UI then falls back to a copy of `Título`, as
+   * Motor.es' own guidance says.
+   */
+  listTitle: string;
+  discoverTitle: string;
+  /**
+   * Empty unless it adds something. Their CMS says it plainly — "solo lo
+   * utilizamos si queremos modificar el título en las búsquedas" — and `Título`'s
+   * own hint completes the rule: "si sobrepasa mucho esta cifra usar
+   * metatítulo". So it is the escape valve for a long headline, not a field to
+   * fill on every piece.
+   */
+  metaTitle: string;
+  metaDescription: string;
+  /** Markdown, like the body. A paragraph of 40–45 words that the body does NOT repeat. */
+  lead: string;
+  brand: string;
+  model: string;
+  tags: string[];
+}
+
+/** Detection only — never a catalogue. See the design log on why these are text inputs. */
+const KNOWN_MODELS: [brand: string, model: string][] = [
+  ["Tesla", "Model 3"],
+  ["BYD", "Dolphin Surf"],
+  ["Xiaomi", "YU7"],
+  ["Renault", "Twingo"],
+  ["Dacia", "Spring"],
+  ["Nissan", "Micra"],
+  ["NIO", "ET5"],
+  ["Rivian", "R2"],
+  ["Citroën", "ë-C3"],
+];
+
+function mockCmsDraft(topic: string, subject: string, body: string): MockCmsDraft {
+  const haystack = `${topic} ${body}`.toLowerCase();
+  const match = KNOWN_MODELS.find(([brand]) => haystack.includes(brand.toLowerCase()));
+
+  const candidateTags = [
+    ["Coches eléctricos", true],
+    ["Autonomía", haystack.includes("autonom")],
+    ["Carga", haystack.includes("carga") || haystack.includes("cargar")],
+    ["Baterías", haystack.includes("batería") || haystack.includes("baterías")],
+    ["Precios", haystack.includes("precio") || haystack.includes("euro")],
+  ] as const;
+
+  return {
+    // Left empty on purpose so the documented fallback is what the screen shows:
+    // a listing title that starts as a copy of `Título` and follows it until it
+    // is edited by hand.
+    listTitle: "",
+    discoverTitle: `${subject}: esto es lo que he visto en seis años de eléctrico`,
+    // Only when the headline overruns their recommended length, which is exactly
+    // the case their help text describes.
+    metaTitle:
+      topic.length > CMS_TITLE_MAX
+        ? `${subject.slice(0, CMS_TITLE_MAX - 20).trim()}: datos reales en España`
+        : "",
+    metaDescription: "",
+    lead: "Llevo seis años conduciendo eléctrico como único coche. En ese tiempo he aprendido que las **rutinas** pesan mucho más que la autonomía homologada, y que casi todo depende de dónde enchufas por la noche. Aquí van mis cifras, con precios españoles y sin adornos.",
+    brand: match?.[0] ?? "",
+    model: match?.[1] ?? "",
+    tags: candidateTags
+      .filter(([, hit]) => hit)
+      .map(([tag]) => tag)
+      .slice(0, CMS_TAGS_MAX),
+  };
+}
+
 export function mockGenerateDraft(
   channel: PublishChannel,
   title: string,
-  angle: string,
-): { title: string; body: string } {
+  // Underscored because the canned text ignores it, while the signature keeps it:
+  // the real call is the angle's only real consumer, and dropping the parameter
+  // here would hide that from every caller.
+  _angle: string,
+): { title: string; body: string; cms?: MockCmsDraft } {
   const topic = title.trim() || "El coche eléctrico en España";
   const subject = topic.split(/[:—–]/)[0].trim() || topic;
 
@@ -453,28 +533,30 @@ export function mockGenerateDraft(
     };
   }
 
-  return {
-    title: topic,
-    body: [
-      `Llevo seis años conduciendo eléctrico a diario y hay una cosa que no aparece en ninguna ficha técnica: lo que de verdad cambia no son las cifras, son las rutinas. ${angle.trim() ? "" : ""}Esto es lo que he visto, con números de aquí y sin adornos.`,
-      "",
-      "## Qué dicen las cifras oficiales",
-      "",
-      "Sobre el papel todo cuadra. Los datos homologados salen de un ciclo de laboratorio que sirve para comparar coches entre sí, no para saber cuánto vas a gastar tú el martes que viene camino del trabajo. Por eso la distancia entre el folleto y el cuentakilómetros no es un engaño, es que miden cosas distintas.",
-      "",
-      "## Qué se ve en uso",
-      "",
-      "En trayecto urbano la diferencia es pequeña y a menudo favorable. En autopista a 120 km/h se abre, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior, bastante menos en la costa mediterránea. Nada de esto impide hacer vida normal, pero conviene saberlo antes de firmar y no después.",
-      "",
-      "Traducido a euros: cargando en casa con tarifa valle, el coste por cada 100 kilómetros se queda en unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre las dos situaciones es mucho mayor que la diferencia entre dos coches distintos.",
-      "",
-      "## Para quién tiene sentido hoy",
-      "",
-      "Si puedes enchufar donde duermes, la respuesta es fácil. Si no puedes, la pregunta deja de ser sobre el coche y pasa a ser sobre tu barrio: qué cargadores hay, a qué precio y con qué fiabilidad. Ese es el cálculo que casi nadie hace y el que más disgustos evita.",
-      "",
-      "Lo que sí puedo decir después de seis años es que la parte que más me preocupaba al principio, la autonomía, dejó de importarme el primer mes. Y la que ni me planteaba, la carga pública fuera de casa, es la que sigue dando trabajo.",
-    ].join("\n"),
-  };
+  // The body starts AFTER the lead, it does not contain it. That is Motor.es'
+  // own structure — their template prints `Entradilla` above the article — and
+  // it is why the redactor returns two pieces instead of one text that gets
+  // split afterwards: splitting later would put the seam wherever a paragraph
+  // break happened to fall and would reword nothing.
+  const body = [
+    "## Qué dicen las cifras oficiales",
+    "",
+    "Sobre el papel todo cuadra. Los datos homologados salen de un ciclo de laboratorio que sirve para comparar coches entre sí, no para saber cuánto vas a gastar tú el martes que viene camino del trabajo. Por eso la distancia entre el folleto y el cuentakilómetros no es un engaño, es que miden cosas distintas.",
+    "",
+    "## Qué se ve en uso",
+    "",
+    "En trayecto urbano la diferencia es pequeña y a menudo favorable. En autopista a 120 km/h se abre, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior, bastante menos en la costa mediterránea. Nada de esto impide hacer vida normal, pero conviene saberlo antes de firmar y no después.",
+    "",
+    "Traducido a euros: cargando en casa con tarifa valle, el coste por cada 100 kilómetros se queda en unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre las dos situaciones es mucho mayor que la diferencia entre dos coches distintos.",
+    "",
+    "## Para quién tiene sentido hoy",
+    "",
+    "Si puedes enchufar donde duermes, la respuesta es fácil. Si no puedes, la pregunta deja de ser sobre el coche y pasa a ser sobre tu barrio: qué cargadores hay, a qué precio y con qué fiabilidad. Ese es el cálculo que casi nadie hace y el que más disgustos evita.",
+    "",
+    "Lo que sí puedo decir después de seis años es que la parte que más me preocupaba al principio, la autonomía, dejó de importarme el primer mes. Y la que ni me planteaba, la carga pública fuera de casa, es la que sigue dando trabajo.",
+  ].join("\n");
+
+  return { title: topic, body, cms: mockCmsDraft(topic, subject, body) };
 }
 
 /**

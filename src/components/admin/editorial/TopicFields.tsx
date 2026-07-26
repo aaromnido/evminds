@@ -3,8 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import AiAssistButton from "./AiAssistButton";
 import FieldError from "./FieldError";
-import SeoTitleField from "./SeoTitleField";
-import type { BriefErrors } from "@/lib/editorial-validation";
+import CountedTextField from "./CountedTextField";
+import { SEO_TITLE_MAX, type BriefErrors } from "@/lib/editorial-validation";
 
 interface Props {
   title: string;
@@ -64,7 +64,7 @@ export default function TopicFields({
 
   return (
     <div className="grid gap-5">
-      <SeoTitleField
+      <CountedTextField
         id="brief-title"
         label="Titular de partida"
         hint="Orienta al redactor. Podrás retocarlo en el paso siguiente."
@@ -72,8 +72,17 @@ export default function TopicFields({
         value={title}
         onChange={onTitleChange}
         onBlur={() => setTouched((prev) => ({ ...prev, title: true }))}
-        improving={improvingSeo}
-        onImprove={onImproveSeo}
+        required
+        // Our own target, not Motor.es': step ② is about steering the redactor,
+        // and 60 is where Google cuts. Their CMS's 65 belongs to step ③.
+        max={SEO_TITLE_MAX}
+        counterOverTitle="Google suele cortar el titular por aquí en los resultados de búsqueda."
+        assist={{
+          label: "Mejorar SEO",
+          runningLabel: "Mejorando…",
+          running: improvingSeo,
+          onClick: onImproveSeo,
+        }}
         error={titleError}
         disabled={disabled}
       />

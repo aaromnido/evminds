@@ -22,6 +22,25 @@ interface Props {
   label?: string;
   hint?: string;
   placeholder?: string;
+  /**
+   * Recommended number of tags. Shows a count beside the hint and turns amber
+   * past it, so the pile cannot quietly grow — Motor.es recommends "entre 2 y 5
+   * como máximo", and over there an invented tag also costs a wait, since new
+   * ones are held until someone validates them.
+   *
+   * Absent means no count at all, which is how Artículos keeps behaving exactly
+   * as it did before this component was shared.
+   */
+  max?: number;
+  /**
+   * Optional control at the right of the label row — the editorial wizard puts
+   * its per-field copy button there.
+   *
+   * A slot rather than copy props, so this component stays ignorant of copying
+   * and Artículos does not start depending on an editorial component. Same shape
+   * as `ScheduleField`'s `quickPick`.
+   */
+  headerAction?: React.ReactNode;
   disabled?: boolean;
 }
 
@@ -42,9 +61,12 @@ export default function TagsField({
   label = "Tags",
   hint = "Pulsa Enter o coma para añadir.",
   placeholder = "Tesla, batería, …",
+  max,
+  headerAction,
   disabled,
 }: Props) {
   const [draft, setDraft] = useState("");
+  const over = max !== undefined && value.length > max;
 
   const add = () => {
     const tag = draft.trim().replace(/,$/, "");
@@ -54,7 +76,10 @@ export default function TagsField({
 
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <Label htmlFor={id}>{label}</Label>
+        {headerAction}
+      </div>
       {name && <input type="hidden" name={name} value={value.join(",")} />}
       <div
         className={cn(nativeFieldClass, "flex min-h-9 flex-wrap gap-1.5 py-1.5")}
@@ -92,7 +117,27 @@ export default function TagsField({
           className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
       </div>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="max-w-[78ch] text-xs text-muted-foreground">{hint}</p>
+        {max !== undefined && value.length > 0 && (
+          <span
+            className={cn(
+              "text-xs tabular-nums text-muted-foreground",
+              over && "rounded-full px-2 py-0.5 font-medium",
+            )}
+            style={
+              over
+                ? {
+                    backgroundColor: `color-mix(in oklab, var(--ev-tone-amber) 18%, var(--background))`,
+                    color: `color-mix(in oklab, var(--ev-tone-amber) 45%, var(--foreground))`,
+                  }
+                : undefined
+            }
+          >
+            {value.length}/{max}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -51,8 +51,8 @@ const nowHourInMadrid = new Intl.DateTimeFormat("en-GB", {
 <AdminShell
   title={`${spec.name} · Admin`}
   pageTitle={`Texto para ${spec.name}`}
-  pageDescription={spec.handoff === "copy"
-    ? "Revisa el texto, elige la imagen y cópialo a su CMS."
+  pageDescription={spec.needsCmsFields
+    ? "Los campos de su CMS, en su mismo orden. Copia uno a uno y pégalos allí."
     : "Revisa el texto, elige la imagen y programa la publicación."}
 >
   <PublishChannelStep
@@ -61,6 +61,8 @@ const nowHourInMadrid = new Intl.DateTimeFormat("en-GB", {
     channels={channels}
     briefTitle={idea?.proposed_title_es ?? ""}
     briefAngle={idea?.angle ?? ""}
+    briefSourceName={idea?.source_name}
+    briefSourceUrl={idea?.source_url}
     ideaId={ideaId}
     todayInMadrid={todayInMadrid}
     nowHourInMadrid={nowHourInMadrid}
