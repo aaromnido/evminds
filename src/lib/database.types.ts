@@ -19,6 +19,24 @@ type AiWarningType =
   | "launch_non_european"
   | "prototype_as_product";
 
+/**
+ * Editorial wizard channels — mirrors `PublishChannel` in src/lib/editorial-types.ts
+ * and the CHECK constraint in migration 53. These identifiers are OURS (see
+ * editorial-channels.ts), which is why a CHECK is legitimate for them and never
+ * for anything sourced from Motor.es' CMS.
+ */
+type EditorialChannel = "motor" | "evminds";
+
+/** Coarse piece state; `done` = every chosen channel is closed. Migration 53. */
+type EditorialPieceStatus = "in_progress" | "done";
+
+/**
+ * Per-channel state. Both terminal values are closed, and they do NOT mean the
+ * same thing: `done` is Motor.es finished on our side (publishing it is typing it
+ * into their CMS), `scheduled` means a `posts` row exists.
+ */
+type EditorialChannelStatus = "draft" | "done" | "scheduled";
+
 export interface Database {
   public: {
     Tables: {
@@ -134,6 +152,71 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      /**
+       * A piece being written in the editorial wizard: the brief, shared by every
+       * channel it goes to. See migration 53.
+       *
+       * `idea_id` intentionally has no foreign key, and the source is copied
+       * rather than joined: the Ideas section must allow deleting, and a written
+       * piece has to survive the idea it came from.
+       */
+      editorial_pieces: {
+        Row: {
+          id: string;
+          brief_title: string;
+          brief_angle: string;
+          reference_urls: string[];
+          idea_id: string | null;
+          source_name: string | null;
+          source_url: string | null;
+          channels: EditorialChannel[];
+          /** Coarse on purpose: the granular state lives per channel. */
+          status: EditorialPieceStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["editorial_pieces"]["Row"],
+          "id" | "created_at" | "updated_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["editorial_pieces"]["Insert"]>;
+        Relationships: [];
+      };
+      /**
+       * One row per channel a piece is written for. See migration 53 for why the
+       * state is modelled per channel rather than per piece.
+       */
+      editorial_channel_drafts: {
+        Row: {
+          id: string;
+          piece_id: string;
+          channel: EditorialChannel;
+          title: string;
+          /** Markdown — the stored workspace format for both channels. */
+          body: string;
+          image_url: string | null;
+          /** `YYYY-MM-DD`. The DAY, never an instant: the UI stopped asking for a time. */
+          publish_date: string | null;
+          /**
+           * Channel-specific fields, deliberately untyped here. The real shape is
+           * per channel and lives at the parse boundary in `editorial-types.ts`
+           * (`MotorChannelPayload` / `EvmindsChannelPayload`), which is also what
+           * absorbs Motor.es' deferred CMS fields without a schema change.
+           */
+          payload: Record<string, unknown>;
+          status: EditorialChannelStatus;
+          /** The `posts` row this channel created, so re-editing moves it instead of duplicating it. */
+          post_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["editorial_channel_drafts"]["Row"],
+          "id" | "created_at" | "updated_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["editorial_channel_drafts"]["Insert"]>;
         Relationships: [];
       };
     };
