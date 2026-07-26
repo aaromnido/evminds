@@ -30,7 +30,7 @@ interface Props {
  * something the model never promised. The image is the description.
  *
  * PROTOTYPE: the difference between variations is a CSS filter (see
- * `mockImageVariants`). The real version gets three URLs back from Higgsfield.
+ * `mockImageVariants`). The real version gets three URLs back from Magnific.
  */
 export default function ImageVariantPicker({ variants, selectedId, onSelect, onDiscard }: Props) {
   const hasSelection = variants.some((v) => v.id === selectedId);

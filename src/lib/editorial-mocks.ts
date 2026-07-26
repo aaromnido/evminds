@@ -564,7 +564,7 @@ export function mockPostRecord(title: string, body: string): MockPostRecord {
  *
  * PROTOTYPE SHORTCUT — the variations are the same image with a CSS filter on
  * top, because the point right now is designing the pick-one-of-three flow, not
- * generating pixels. The real version calls Higgsfield with the prompt and
+ * generating pixels. The real version calls Magnific with the prompt and
  * returns three genuine URLs, at which point `filter` disappears from this type.
  */
 export interface MockImageVariant {
