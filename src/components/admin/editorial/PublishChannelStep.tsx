@@ -917,14 +917,47 @@ export default function PublishChannelStep({
 
     setHandingOff(true);
     // Terminal state, and the two channels' are NOT the same thing: Motor.es is
-    // finished on our side, EVminds is scheduled. Phase 4 is what turns the
-    // second one into an actual `posts` row and fills `post_id`.
-    const finalStatus: ChannelDraftStatus = spec.handoff === "copy" ? "done" : "scheduled";
-    const ok = await saveNow({ status: finalStatus });
-    setHandingOff(false);
-    if (!ok) return;
-    setStatus(finalStatus);
-    setDone(true);
+    // finished on our side, EVminds is scheduled — a real `posts` row now,
+    // not a status flip (phase 4).
+    if (spec.handoff === "copy") {
+      const ok = await saveNow({ status: "done" });
+      setHandingOff(false);
+      if (!ok) return;
+      setStatus("done");
+      setDone(true);
+      return;
+    }
+
+    // EVminds: flush the draft first, then hand off to publish-post.ts, which
+    // is the only place that ever writes `status: 'scheduled'` — and only
+    // once the `posts` row it creates or updates has actually succeeded, so
+    // this row can never claim "scheduled" over a post that doesn't exist.
+    const flushed = await saveNow();
+    if (!flushed) {
+      setHandingOff(false);
+      return;
+    }
+    try {
+      const res = await fetch("/admin/redaccion/publish-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pieceId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) {
+        throw new Error(typeof data?.error === "string" ? data.error : "No se ha podido publicar.");
+      }
+      // The published slug can differ from what was on screen if it collided
+      // with an existing article and got a numeric suffix — keep the UI
+      // honest about the real URL instead of showing a stale one.
+      if (typeof data.slug === "string" && data.slug !== slug) setSlug(data.slug);
+      setStatus("scheduled");
+      setDone(true);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "No se ha podido publicar.", "error");
+    } finally {
+      setHandingOff(false);
+    }
   }
 
   if (done) {
