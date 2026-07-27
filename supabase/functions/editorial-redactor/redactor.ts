@@ -2,13 +2,13 @@
  * Service: the A3 redactor — one Gemini call per channel, brief in, structured
  * draft out.
  *
- * Mirrors `ai-summary.ts`'s shape exactly (retry loop, `response_schema`,
- * `thinkingConfig: { thinkingBudget: 0 }`), because it is the established,
- * working pattern for a Gemini-calling Edge Function in this codebase. No
- * database access here: the caller (the admin proxy) resolves the sibling
- * Motor.es draft before calling and persists the result after, via the
- * client's existing autosave — this stays a pure "structured text in,
- * structured text out" function, like `generateSummary()`.
+ * Mirrors `ai-summary.ts`'s shape (retry loop, `response_schema`), the
+ * established, working pattern for a Gemini-calling Edge Function in this
+ * codebase — except the model and its thinking config, which diverge on
+ * purpose (see below). No database access here: the caller (the admin proxy)
+ * resolves the sibling Motor.es draft before calling and persists the result
+ * after, via the client's existing autosave — this stays a pure "structured
+ * text in, structured text out" function, like `generateSummary()`.
  */
 
 import {
@@ -19,7 +19,18 @@ import {
   STYLE_GUIDE,
 } from './prompt-context.ts';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+/**
+ * `gemini-3.6-flash`, not the `gemini-2.5-flash` the rest of this codebase
+ * uses (Fer, 2026-07-27, scoped to this function only — the scraper's
+ * `ai-summary.ts`/`regenerate-ai` stay on 2.5 Flash). Picked for the redactor
+ * specifically: better prose generation-over-generation, and — despite being
+ * the "workhorse" tier, not the flagship — a **newer** knowledge cutoff
+ * (2026-03) than Gemini 3.1 Pro's (2025-01), because Google refreshes Flash
+ * more often than Pro. Costs meaningfully more per token (~10x input, ~6x
+ * output) than 2.5 Flash, but in absolute terms that is cents per article at
+ * this call volume (a button click per piece, not a bulk pipeline).
+ */
+const GEMINI_MODEL = 'gemini-3.6-flash';
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
@@ -183,7 +194,7 @@ Genera un JSON con estos campos exactos:
 - "meta_titulo": SOLO si "titulo" se pasa bastante de 65 caracteres o queda mal como resultado de búsqueda. Si no, cadena vacía "".
 - "meta_descripcion": SOLO si añade algo que el titular no dice, una única frase, apunta a 155 caracteres. Si no aporta nada nuevo, cadena vacía "".
 - "entradilla": un párrafo de apertura de 40 a 45 palabras (50 como máximo, contado en PALABRAS, no caracteres). Formato en línea permitido (negrita, cursiva, enlace), SIN encabezados. El "cuerpo" no debe repetirla.
-- "cuerpo": el cuerpo de la noticia en Markdown, empezando DESPUÉS de la entradilla (nunca la repite ni la resume otra vez). Usa "##" para los encabezados de sección, NUNCA "#".
+- "cuerpo": el cuerpo de la noticia en Markdown, empezando DESPUÉS de la entradilla (nunca la repite ni la resume otra vez). Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 550 y 1.150 palabras (la pieza completa, entradilla incluida, tiene que rondar las 600-1.200 palabras que pide la guía de estilo de Motor.es). Esto es un artículo desarrollado con varias secciones, NO un resumen de tres párrafos: cubre el contexto, los datos comparativos y las implicaciones prácticas con profundidad.
 - "marca": la marca del coche protagonista, si la pieza va de un coche concreto. Si no, cadena vacía "".
 - "modelo": el modelo, en las mismas condiciones que "marca".
 - "tags": entre 2 y 5, prefiriendo los que ya existen en el vocabulario de Motor.es (listados arriba).
@@ -219,7 +230,7 @@ ${buildBriefBlock(input)}
 ${motorBlock}${weeklyBlock}
 Genera un JSON con estos campos exactos:
 - "titulo": el titular, en la voz de EVminds (segunda persona del plural, la flota de casa como vara de medir). ${input.motorDraft ? 'No puede compartir las primeras palabras con el título de Motor.es de arriba.' : ''}
-- "cuerpo": el cuerpo completo del artículo en Markdown. Usa "##" para los encabezados de sección, NUNCA "#".`;
+- "cuerpo": el cuerpo completo del artículo en Markdown. Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 800 y 2.000 palabras, según lo que dé de sí el tema — la guía de estilo de EVminds pide esa horquilla. Es un artículo desarrollado con varias secciones, NO un resumen condensado.`;
 }
 
 function buildMotorResponseSchema() {
@@ -334,9 +345,14 @@ export async function generateDraft(
       maxOutputTokens: 8192,
       response_mime_type: 'application/json',
       response_schema: schema,
-      // gemini-2.5-flash is a "thinking" model by default; disable to free the
-      // full output budget for the actual draft (same trade-off as ai-summary.ts).
-      thinkingConfig: { thinkingBudget: 0 },
+      // gemini-3.6-flash replaced `thinkingBudget` with `thinkingLevel`
+      // (minimal|low|medium|high) and can't disable thinking outright, unlike
+      // 2.5 Flash. "low" over "minimal": Fer's whole reason for this model is
+      // better prose, and thinking helps that — "minimal" would fight the
+      // upgrade it came with. This screen already has a real waiting state
+      // (`DraftGeneratingLoader`), so the extra latency over "minimal" is a
+      // reasonable trade, not a regression.
+      thinkingConfig: { thinkingLevel: 'low' },
     },
   });
 
