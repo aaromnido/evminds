@@ -463,7 +463,11 @@ export default function PublishChannelStep({
    * before the one you are opening", and the first channel has none.
    */
   const backHref = (() => {
-    if (!previousSpec) return "/admin/redaccion/enfoque";
+    // Back to the brief, carrying the piece so that screen arrives filled in and
+    // saving there updates this piece instead of starting another one.
+    if (!previousSpec) {
+      return pieceId ? `/admin/redaccion/enfoque?pieza=${pieceId}` : "/admin/redaccion/enfoque";
+    }
     const params = new URLSearchParams({ canales: channels.join(","), canal: previousSpec.value });
     if (pieceId) params.set("pieza", pieceId);
     if (ideaId) params.set("idea", ideaId);

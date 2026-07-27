@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Wand2 } from "lucide-react";
+import { ArrowRight, Check, Wand2 } from "lucide-react";
 import BackStepButton from "./BackStepButton";
 import ChannelPicker from "./ChannelPicker";
 import StepActions from "./StepActions";
@@ -21,6 +21,18 @@ const READ_DELAY_MS = 1200;
 interface Props {
   /** Present when arriving from a picked proposal (route A). */
   idea?: IdeaCandidate | null;
+  /**
+   * Present when coming BACK to the brief of a piece that already exists.
+   *
+   * Everything below arrives from its row, and saving updates that row instead of
+   * inserting another: without it, going back and pressing the primary action
+   * again would quietly leave two pieces about the same thing.
+   */
+  pieceId?: string | null;
+  briefTitle?: string | null;
+  briefAngle?: string | null;
+  briefLinks?: string[] | null;
+  briefChannels?: PublishChannel[] | null;
 }
 
 /**
@@ -38,23 +50,33 @@ interface Props {
  *
  * PROTOTYPE: every action is simulated in local state — no backend.
  */
-export default function DefineAngleStep({ idea }: Props) {
-  const [title, setTitle] = useState(idea?.proposed_title_es ?? "");
-  const [angle, setAngle] = useState(idea?.angle ?? "");
+export default function DefineAngleStep({
+  idea,
+  pieceId = null,
+  briefTitle,
+  briefAngle,
+  briefLinks,
+  briefChannels,
+}: Props) {
+  const [title, setTitle] = useState(briefTitle ?? idea?.proposed_title_es ?? "");
+  const [angle, setAngle] = useState(briefAngle ?? idea?.angle ?? "");
   const [expanding, setExpanding] = useState(false);
   const [improvingSeo, setImprovingSeo] = useState(false);
   const [links, setLinks] = useState<ReferenceLink[]>(() =>
-    (idea?.reference_urls ?? []).map((url, i) => ({
+    (briefLinks ?? idea?.reference_urls ?? []).map((url, i) => ({
       id: `link-${i}`,
       url,
-      status: "reading" as const,
-      title: null,
+      // A stored link was read once already, so it comes back as read rather than
+      // being fetched again on arrival: re-reading it could fail this time and
+      // turn a piece that was fine into one showing an error nobody caused.
+      status: (briefLinks ? "read" : "reading") as ReferenceLink["status"],
+      title: briefLinks ? "Leído al preparar el enfoque" : null,
       error: null,
     })),
   );
   // Motor.es is ticked by default: it is the only channel in the MVP and the
   // reason the flow exists, so the common case needs no decision.
-  const [channels, setChannels] = useState<PublishChannel[]>(["motor"]);
+  const [channels, setChannels] = useState<PublishChannel[]>(briefChannels ?? ["motor"]);
   const [generating, setGenerating] = useState(false);
   const [savingBrief, setSavingBrief] = useState(false);
   const { toast, showToast, dismiss } = useToast();
@@ -92,7 +114,8 @@ export default function DefineAngleStep({ idea }: Props) {
 
   // Links carried over from the idea start reading on arrival, same as ones
   // added by hand: the state is only useful if it is resolved before generating.
-  const initialLinks = useRef(links);
+  // Links restored from a saved piece are NOT re-read — they already were.
+  const initialLinks = useRef(briefLinks ? [] : links);
   // Mount only: the ref keeps the initial list stable so this never re-runs.
   useEffect(() => {
     for (const link of initialLinks.current) readLink(link);
@@ -156,6 +179,9 @@ export default function DefineAngleStep({ idea }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Present when coming back to an existing piece: the route updates that
+          // row instead of inserting a second one about the same thing.
+          id: pieceId,
           briefTitle: title,
           briefAngle: angle,
           // Only the links that were actually read make it into the piece: a URL
@@ -199,7 +225,14 @@ export default function DefineAngleStep({ idea }: Props) {
     window.location.href = "/admin/redaccion/piezas";
   }
 
-  /** Creates the piece and goes on to write it. The step's one primary action. */
+  /**
+   * Saves the brief and goes on to the text. The step's one primary action.
+   *
+   * On a piece that already exists it does NOT regenerate anything: the text
+   * lives in its own row and comes back as it was left. That is why the label
+   * changes in that case — a button still saying "Generar el borrador" would be
+   * promising a rewrite that is not going to happen.
+   */
   async function handleGenerate() {
     // The button is already disabled when this is false; this is the belt to
     // that pair of braces, so a stray keyboard activation can't skip the checks.
@@ -246,7 +279,20 @@ export default function DefineAngleStep({ idea }: Props) {
       {/* Same row and same shape as "Ver historial" in step ①: the secondary
           navigation of this section always sits here. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <BackStepButton dirty={dirty} disabled={busy} />
+        {/* On a piece that already exists, what would be lost is only the edits
+            to the brief — the text, the image and the dates are stored — so the
+            dialog says that instead of the "nothing is saved anywhere" line,
+            which stopped being true with phase 2. */}
+        <BackStepButton
+          dirty={dirty}
+          confirmTitle={pieceId ? "¿Salir sin guardar el enfoque?" : undefined}
+          confirmDescription={
+            pieceId
+              ? "Se perderán los cambios que hayas hecho aquí. El texto que ya has escrito y su fecha se quedan como están."
+              : undefined
+          }
+          disabled={busy}
+        />
       </div>
 
       {/* Full width, like the cards in step ①: the reading measure is applied to
@@ -324,15 +370,20 @@ export default function DefineAngleStep({ idea }: Props) {
             second way of finishing: it stores the brief and takes you to the list
             without generating anything. */}
         <StepActions
-          label="Generar el borrador"
-          runningLabel="Escribiendo el borrador…"
+          label={pieceId ? "Seguir con el texto" : "Generar el borrador"}
+          runningLabel={pieceId ? "Guardando…" : "Escribiendo el borrador…"}
           running={generating}
           onClick={handleGenerate}
-          icon={<Wand2 />}
+          icon={pieceId ? <Check /> : <Wand2 />}
           trailingIcon={<ArrowRight data-icon="inline-end" />}
           missing={missing}
-          missingPrefix="Antes de generar"
-          readyHint="Tardará un momento. Podrás editar el texto entero antes de publicar nada."
+          missingPrefix={pieceId ? "Antes de seguir" : "Antes de generar"}
+          readyHint={
+            pieceId
+              ? "Se guarda el enfoque y vuelves al texto, que se queda tal cual lo dejaste."
+              : "Tardará un momento. Podrás editar el texto entero antes de publicar nada."
+          }
+          minWidth="15rem"
           secondary={{
             label: "Guardar y seguir luego",
             runningLabel: "Guardando…",

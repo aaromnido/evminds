@@ -2,32 +2,59 @@
 /**
  * Redacción — step ② of the writing wizard: define the angle.
  *
- * Serves both entry routes:
- *   - `?idea=<id>` → arrived from a picked curator proposal (route A)
- *   - no params    → Fer's own topic, starting from scratch (route B)
+ * Serves three entry routes now:
+ *   - `?idea=<id>`  → arrived from a picked curator proposal (route A)
+ *   - no params     → Fer's own topic, starting from scratch (route B)
+ *   - `?pieza=<id>` → **came back** to the brief of a piece that already exists
  *
- * PROTOTYPE (task A3, UI-first phase): fed by `editorial-mocks.ts`, not by
- * Supabase. To wire this up for real, replace `buildMockIdeas(nowIso)` with the
- * query. See `.claude/design/ai-editorial-agent-ui.md`.
+ * That third one is what "Volver atrás" from the first channel lands on, and it
+ * has to arrive filled in: the brief is stored, so showing an empty form would be
+ * losing on screen something the database is holding — and, worse, generating
+ * again from there would insert a SECOND piece instead of updating this one.
+ *
+ * PROTOTYPE (task A3): the ideas are still `editorial-mocks.ts`. The piece is not.
+ * See `.claude/design/ai-editorial-agent-ui.md`.
  *
  * The step indicator is rendered inside the island here (unlike step ①), because
  * choosing a second channel adds a fourth step to it live.
  */
 import AdminShell from "@/layouts/AdminShell.astro";
 import DefineAngleStep from "@/components/admin/editorial/DefineAngleStep.tsx";
+import { parseChannels } from "@/lib/editorial-channels";
 import { buildMockIdeas } from "@/lib/editorial-mocks";
 
-const ideaId = Astro.url.searchParams.get("idea");
+const params = Astro.url.searchParams;
+const supabase = Astro.locals.supabase;
+const pieceId = params.get("pieza");
 const nowIso = new Date().toISOString();
-const idea = ideaId ? buildMockIdeas(nowIso).find((i) => i.id === ideaId) : undefined;
+
+const { data: piece } =
+  pieceId && supabase
+    ? await supabase.from("editorial_pieces").select("*").eq("id", pieceId).maybeSingle()
+    : { data: null };
+
+// The idea only matters when there is no piece yet: once there is one, the brief
+// it carries IS the answer, and it may have been edited since.
+const ideaId = piece?.idea_id ?? params.get("idea");
+const idea = !piece && ideaId ? buildMockIdeas(nowIso).find((i) => i.id === ideaId) : undefined;
 ---
 
 <AdminShell
   title="Enfoque · Admin"
   pageTitle="Definir el enfoque"
-  pageDescription={idea
-    ? "Ajusta qué quieres contar y dónde se publica antes de generar el texto."
-    : "Cuenta de qué quieres escribir y dónde se publica."}
+  pageDescription={piece
+    ? "Cambia lo que quieras del enfoque. El texto que ya has escrito se queda como está."
+    : idea
+      ? "Ajusta qué quieres contar y dónde se publica antes de generar el texto."
+      : "Cuenta de qué quieres escribir y dónde se publica."}
 >
-  <DefineAngleStep client:load idea={idea ?? null} />
+  <DefineAngleStep
+    client:load
+    idea={idea ?? null}
+    pieceId={piece?.id ?? null}
+    briefTitle={piece?.brief_title ?? null}
+    briefAngle={piece?.brief_angle ?? null}
+    briefLinks={piece?.reference_urls ?? null}
+    briefChannels={piece ? parseChannels(piece.channels.join(",")) : null}
+  />
 </AdminShell>
