@@ -11,13 +11,8 @@
  * server-rendered and hydrated output byte-identical.
  */
 
-import type { IdeaCandidate, IdeaDraftInput, PublishChannel } from "./editorial-types";
-import {
-  CMS_META_DESCRIPTION_MAX,
-  CMS_TAGS_MAX,
-  CMS_TITLE_MAX,
-  SEO_TITLE_MAX,
-} from "./editorial-validation";
+import type { IdeaCandidate, IdeaDraftInput } from "./editorial-types";
+import { CMS_META_DESCRIPTION_MAX, CMS_TITLE_MAX, SEO_TITLE_MAX } from "./editorial-validation";
 import { sourceHostname } from "./editorial-utils";
 import { VALID_POST_CATEGORIES, type PostCategory } from "./post-categories";
 
@@ -381,37 +376,6 @@ export function mockReadReferenceLink(
 export const MOCK_HERO_IMAGE = "/images/articulos/0002/hero-nissan-micra.png";
 
 /**
- * Fake redactor: the draft for one channel.
- *
- * **One brief, two different drafts** (Fer, 2026-07-26 — and already the product
- * decision in the task doc, 2026-07-17). It takes the channel because the two
- * texts are genuinely different pieces, not the same text pasted twice: same
- * facts and same angle, different structure, different opening and a different
- * headline. Publishing one text in both places would put Fer competing against
- * himself in search results, and that cost never shows up on screen.
- *
- * In the real build this is one Gemini call per channel with the shared brief
- * plus that channel's voice note. Here it is canned text, long enough that the
- * editing workspace can be judged at a realistic size.
- */
-/**
- * Reframe a headline under EVminds' own voice, without going over the SEO limit.
- *
- * **The headline has to differ too, automatically** (Fer, 2026-07-26). It is the
- * most visible half of duplicate content: the headline is what a reader actually
- * sees side by side in a results page, so two identical ones are worse than two
- * similar bodies. The frame goes **in front**, not appended as a tail, because a
- * tail keeps the first words identical and that is precisely what gets compared.
- *
- * The subject is trimmed at a word boundary so the result still fits what Google
- * shows, instead of being flagged amber by the counter the moment it lands.
- */
-function evmindsHeadline(subject: string): string {
-  const frame = "Seis años en eléctrico";
-  return `${frame}: ${trimToWords(subject, SEO_TITLE_MAX - frame.length - 2)}`;
-}
-
-/**
  * Cuts a phrase to fit, at a word boundary and without a dangling preposition.
  *
  * Cutting at a word boundary alone leaves things like "…Supercargadores en",
@@ -463,145 +427,6 @@ export function mockWriteMetaDescription(title: string): string {
  */
 export function mockShortenTitleForSearch(title: string): string {
   return trimToWords(title, CMS_TITLE_MAX);
-}
-
-/**
- * The Motor.es-only half of a draft: their CMS's extra columns.
- *
- * `fuente` and `url fuente` are NOT here — they come from the idea's source when
- * there is one (step ①), so the model would only ever be guessing at something we
- * already know. See `PublishChannelStep`.
- */
-export interface MockCmsDraft {
-  /**
-   * Empty when the model has nothing genuinely different to propose, which is
-   * the documented default: the UI then falls back to a copy of `Título`, as
-   * Motor.es' own guidance says.
-   */
-  listTitle: string;
-  discoverTitle: string;
-  /**
-   * Empty unless it adds something. Their CMS says it plainly — "solo lo
-   * utilizamos si queremos modificar el título en las búsquedas" — and `Título`'s
-   * own hint completes the rule: "si sobrepasa mucho esta cifra usar
-   * metatítulo". So it is the escape valve for a long headline, not a field to
-   * fill on every piece.
-   */
-  metaTitle: string;
-  metaDescription: string;
-  /** Markdown, like the body. A paragraph of 40–45 words that the body does NOT repeat. */
-  lead: string;
-  brand: string;
-  model: string;
-  tags: string[];
-}
-
-/** Detection only — never a catalogue. See the design log on why these are text inputs. */
-const KNOWN_MODELS: [brand: string, model: string][] = [
-  ["Tesla", "Model 3"],
-  ["BYD", "Dolphin Surf"],
-  ["Xiaomi", "YU7"],
-  ["Renault", "Twingo"],
-  ["Dacia", "Spring"],
-  ["Nissan", "Micra"],
-  ["NIO", "ET5"],
-  ["Rivian", "R2"],
-  ["Citroën", "ë-C3"],
-];
-
-function mockCmsDraft(topic: string, subject: string, body: string): MockCmsDraft {
-  const haystack = `${topic} ${body}`.toLowerCase();
-  const match = KNOWN_MODELS.find(([brand]) => haystack.includes(brand.toLowerCase()));
-
-  const candidateTags = [
-    ["Coches eléctricos", true],
-    ["Autonomía", haystack.includes("autonom")],
-    ["Carga", haystack.includes("carga") || haystack.includes("cargar")],
-    ["Baterías", haystack.includes("batería") || haystack.includes("baterías")],
-    ["Precios", haystack.includes("precio") || haystack.includes("euro")],
-  ] as const;
-
-  return {
-    // Left empty on purpose so the documented fallback is what the screen shows:
-    // a listing title that starts as a copy of `Título` and follows it until it
-    // is edited by hand.
-    listTitle: "",
-    discoverTitle: `${subject}: esto es lo que he visto en seis años de eléctrico`,
-    // Only when the headline overruns their recommended length, which is exactly
-    // the case their help text describes.
-    metaTitle:
-      topic.length > CMS_TITLE_MAX
-        ? `${subject.slice(0, CMS_TITLE_MAX - 20).trim()}: datos reales en España`
-        : "",
-    metaDescription: "",
-    lead: "Llevo seis años conduciendo eléctrico como único coche. En ese tiempo he aprendido que las **rutinas** pesan mucho más que la autonomía homologada, y que casi todo depende de dónde enchufas por la noche. Aquí van mis cifras, con precios españoles y sin adornos.",
-    brand: match?.[0] ?? "",
-    model: match?.[1] ?? "",
-    tags: candidateTags
-      .filter(([, hit]) => hit)
-      .map(([tag]) => tag)
-      .slice(0, CMS_TAGS_MAX),
-  };
-}
-
-export function mockGenerateDraft(
-  channel: PublishChannel,
-  title: string,
-  // Underscored because the canned text ignores it, while the signature keeps it:
-  // the real call is the angle's only real consumer, and dropping the parameter
-  // here would hide that from every caller.
-  _angle: string,
-): { title: string; body: string; cms?: MockCmsDraft } {
-  const topic = title.trim() || "El coche eléctrico en España";
-  const subject = topic.split(/[:—–]/)[0].trim() || topic;
-
-  if (channel === "evminds") {
-    return {
-      title: evmindsHeadline(subject),
-      body: [
-        "Cuando me preguntan por esto, casi siempre esperan que hable de autonomía. Y casi siempre acabamos hablando de otra cosa: de dónde duermes, de a qué hora enchufas y de cuánto te cuesta el kilovatio en tu casa. Después de seis años con un eléctrico como único coche, esa es la conversación que de verdad importa.",
-        "",
-        "## Lo que cambia el primer mes",
-        "",
-        "La rutina, antes que las cifras. Dejas de pensar en gasolineras y empiezas a pensar en enchufes, y esa sustitución es casi todo el aprendizaje. El resto son detalles que se colocan solos.",
-        "",
-        "## Los números, con precios de aquí",
-        "",
-        "Cargando en casa con tarifa valle, cada 100 kilómetros salen por unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre esas dos situaciones es mucho mayor que la que hay entre dos coches distintos, y por eso comparar fichas técnicas sin mirar dónde vas a cargar no sirve de nada.",
-        "",
-        "En autopista a 120 km/h el consumo se abre respecto al homologado, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior y bastante menos en la costa. Nada de eso impide hacer vida normal; solo conviene saberlo antes de firmar.",
-        "",
-        "## Y lo que sigue sin estar resuelto",
-        "",
-        "La autonomía dejó de preocuparme el primer mes. La carga pública fuera de casa, que ni me planteaba, es la que sigue dando trabajo: precios opacos, aplicaciones que fallan y postes ocupados por coches que ya han terminado. Ahí es donde queda margen de mejora, y no en la batería.",
-      ].join("\n"),
-    };
-  }
-
-  // The body starts AFTER the lead, it does not contain it. That is Motor.es'
-  // own structure — their template prints `Entradilla` above the article — and
-  // it is why the redactor returns two pieces instead of one text that gets
-  // split afterwards: splitting later would put the seam wherever a paragraph
-  // break happened to fall and would reword nothing.
-  const body = [
-    "## Qué dicen las cifras oficiales",
-    "",
-    "Sobre el papel todo cuadra. Los datos homologados salen de un ciclo de laboratorio que sirve para comparar coches entre sí, no para saber cuánto vas a gastar tú el martes que viene camino del trabajo. Por eso la distancia entre el folleto y el cuentakilómetros no es un engaño, es que miden cosas distintas.",
-    "",
-    "## Qué se ve en uso",
-    "",
-    "En trayecto urbano la diferencia es pequeña y a menudo favorable. En autopista a 120 km/h se abre, y en invierno se abre más. Con mis registros, la penalización real ronda el 20 % en un día frío del interior, bastante menos en la costa mediterránea. Nada de esto impide hacer vida normal, pero conviene saberlo antes de firmar y no después.",
-    "",
-    "Traducido a euros: cargando en casa con tarifa valle, el coste por cada 100 kilómetros se queda en unos pocos euros. Cargando siempre en carretera a precio de punta, se acerca al de un gasolina eficiente. La diferencia entre las dos situaciones es mucho mayor que la diferencia entre dos coches distintos.",
-    "",
-    "## Para quién tiene sentido hoy",
-    "",
-    "Si puedes enchufar donde duermes, la respuesta es fácil. Si no puedes, la pregunta deja de ser sobre el coche y pasa a ser sobre tu barrio: qué cargadores hay, a qué precio y con qué fiabilidad. Ese es el cálculo que casi nadie hace y el que más disgustos evita.",
-    "",
-    "Lo que sí puedo decir después de seis años es que la parte que más me preocupaba al principio, la autonomía, dejó de importarme el primer mes. Y la que ni me planteaba, la carga pública fuera de casa, es la que sigue dando trabajo.",
-  ].join("\n");
-
-  return { title: topic, body, cms: mockCmsDraft(topic, subject, body) };
 }
 
 /**

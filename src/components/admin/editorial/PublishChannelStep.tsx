@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarClock, Check } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, Eye, Wand2 } from "lucide-react";
 import ArticlePreviewSheet from "./ArticlePreviewSheet";
 import BackStepButton from "./BackStepButton";
 import ChannelStepDone from "./ChannelStepDone";
@@ -8,6 +8,7 @@ import CmsRecordFields from "./CmsRecordFields";
 import CmsSearchFields from "./CmsSearchFields";
 import CopyProgress from "./CopyProgress";
 import DraftBodyField from "./DraftBodyField";
+import DraftGeneratingLoader from "./DraftGeneratingLoader";
 import DraftTextBlock from "./DraftTextBlock";
 import EvmindsPreGenerateStep from "./EvmindsPreGenerateStep";
 import FieldError from "./FieldError";
@@ -20,10 +21,10 @@ import ScheduleField from "./ScheduleField";
 import StepActions from "./StepActions";
 import StepSection from "./StepSection";
 import WizardSteps, { buildWizardSteps } from "./WizardSteps";
+import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
 import {
-  mockGenerateDraft,
   mockImageVariants,
   mockDescribeImage,
   mockImproveSeoTitle,
@@ -125,8 +126,6 @@ const CHANNEL_GAP_DAYS = 7;
 interface SeedInput {
   channel: PublishChannel;
   initialDraft: ChannelDraftState | null;
-  briefTitle: string;
-  briefAngle: string;
   briefSourceName?: string | null;
   briefSourceUrl?: string | null;
   previousChannelDate?: string | null;
@@ -145,8 +144,6 @@ interface SeedInput {
 function buildSeed({
   channel,
   initialDraft,
-  briefTitle,
-  briefAngle,
   briefSourceName,
   briefSourceUrl,
   previousChannelDate,
@@ -197,73 +194,37 @@ function buildSeed({
     };
   }
 
-  // EVminds with nothing stored yet: no text to seed, and none is generated
-  // here. Unlike every other channel, EVminds waits for an explicit "Generar"
-  // (`EvmindsPreGenerateStep`) so "Qué ha cambiado esta semana" can reach the
-  // prompt BEFORE the call fires, not after (Fer, 2026-07-27) — auto-generating
-  // on arrival, like every other channel does, would leave no moment for the
-  // note to exist yet.
-  if (channel === "evminds") {
-    return {
-      title: "",
-      body: "",
-      imageUrl: "",
-      publishDate: defaultPublishDate,
-      listTitle: "",
-      listTitleEdited: false,
-      discoverTitle: "",
-      metaTitle: "",
-      metaDescription: "",
-      lead: "",
-      brand: "",
-      model: "",
-      sourceName: briefSourceName ?? "",
-      sourceUrl: briefSourceUrl ?? "",
-      cmsTags: [],
-      published: false,
-      publishedDate: "",
-      publishedUrl: "",
-      slug: "",
-      slugEdited: false,
-      excerpt: "",
-      category: VALID_POST_CATEGORIES[0],
-      tags: [],
-      imageAlt: "",
-      altEdited: false,
-      weeklyNotes: "",
-    };
-  }
-
-  // Motor.es: the draft was already generated at the end of step ②, so it is
-  // here on arrival — making the user wait a second time for the same work
-  // would be a fake loading state.
-  const draft = mockGenerateDraft(channel, briefTitle, briefAngle);
-  const record = mockPostRecord(draft.title, draft.body);
-
+  // Nothing stored yet, either channel: no text to seed, and none is
+  // generated here — a real Gemini call cannot be synchronous like the old
+  // mock was. EVminds waits for an explicit "Generar" (`EvmindsPreGenerateStep`)
+  // so "Qué ha cambiado esta semana" can reach the prompt BEFORE the call
+  // fires, not after (Fer, 2026-07-27). Motor.es fires the same call
+  // automatically on arrival instead (see the mount effect in the component
+  // below) — it has no note to wait for, so there is nothing to gate on.
   return {
-    title: draft.title,
-    body: draft.body,
-    imageUrl: MOCK_HERO_IMAGE,
+    title: "",
+    body: "",
+    imageUrl: "",
     publishDate: defaultPublishDate,
-    listTitle: draft.cms?.listTitle || draft.title,
-    listTitleEdited: Boolean(draft.cms?.listTitle),
-    discoverTitle: draft.cms?.discoverTitle ?? "",
-    metaTitle: draft.cms?.metaTitle ?? "",
-    metaDescription: draft.cms?.metaDescription ?? "",
-    lead: draft.cms?.lead ?? "",
-    brand: draft.cms?.brand ?? "",
-    model: draft.cms?.model ?? "",
+    listTitle: "",
+    listTitleEdited: false,
+    discoverTitle: "",
+    metaTitle: "",
+    metaDescription: "",
+    lead: "",
+    brand: "",
+    model: "",
     sourceName: briefSourceName ?? "",
     sourceUrl: briefSourceUrl ?? "",
-    cmsTags: draft.cms?.tags ?? [],
+    cmsTags: [],
     published: false,
     publishedDate: "",
     publishedUrl: "",
-    slug: slugify(draft.title),
+    slug: "",
     slugEdited: false,
-    excerpt: record.excerpt,
-    category: record.category,
-    tags: record.tags,
+    excerpt: "",
+    category: VALID_POST_CATEGORIES[0],
+    tags: [],
     imageAlt: "",
     altEdited: false,
     weeklyNotes: "",
@@ -323,15 +284,13 @@ export default function PublishChannelStep({
    * the two it came from — and asking twice is how half a screen ends up restored
    * and the other half regenerated.
    *
-   * The generated path is still the prototype's canned text (phase 3 replaces it
-   * with the redactor call); the resumed path is real.
+   * The generated path starts empty either way now — a real Gemini call can't
+   * fill it in synchronously, so `generateDraft` (below) does that after mount.
    */
   const [seed] = useState(() =>
     buildSeed({
       channel,
       initialDraft,
-      briefTitle,
-      briefAngle,
       briefSourceName,
       briefSourceUrl,
       previousChannelDate,
@@ -412,13 +371,20 @@ export default function PublishChannelStep({
   const [variants, setVariants] = useState<MockImageVariant[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
-  // Whether EVminds already has a text of its own. Every other channel starts
-  // `true` (nothing to wait for); EVminds starts `true` only when resumed with
-  // an actual title, and `false` otherwise — computed once from the seed, not
-  // derived from the live `title`, so clearing the field mid-edit can never
-  // send the screen back to the pre-generate step by accident.
-  const [generated, setGenerated] = useState(channel !== "evminds" || Boolean(seed.title));
-  const [generatingEvminds, setGeneratingEvminds] = useState(false);
+  // Whether this channel already has a text of its own. `true` only when
+  // resumed with an actual title, `false` otherwise — computed once from the
+  // seed, not derived from the live `title`, so clearing the field mid-edit
+  // can never send the screen back to the generating state by accident.
+  const [generated, setGenerated] = useState(Boolean(seed.title));
+  // Motor.es starts generating immediately (the mount effect below fires the
+  // instant this renders); EVminds starts idle and waits for its button.
+  const [generatingDraft, setGeneratingDraft] = useState(channel === "motor" && !seed.title);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  // "Volver a generar" on the body field alone (Fer, 2026-07-27) — a separate
+  // flag from `generatingDraft`, which is reserved for the first, full-screen
+  // generation. This one is scoped and small: a toast on success or failure,
+  // never a screen takeover, and it never touches title/entradilla/tags/etc.
+  const [regeneratingBody, setRegeneratingBody] = useState(false);
 
   const [improvingSeo, setImprovingSeo] = useState(false);
   const [writingMetaDescription, setWritingMetaDescription] = useState(false);
@@ -517,7 +483,13 @@ export default function PublishChannelStep({
   if (errors.schedule) missing.push("elige cuándo se publica");
 
   const busy =
-    handingOff || navigating || editing || generatingImage || savingDraft || generatingEvminds;
+    handingOff ||
+    navigating ||
+    editing ||
+    generatingImage ||
+    savingDraft ||
+    generatingDraft ||
+    regeneratingBody;
 
   /** Set only when there is another channel screen after this one. */
   const nextSpec = nextChannel ? getChannel(nextChannel) : null;
@@ -642,35 +614,126 @@ export default function PublishChannelStep({
   }
 
   /**
-   * EVminds' own trigger, pressed from `EvmindsPreGenerateStep`.
-   *
-   * Everything this needs — the brief, `weeklyNotes`, and (once the real
-   * redactor call replaces the mock) the sibling Motor.es draft when it is
-   * `published` — is already in scope or in state by the time this runs, which
-   * is the whole point of gating on an explicit action instead of generating on
-   * arrival: the note has had a chance to exist first.
-   *
-   * PROTOTYPE: `mockGenerateDraft` ignores `weeklyNotes`, same as it ignores
-   * the angle today. Phase 3 replaces this body with the real call and keeps
-   * the trigger.
+   * The one call to the redactor proxy, shared by every action that needs a
+   * fresh draft: the initial generation and the per-field "Volver a generar".
+   * Throws on any failure, so each caller decides how to surface it (a
+   * full-screen error for the first generation, a toast for a scoped retry).
    */
-  function handleGenerateEvminds() {
-    setGeneratingEvminds(true);
-    window.setTimeout(() => {
-      const draft = mockGenerateDraft(channel, briefTitle, briefAngle);
-      const record = mockPostRecord(draft.title, draft.body);
-      applyTitle(draft.title);
-      setBody(draft.body);
+  async function requestRedactor() {
+    const res = await fetch("/admin/redaccion/generate-draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pieceId,
+        channel,
+        briefTitle,
+        briefAngle,
+        sourceName: briefSourceName ?? "",
+        sourceUrl: briefSourceUrl ?? "",
+        ...(channel === "evminds" ? { weeklyNotes } : {}),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.ok !== true) {
+      throw new Error(typeof data?.error === "string" ? data.error : "La generación ha fallado.");
+    }
+    return data;
+  }
+
+  /**
+   * The real redactor call, replacing the old canned `mockGenerateDraft`.
+   *
+   * Shared by both channels: the mount effect below fires it automatically for
+   * Motor.es, and `handleGenerateEvminds` fires it from `EvmindsPreGenerateStep`'s
+   * button. Everything the call needs — the brief, `weeklyNotes`, and the
+   * sibling Motor.es draft when it is `published` (resolved server-side by the
+   * proxy, never here) — is already in scope or in state by the time this runs.
+   *
+   * A real Gemini call cannot be synchronous like the old mock was, so both
+   * channels now share the same generating/error state and the same wait
+   * (`DraftGeneratingLoader`) instead of one being instant.
+   */
+  async function generateDraft() {
+    setGeneratingDraft(true);
+    setGenerateError(null);
+    try {
+      const data = await requestRedactor();
+
+      applyTitle(data.title);
+      setBody(data.body);
       // Goes through the same path as picking a new upload: it is what also
       // kicks off the alt-text description, which the mount-time effect could
       // not do since there was no image yet when it ran.
       handleImageChange(MOCK_HERO_IMAGE);
-      setExcerpt(record.excerpt);
-      setCategory(record.category);
-      setTags(record.tags);
+
+      if (channel === "motor") {
+        setDiscoverTitle(data.discoverTitle ?? "");
+        setMetaTitle(data.metaTitle ?? "");
+        setMetaDescription(data.metaDescription ?? "");
+        setLead(data.lead ?? "");
+        setBrand(data.brand ?? "");
+        setModel(data.model ?? "");
+        setSourceName(data.sourceName ?? "");
+        setSourceUrl(data.sourceUrl ?? "");
+        setCmsTags(Array.isArray(data.tags) ? data.tags : []);
+        // Empty means "nothing genuinely different" (Motor.es' own documented
+        // fallback): `applyTitle` above already copied the headline into it
+        // while `listTitleEdited` was still false. A distinct one overrides
+        // that copy and stops it following the headline from here on.
+        if (data.listTitle) {
+          setListTitle(data.listTitle);
+          setListTitleEdited(true);
+        }
+      } else {
+        // Excerpt/category/tags: still `mockPostRecord`, not part of this pass.
+        const record = mockPostRecord(data.title, data.body);
+        setExcerpt(record.excerpt);
+        setCategory(record.category);
+        setTags(record.tags);
+      }
+
       setGenerated(true);
-      setGeneratingEvminds(false);
-    }, EDIT_IMAGE_DELAY_MS);
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : "La generación ha fallado.");
+    } finally {
+      setGeneratingDraft(false);
+    }
+  }
+
+  /**
+   * "Volver a generar" on "Cuerpo noticia" alone (Fer, 2026-07-27). Runs the
+   * same redactor call — there is no body-only prompt, so this is a fresh full
+   * draft off the same brief — but only the body is applied. Título,
+   * entradilla, tags, marca/modelo… stay exactly as they are, since the point
+   * is another take on the body, not redoing the whole piece.
+   */
+  async function handleRegenerateBody() {
+    setRegeneratingBody(true);
+    try {
+      const data = await requestRedactor();
+      setBody(data.body);
+      showToast("Nuevo cuerpo generado. El resto del borrador sigue igual.");
+    } catch {
+      showToast("No se ha podido volver a generar el cuerpo.", "error");
+    } finally {
+      setRegeneratingBody(false);
+    }
+  }
+
+  /**
+   * Motor.es fires the redactor call the instant this screen mounts with
+   * nothing generated yet — it has no note to wait for, unlike EVminds, so
+   * there is no gate to press through first.
+   */
+  useEffect(() => {
+    if (channel === "motor" && !generated) void generateDraft();
+    // Empty deps on purpose: this is the arrival pass, fired once. Retries go
+    // through the button in the error state below, not through this effect.
+  }, []);
+
+  /** EVminds' own trigger, pressed from `EvmindsPreGenerateStep`. */
+  function handleGenerateEvminds() {
+    void generateDraft();
   }
 
   /** Last chance to fix the headline, in case step ② skipped the SEO pass. */
@@ -953,17 +1016,48 @@ export default function PublishChannelStep({
           onBeforeLeave={() => saveNow()}
           disabled={busy}
         />
+        {/* Same size and style as "Volver atrás" (Fer, 2026-07-27): a second way
+            to reach the preview, always in reach at the top of the screen,
+            alongside the one that lives next to "Cuerpo noticia" for when you
+            want it without scrolling up while writing. Both open the same sheet. */}
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => setPreviewOpen(true)}
+          disabled={busy || Boolean(errors.image)}
+          title={errors.image ? "Para previsualizar hace falta la imagen de cabecera." : undefined}
+        >
+          <Eye />
+          Previsualizar
+        </Button>
       </div>
 
-      {channel === "evminds" && !generated ? (
-        <EvmindsPreGenerateStep
-          briefTitle={briefTitle}
-          briefAngle={briefAngle}
-          weeklyNotes={weeklyNotes}
-          onWeeklyNotesChange={setWeeklyNotes}
-          onGenerate={handleGenerateEvminds}
-          generating={generatingEvminds}
-        />
+      {!generated ? (
+        generatingDraft ? (
+          <DraftGeneratingLoader />
+        ) : channel === "evminds" ? (
+          <div className="grid gap-4">
+            {generateError && <FieldError message={generateError} />}
+            <EvmindsPreGenerateStep
+              briefTitle={briefTitle}
+              briefAngle={briefAngle}
+              weeklyNotes={weeklyNotes}
+              onWeeklyNotesChange={setWeeklyNotes}
+              onGenerate={handleGenerateEvminds}
+              generating={generatingDraft}
+            />
+          </div>
+        ) : (
+          // Motor.es has no gate screen to fall back to, so a failed
+          // auto-fire needs its own retry.
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
+            <p className="max-w-[52ch] text-sm text-destructive">{generateError}</p>
+            <Button type="button" variant="outline" onClick={() => void generateDraft()}>
+              <Wand2 />
+              Reintentar
+            </Button>
+          </div>
+        )
       ) : (
         <div className="grid gap-4">
           {spec.needsCmsFields ? (
@@ -1062,6 +1156,8 @@ export default function PublishChannelStep({
                     previewBlockedReason={
                       errors.image ? "Para previsualizar hace falta la imagen de cabecera." : null
                     }
+                    onRegenerate={handleRegenerateBody}
+                    regenerating={regeneratingBody}
                     disabled={busy}
                   />
                   <FieldError message={errors.body} />

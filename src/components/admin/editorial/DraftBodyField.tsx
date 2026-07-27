@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Eye } from "lucide-react";
+import AiAssistButton from "./AiAssistButton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,14 @@ interface Props {
   onPreview: () => void;
   /** Set when previewing isn't possible yet, and says why. */
   previewBlockedReason?: string | null;
+  /**
+   * Asks for a fresh take on this field alone (Fer, 2026-07-27). Optional, and
+   * its absence hides the button — a plain textarea has nothing to regenerate.
+   * Only the body changes; the rest of the draft (title, entradilla, tags…)
+   * stays exactly as it is.
+   */
+  onRegenerate?: () => void;
+  regenerating?: boolean;
   disabled?: boolean;
 }
 
@@ -55,6 +64,8 @@ export default function DraftBodyField({
   onCopy,
   onPreview,
   previewBlockedReason,
+  onRegenerate,
+  regenerating,
   disabled,
 }: Props) {
   const [view, setView] = useState<DraftView>("html");
@@ -76,6 +87,17 @@ export default function DraftBodyField({
           <span className="text-xs tabular-nums text-muted-foreground">
             {words} palabra{words === 1 ? "" : "s"}
           </span>
+          {onRegenerate && (
+            <AiAssistButton
+              label="Volver a generar"
+              runningLabel="Generando…"
+              running={Boolean(regenerating)}
+              disabled={disabled}
+              onClick={onRegenerate}
+              minWidth="10rem"
+              buttonClassName="h-8"
+            />
+          )}
           <Button
             variant="outline"
             size="sm"

@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.regenerate-ai]
 verify_jwt = false
+
+[functions.editorial-redactor]
+verify_jwt = false
