@@ -22,7 +22,7 @@ export default function ImageDropZone({
   value,
   onChange,
   name = "image_url",
-  uploadEndpoint = "/admin/posts/upload-image",
+  uploadEndpoint = "/admin/articulos/upload-image",
   folder = "news",
   previewFilter,
 }: Props) {

@@ -47,12 +47,10 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard, ready: true },
-  {
-    title: "Artículos propios",
-    href: "/admin/posts",
-    icon: FilePenLine,
-    ready: true,
-  },
+  // "Artículos", not "Artículos propios": with "Noticias" right underneath — the
+  // ones that are somebody else's — the word "propios" was carrying a
+  // distinction the pair already makes.
+  { title: "Artículos", href: "/admin/articulos", icon: FilePenLine, ready: true },
   { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: true },
   {
     title: "Redacción",

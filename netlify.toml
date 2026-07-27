@@ -2,6 +2,16 @@
   command = "pnpm build"
   publish = "dist"
 
+# `/admin/posts/<id>/edit` → `/admin/articulos/<id>/edit` (phase 2b, 2026-07-27).
+# Here and not in `astro.config.mjs` like its two static siblings: Astro renders a
+# dynamic redirect target as `…/edit/index.html`, which assumes the page is
+# prerendered. It is SSR, so that URL would 404 — worse than not redirecting at
+# all, since it looks like the article is gone.
+[[redirects]]
+  from = "/admin/posts/:id/edit"
+  to = "/admin/articulos/:id/edit"
+  status = 301
+
 [context.production.environment]
   NODE_VERSION = "22.12.0"
 

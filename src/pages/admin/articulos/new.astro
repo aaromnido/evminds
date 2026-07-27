@@ -29,7 +29,7 @@ if (Astro.request.method === "POST" && supabase) {
           : `No se pudo guardar: ${error.message}`;
     } else {
       await purgeTags([`articulo-${parsed.payload.slug}`, "listings"]);
-      return Astro.redirect("/admin/posts");
+      return Astro.redirect("/admin/articulos");
     }
   }
 }

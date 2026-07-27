@@ -281,7 +281,7 @@ export default function PostEditor({
           <SaveButton name="_action" value="save">
             {submitLabel}
           </SaveButton>
-          <a href="/admin/posts" className={buttonVariants({ variant: "outline" })}>
+          <a href="/admin/articulos" className={buttonVariants({ variant: "outline" })}>
             Cancelar
           </a>
           {showDelete && (

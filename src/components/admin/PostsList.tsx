@@ -41,7 +41,7 @@ function pageUrl(p: number, q: string) {
   if (q) sp.set("q", q);
   if (p > 1) sp.set("page", String(p));
   const qs = sp.toString();
-  return qs ? `/admin/posts?${qs}` : "/admin/posts";
+  return qs ? `/admin/articulos?${qs}` : "/admin/articulos";
 }
 
 export default function PostsList({ posts, error, nowIso, q, page, totalPages, total }: Props) {
@@ -64,7 +64,7 @@ export default function PostsList({ posts, error, nowIso, q, page, totalPages, t
               />
               {q && (
                 <a
-                  href="/admin/posts"
+                  href="/admin/articulos"
                   aria-label="Limpiar búsqueda"
                   title="Limpiar búsqueda"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -87,7 +87,7 @@ export default function PostsList({ posts, error, nowIso, q, page, totalPages, t
               </p>
               {!q && (
                 <a
-                  href="/admin/posts/new"
+                  href="/admin/articulos/new"
                   className={buttonVariants({ size: "lg", className: "mt-5" })}
                 >
                   <Plus />
@@ -137,7 +137,7 @@ export default function PostsList({ posts, error, nowIso, q, page, totalPages, t
                           </TableCell>
                           <TableCell className="w-px whitespace-nowrap pr-4 text-center">
                             <a
-                              href={`/admin/posts/${p.id}/edit`}
+                              href={`/admin/articulos/${p.id}/edit`}
                               aria-label="Editar artículo"
                               title="Editar"
                               className={buttonVariants({

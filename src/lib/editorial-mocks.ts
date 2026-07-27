@@ -7,7 +7,7 @@
  *
  * Timestamps are generated relative to a caller-supplied "now" so the page can
  * pass the same reference to the React island (see `nowIso` in
- * `src/pages/admin/posts/index.astro` for the existing precedent). That keeps
+ * `src/pages/admin/articulos/index.astro` for the existing precedent). That keeps
  * server-rendered and hydrated output byte-identical.
  */
 
