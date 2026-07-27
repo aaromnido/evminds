@@ -10,14 +10,10 @@ import TopicFields from "./TopicFields";
 import WizardSteps, { buildWizardSteps } from "./WizardSteps";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
-import { mockReadReferenceLink } from "@/lib/editorial-mocks";
 import { SEO_TITLE_MAX } from "@/lib/editorial-validation";
 import { channelUrl, newPieceUrl, piecesUrl } from "@/lib/editorial-routes";
 import { isBriefValid, validateBrief } from "@/lib/editorial-validation";
 import type { IdeaCandidate, PublishChannel, ReferenceLink } from "@/lib/editorial-types";
-
-/** Fake latency, R1 only for now (real fetch lands in a later pass). */
-const READ_DELAY_MS = 1200;
 
 interface Props {
   /** Present when arriving from a picked proposal (route A). */
@@ -50,8 +46,10 @@ interface Props {
  * ticking EVminds visibly turns the wizard from three steps into four.
  *
  * "Desarrollar con IA" and "Mejorar SEO" call the real `editorial-expand-angle`
- * / `editorial-improve-seo-title` functions. R1's link reading is still
- * simulated (`mockReadReferenceLink`); its real wiring lands separately.
+ * / `editorial-improve-seo-title` functions. R1's link reading calls
+ * `/admin/redaccion/read-link` for UI feedback only — the content that
+ * actually reaches the redactor is re-fetched fresh at generate time by
+ * `generate-draft.ts`, not carried from here.
  */
 export default function DefineAngleStep({
   idea,
@@ -86,32 +84,51 @@ export default function DefineAngleStep({
   /** What arrived with the idea, to tell "typed something" from "untouched". */
   const initial = useRef({ title, angle });
   const nextLinkId = useRef(links.length);
-  /** Attempts per link, so a retry can succeed where the first read failed. */
-  const attempts = useRef<Record<string, number>>({});
 
-  /** Simulated fetch of one link. The real version is a single server call. */
-  function readLink(link: ReferenceLink) {
-    const attempt = (attempts.current[link.id] ?? 0) + 1;
-    attempts.current[link.id] = attempt;
-
+  /**
+   * Reads one link for UI feedback (leído / no se pudo leer). The content
+   * read here is never stored: `generate-draft.ts` re-fetches fresh at
+   * generate time from the piece's own `reference_urls`, so a piece resumed
+   * days later still gets real reference content instead of silently losing
+   * it. This call only has to answer "is this link readable".
+   */
+  async function readLink(link: ReferenceLink) {
     setLinks((prev) =>
       prev.map((l) =>
         l.id === link.id ? { ...l, status: "reading", title: null, error: null } : l,
       ),
     );
 
-    window.setTimeout(() => {
-      const result = mockReadReferenceLink(link.url, attempt);
+    try {
+      const res = await fetch("/admin/redaccion/read-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: link.url }),
+      });
+      const data = await res.json().catch(() => ({ ok: false, error: null }));
       setLinks((prev) =>
         prev.map((l) =>
           l.id === link.id
-            ? result.ok
-              ? { ...l, status: "read", title: result.title, error: null }
-              : { ...l, status: "failed", title: null, error: result.error }
+            ? data.ok
+              ? { ...l, status: "read", title: data.title, error: null }
+              : {
+                  ...l,
+                  status: "failed",
+                  title: null,
+                  error: data.error ?? "No se pudo leer el enlace.",
+                }
             : l,
         ),
       );
-    }, READ_DELAY_MS);
+    } catch {
+      setLinks((prev) =>
+        prev.map((l) =>
+          l.id === link.id
+            ? { ...l, status: "failed", title: null, error: "No se pudo leer el enlace." }
+            : l,
+        ),
+      );
+    }
   }
 
   // Links carried over from the idea start reading on arrival, same as ones
@@ -120,7 +137,7 @@ export default function DefineAngleStep({
   const initialLinks = useRef(briefLinks ? [] : links);
   // Mount only: the ref keeps the initial list stable so this never re-runs.
   useEffect(() => {
-    for (const link of initialLinks.current) readLink(link);
+    for (const link of initialLinks.current) void readLink(link);
   }, []);
 
   function handleAddLink(url: string): string | null {
@@ -133,7 +150,7 @@ export default function DefineAngleStep({
       error: null,
     };
     setLinks((prev) => [...prev, link]);
-    readLink(link);
+    void readLink(link);
     return null;
   }
 

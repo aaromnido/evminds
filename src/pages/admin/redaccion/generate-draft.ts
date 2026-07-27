@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { parseMotorPayload } from "@/lib/editorial-drafts";
+import { readReferenceLink } from "@/lib/reference-link-reader";
 import type { PublishChannel } from "@/lib/editorial-types";
 
 /**
@@ -16,8 +17,15 @@ import type { PublishChannel } from "@/lib/editorial-types";
  * finished-but-unpublished draft says nothing about what a reader would have
  * seen this week.
  *
- * Body: { pieceId, channel, briefTitle, briefAngle, referenceContent?,
- *         sourceName?, sourceUrl?, weeklyNotes? }
+ * R1 also resolves HERE, not from the client: `referenceContent` is built by
+ * re-fetching the piece's own `reference_urls` fresh (via the same reader
+ * `read-link.ts` uses for step ②'s UI feedback), rather than trusting
+ * client-supplied prompt content or carrying text from when the link was
+ * first added. That also means a piece resumed days later still gets real
+ * reference content — nothing about a link's body is persisted anywhere.
+ *
+ * Body: { pieceId, channel, briefTitle, briefAngle, sourceName?, sourceUrl?,
+ *         weeklyNotes? }
  * Response: the redactor's own shape — { ok: true, title, body, ... } | { error }
  */
 
@@ -59,11 +67,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ error: "Configuración del servidor incompleta." }, 500);
   }
 
+  const { data: pieceRow } = await supabase
+    .from("editorial_pieces")
+    .select("reference_urls")
+    .eq("id", pieceId)
+    .maybeSingle();
+
+  const referenceContent = await buildReferenceContent(pieceRow?.reference_urls ?? []);
+
   const requestBody: Record<string, unknown> = {
     channel,
     briefTitle,
     briefAngle,
-    referenceContent: typeof input.referenceContent === "string" ? input.referenceContent : "",
+    referenceContent,
     sourceName: str(input.sourceName) || null,
     sourceUrl: str(input.sourceUrl) || null,
   };
@@ -104,6 +120,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ error: "No se pudo contactar con la función." }, 502);
   }
 };
+
+/**
+ * Fetches every reference link fresh and concatenates whatever was readable,
+ * labeled by source URL. Paywalled/JS-only links are expected to fail
+ * (`readReferenceLink` already treats that as normal, not exceptional) — a
+ * failed link is just absent from the result, it never blocks generation.
+ */
+async function buildReferenceContent(urls: unknown): Promise<string> {
+  if (!Array.isArray(urls) || urls.length === 0) return "";
+
+  const results = await Promise.all(
+    urls
+      .filter((u): u is string => typeof u === "string" && u.trim().length > 0)
+      .map((url) => readReferenceLink(url)),
+  );
+
+  return results
+    .filter((r): r is Extract<typeof r, { ok: true }> => r.ok)
+    .map((r) => `Fuente: ${r.title}\n${r.content}`)
+    .join("\n\n---\n\n");
+}
 
 function str(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
