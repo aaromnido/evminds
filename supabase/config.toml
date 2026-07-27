@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.editorial-shorten-title]
 verify_jwt = false
+
+[functions.editorial-describe-image]
+verify_jwt = false

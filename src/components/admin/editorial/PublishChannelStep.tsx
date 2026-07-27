@@ -26,7 +26,6 @@ import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
 import {
   mockImageVariants,
-  mockDescribeImage,
   mockPostRecord,
   MOCK_HERO_IMAGE,
   type MockImageVariant,
@@ -62,7 +61,6 @@ import type { PublishChannel } from "@/lib/editorial-types";
  * loading state that lies.
  */
 const EDIT_IMAGE_DELAY_MS = 1600;
-const DESCRIBE_IMAGE_DELAY_MS = 1100;
 
 interface Props {
   /** Channel this screen is for. */
@@ -571,17 +569,31 @@ export default function PublishChannelStep({
   /**
    * Ask the AI to describe the current image.
    *
-   * PROTOTYPE: a timeout over `mockDescribeImage`. The real call hands the image
-   * to the multimodal model and asks for one sentence.
+   * Silently skips a non-`http(s)` URL: the wizard still hands out
+   * `MOCK_HERO_IMAGE`, a same-origin placeholder, right after generating a
+   * draft (Phase 6/Magnific isn't built yet), and the Edge Function has no
+   * origin to fetch that from. Treating "not a real photo yet" as nothing to
+   * describe is more honest than surfacing it as a failure.
    */
-  function describeImage(url: string) {
+  async function describeImage(url: string) {
+    if (!/^https?:\/\//i.test(url)) return;
     setDescribingAlt(true);
-    window.setTimeout(() => {
-      setImageAlt(mockDescribeImage(url));
+    try {
+      const res = await fetch("/admin/redaccion/describe-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setImageAlt(data.altText);
       setAltEdited(false);
       setAltTouched(false);
+    } catch {
+      showToast("No se ha podido describir la imagen.", "error");
+    } finally {
       setDescribingAlt(false);
-    }, DESCRIBE_IMAGE_DELAY_MS);
+    }
   }
 
   /**
@@ -592,7 +604,7 @@ export default function PublishChannelStep({
    */
   useEffect(() => {
     if (!spec.needsPostRecord || !imageUrl || imageAlt || describingAlt) return;
-    describeImage(imageUrl);
+    void describeImage(imageUrl);
     // Empty deps on purpose: this is the arrival pass. Later image changes go
     // through `handleImageChange`, which is the only place that knows whether the
     // alt was written by hand and must be left alone.
@@ -859,7 +871,7 @@ export default function PublishChannelStep({
   function handleImageChange(url: string) {
     setImageUrl(url);
     handleDiscardVariants();
-    if (spec.needsPostRecord && url && !altEdited) describeImage(url);
+    if (spec.needsPostRecord && url && !altEdited) void describeImage(url);
   }
 
   const selectedVariant = variants.find((v) => v.id === selectedVariantId);
@@ -973,7 +985,7 @@ export default function PublishChannelStep({
                 },
                 onBlur: () => setAltTouched(true),
                 describing: describingAlt,
-                onDescribe: () => describeImage(imageUrl),
+                onDescribe: () => void describeImage(imageUrl),
                 error: altTouched ? errors.imageAlt : null,
               }
             : undefined
