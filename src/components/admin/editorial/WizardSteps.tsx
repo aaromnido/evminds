@@ -1,6 +1,7 @@
 import { Check, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PublishChannel } from "@/lib/editorial-types";
+import { newPieceUrl } from "@/lib/editorial-routes";
 
 /**
  * The editorial wizard's steps. Step 4 (EVminds) only exists once the
@@ -16,7 +17,7 @@ export interface WizardStep {
 }
 
 export const MVP_STEPS: WizardStep[] = [
-  { n: 1, label: "Tema", href: "/admin/redaccion" },
+  { n: 1, label: "Tema", href: newPieceUrl() },
   { n: 2, label: "Enfoque" },
   { n: 3, label: "Texto y publicación" },
 ];
@@ -41,7 +42,7 @@ export function buildWizardSteps(channels: PublishChannel[]): WizardStep[] {
     ? ordered.map((c, i) => ({ n: 3 + i, label: CHANNEL_LABEL[c] }))
     : [{ n: 3, label: "Texto y publicación" }];
 
-  return [{ n: 1, label: "Tema", href: "/admin/redaccion" }, { n: 2, label: "Enfoque" }, ...tail];
+  return [{ n: 1, label: "Tema", href: newPieceUrl() }, { n: 2, label: "Enfoque" }, ...tail];
 }
 
 /** Circle diameter, in px. The connector sits at exactly half of it. */

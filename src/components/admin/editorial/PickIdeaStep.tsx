@@ -12,6 +12,7 @@ import { useToast } from "@/lib/use-toast";
 import { buildMockIdeas, buildOwnIdea } from "@/lib/editorial-mocks";
 import type { IdeaCandidate, IdeaDraftInput } from "@/lib/editorial-types";
 import type { SaveState } from "./SaveIdeaButton";
+import { newAngleUrl } from "@/lib/editorial-routes";
 
 /** Fake latencies (prototype only). */
 const PICK_DELAY_MS = 700;
@@ -76,7 +77,7 @@ export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
     // Simulated hand-off. The real version persists the idea server-side and
     // lands on step ② with it already loaded.
     window.setTimeout(() => {
-      window.location.href = `/admin/redaccion/enfoque?idea=${idea.id}`;
+      window.location.href = newAngleUrl(idea.id);
     }, PICK_DELAY_MS);
   }
 

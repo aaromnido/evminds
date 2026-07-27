@@ -15,6 +15,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ChannelDraftStatus } from "./editorial-drafts";
 import { orderChannels } from "./editorial-channels";
 import type { Database } from "./database.types";
+import { channelUrl } from "./editorial-routes";
 import type { PublishChannel } from "./editorial-types";
 
 /** A piece is finished when every channel it was created for is closed. */
@@ -101,12 +102,7 @@ export function resumeHref(
 ): string {
   const open = summaries.find((c) => c.status === null || c.status === "draft");
   const target = open?.channel ?? channels[channels.length - 1] ?? "motor";
-  const params = new URLSearchParams({
-    canales: channels.join(","),
-    canal: target,
-    pieza: pieceId,
-  });
-  return `/admin/redaccion/texto?${params}`;
+  return channelUrl(pieceId, target);
 }
 
 /**

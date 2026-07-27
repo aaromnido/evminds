@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePenLine, Newspaper, PenLine, LogOut, Plus } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,68 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
-
-interface NavChild {
-  title: string;
-  href: string;
-  ready: boolean;
-}
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  ready: boolean;
-  /** Sub-entries, for a section that is more than one screen. */
-  children?: NavChild[];
-}
-
-/**
- * Editorial (task A3, phase 2b — agreed with Fer 2026-07-27).
- *
- * **Redacción had become two things at once**: a linear wizard and a section with
- * contents of its own. Its entry pointed at step ①, which is a wizard step
- * disguised as a section landing — visible the moment the section got real
- * content, in phase 2. So it grows children, and "Ideas" moves in as one of them:
- * it only ever feeds Redacción, and it had been sitting at top level in
- * "próximamente" for weeks holding a slot for a screen that does not exist.
- *
- * See `.claude/plans/plan-ai-editorial-agent-mvp.md` → Phase 2b for the route map.
- */
-const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", href: "/admin", icon: LayoutDashboard, ready: true },
-  {
-    title: "Artículos propios",
-    href: "/admin/posts",
-    icon: FilePenLine,
-    ready: true,
-  },
-  { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: true },
-  {
-    title: "Redacción",
-    href: "/admin/redaccion",
-    icon: PenLine,
-    ready: true,
-    children: [
-      { title: "Tus piezas", href: "/admin/redaccion/piezas", ready: true },
-      { title: "Ideas", href: "/admin/redaccion/ideas", ready: false },
-      { title: "Escribir", href: "/admin/redaccion", ready: true },
-    ],
-  },
-];
-
-/**
- * Whether a nav entry should read as "you are here".
- *
- * A parent lights up for anything inside it, and a child only for its own screen.
- * That difference is the whole point: `startsWith` on a child would light
- * "Tus piezas" from every route under Redacción, which does not error — it just
- * tells you the wrong place, which is worse.
- */
-function isActivePath(activePath: string, href: string, exact: boolean): boolean {
-  if (exact || href === "/admin") return activePath === href;
-  return activePath === href || activePath.startsWith(`${href}/`);
-}
+import { isChildActive, isParentActive, NAV_ITEMS } from "@/lib/admin-nav";
 
 interface Props {
   userEmail: string;
@@ -126,7 +65,7 @@ export default function AdminSidebarLayout({
             <SidebarGroupContent>
               <SidebarMenu className="gap-2">
                 {NAV_ITEMS.map((item) => {
-                  const active = isActivePath(activePath, item.href, false);
+                  const active = isParentActive(activePath, item.href);
                   return (
                     <SidebarMenuItem key={item.href}>
                       {item.ready ? (
@@ -166,9 +105,7 @@ export default function AdminSidebarLayout({
                               {child.ready ? (
                                 <SidebarMenuSubButton
                                   render={<a href={child.href} />}
-                                  // Exact: a child must not light up for its
-                                  // siblings' screens.
-                                  isActive={isActivePath(activePath, child.href, true)}
+                                  isActive={isChildActive(activePath, child)}
                                 >
                                   <span>{child.title}</span>
                                 </SidebarMenuSubButton>

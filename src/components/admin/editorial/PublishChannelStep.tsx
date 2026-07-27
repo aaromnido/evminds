@@ -39,6 +39,7 @@ import type {
   EvmindsChannelPayload,
   MotorChannelPayload,
 } from "@/lib/editorial-drafts";
+import { channelUrl, pieceBriefUrl } from "@/lib/editorial-routes";
 import { useDraftAutosave } from "@/lib/use-draft-autosave";
 import { formatPublishSchedule, shiftDateByDays } from "@/lib/editorial-utils";
 import {
@@ -71,11 +72,12 @@ interface Props {
   /**
    * The durable piece this screen writes into, created when step ② was left.
    *
-   * Null only when the wizard is entered directly at this step with no piece
-   * behind it. Nothing is autosaved then, which is honest: there is nowhere to
-   * save to.
+   * **Never null since phase 2b:** the piece is the path (`/pieza/<id>/<canal>`),
+   * so a screen without one cannot be reached — the page redirects instead of
+   * rendering an empty one. That removed every "there is nowhere to save" branch
+   * this component used to carry.
    */
-  pieceId: string | null;
+  pieceId: string;
   /**
    * What was already stored for this channel, if anything. Its presence is what
    * turns arrival into a **resume** instead of a generation: the screen comes
@@ -96,8 +98,6 @@ interface Props {
    */
   briefSourceName?: string | null;
   briefSourceUrl?: string | null;
-  /** Carried forward into the next channel's URL, when there is one. */
-  ideaId?: string | null;
   /**
    * "Now" in Madrid, as wall-clock strings (`YYYY-MM-DD` and `HH:MM`), computed
    * by the page. Never derive them here: `Date` inside a hydrated island answers
@@ -108,10 +108,11 @@ interface Props {
   /**
    * Publish date chosen on the previous channel's screen, `YYYY-MM-DD`.
    *
-   * Travels in the URL (`?fecha=`) because each channel is its own page. When it
-   * is here, this channel's date starts a week later — Fer's rule (2026-07-26):
-   * EVminds publishes a week after Motor.es, so the common answer should already
-   * be in the field rather than being worked out by hand every time.
+   * **Read from that channel's row** by the page — it used to travel as `?fecha=`
+   * and that is exactly how it got lost. When it is here, this channel's date
+   * starts a week later, which is Fer's rule (2026-07-26): EVminds publishes a
+   * week after Motor.es, so the common answer should already be in the field
+   * rather than being worked out by hand every time.
    */
   previousChannelDate?: string | null;
 }
@@ -256,7 +257,6 @@ export default function PublishChannelStep({
   briefAngle,
   briefSourceName,
   briefSourceUrl,
-  ideaId,
   todayInMadrid,
   nowHourInMadrid,
   previousChannelDate,
@@ -457,22 +457,12 @@ export default function PublishChannelStep({
 
   /**
    * Where "Volver atrás" lands: the **previous channel's screen** when there is
-   * one, and only the brief when this is the first channel.
+   * one, and the piece's brief when this is the first channel.
    *
-   * No `?fecha=` on the way back — that parameter means "the date of the channel
-   * before the one you are opening", and the first channel has none.
+   * Both are plain paths now: the piece is in the URL, so there is nothing to
+   * carry along and nothing that can fail to arrive.
    */
-  const backHref = (() => {
-    // Back to the brief, carrying the piece so that screen arrives filled in and
-    // saving there updates this piece instead of starting another one.
-    if (!previousSpec) {
-      return pieceId ? `/admin/redaccion/enfoque?pieza=${pieceId}` : "/admin/redaccion/enfoque";
-    }
-    const params = new URLSearchParams({ canales: channels.join(","), canal: previousSpec.value });
-    if (pieceId) params.set("pieza", pieceId);
-    if (ideaId) params.set("idea", ideaId);
-    return `/admin/redaccion/texto?${params}`;
-  })();
+  const backHref = previousSpec ? channelUrl(pieceId, previousSpec.value) : pieceBriefUrl(pieceId);
 
   // --- Copying, field by field ---------------------------------------------
 
@@ -705,16 +695,11 @@ export default function PublishChannelStep({
     if (nextSpec) {
       setNavigating(true);
       // Flushed rather than left to the timer: navigating away mid-debounce is
-      // exactly the window that would lose the last edits.
+      // exactly the window that would lose the last edits — and it is also what
+      // lets the next channel read this one's date from its row instead of being
+      // handed it in the URL.
       await saveNow();
-      const params = new URLSearchParams({ canales: channels.join(","), canal: nextSpec.value });
-      if (pieceId) params.set("pieza", pieceId);
-      if (ideaId) params.set("idea", ideaId);
-      // So the next channel can start a week after this one. Redundant once the
-      // piece exists (the next screen reads this channel's stored date), and kept
-      // for the case where it does not.
-      if (publishDate) params.set("fecha", publishDate);
-      window.location.href = `/admin/redaccion/texto?${params}`;
+      window.location.href = channelUrl(pieceId, nextSpec.value);
       return;
     }
 
@@ -723,9 +708,7 @@ export default function PublishChannelStep({
     // finished on our side, EVminds is scheduled. Phase 4 is what turns the
     // second one into an actual `posts` row and fills `post_id`.
     const finalStatus: ChannelDraftStatus = spec.handoff === "copy" ? "done" : "scheduled";
-    // Without a piece there is nothing to write into, and that must not stop the
-    // wizard from finishing: entering this step directly is a supported route.
-    const ok = pieceId ? await saveNow({ status: finalStatus }) : true;
+    const ok = await saveNow({ status: finalStatus });
     setHandingOff(false);
     if (!ok) return;
     setStatus(finalStatus);
@@ -853,8 +836,9 @@ export default function PublishChannelStep({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BackStepButton
           href={backHref}
-          // Only relevant without a piece; with one, `onBeforeLeave` decides.
-          dirty={!pieceId}
+          // `onBeforeLeave` decides: this flag only matters for callers without
+          // one, which this screen no longer is.
+          dirty={false}
           // **This dialog used to warn that going back lost the text, the image
           // and the date, and that was true: there was no durable row.** Now
           // there is, so leaving saves and goes — and the only thing left worth
@@ -862,13 +846,9 @@ export default function PublishChannelStep({
           // place would have been worse than never having it: a dialog that
           // warns about something that cannot happen teaches people not to read
           // dialogs.
-          confirmTitle={pieceId ? "No se han podido guardar los cambios" : "¿Volver atrás?"}
-          confirmDescription={
-            pieceId
-              ? `Los últimos cambios de ${spec.name} no han llegado a guardarse, así que se perderían al salir. Puedes seguir aquí e intentarlo otra vez, o salir de todas formas.`
-              : `Esta pieza no se está guardando en ningún sitio, así que se perderá el texto de ${spec.name}, la imagen y la fecha.`
-          }
-          onBeforeLeave={pieceId ? () => saveNow() : undefined}
+          confirmTitle="No se han podido guardar los cambios"
+          confirmDescription={`Los últimos cambios de ${spec.name} no han llegado a guardarse, así que se perderían al salir. Puedes seguir aquí e intentarlo otra vez, o salir de todas formas.`}
+          onBeforeLeave={() => saveNow()}
           disabled={busy}
         />
       </div>
@@ -1080,24 +1060,18 @@ export default function PublishChannelStep({
                 : "Quedará programado y podrás cambiar la fecha después desde Artículos."
           }
           minWidth="16rem"
-          // No piece, nowhere to save: offering the button anyway would be the
-          // same empty promise that got it removed from step ② in the first place.
-          secondary={
-            pieceId
-              ? {
-                  label: "Guardar borrador",
-                  runningLabel: "Guardando…",
-                  running: savingDraft || saveState === "saving",
-                  onClick: handleSaveDraft,
-                  // Nothing pending: the button says so and goes inert, which is
-                  // also how the autosave becomes visible without a second widget
-                  // saying the same thing in different words.
-                  done: saveState === "clean",
-                  doneLabel: "Borrador guardado",
-                  minWidth: "13rem",
-                }
-              : undefined
-          }
+          secondary={{
+            label: "Guardar borrador",
+            runningLabel: "Guardando…",
+            running: savingDraft || saveState === "saving",
+            onClick: handleSaveDraft,
+            // Nothing pending: the button says so and goes inert, which is also
+            // how the autosave becomes visible without a second widget saying the
+            // same thing in different words.
+            done: saveState === "clean",
+            doneLabel: "Borrador guardado",
+            minWidth: "13rem",
+          }}
         />
       </div>
 

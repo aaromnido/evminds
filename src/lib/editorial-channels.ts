@@ -134,7 +134,13 @@ export function orderChannels(channels: PublishChannel[]): PublishChannel[] {
   return CHANNELS.map((c) => c.value).filter((v) => channels.includes(v));
 }
 
-/** Parses the `?canales=` param into a valid, ordered, never-empty selection. */
+/**
+ * Parses a comma-separated channel list into a valid, ordered, never-empty one.
+ *
+ * Its input used to be the `?canales=` parameter; since phase 2b it is the
+ * piece's stored `channels` column, which is the same shape and cannot be
+ * hand-edited into contradicting what the piece was created for.
+ */
 export function parseChannels(raw: string | null): PublishChannel[] {
   const parsed = (raw ?? "")
     .split(",")

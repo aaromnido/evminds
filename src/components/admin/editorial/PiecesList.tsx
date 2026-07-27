@@ -7,6 +7,7 @@ import PieceCard from "./PieceCard";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
 import type { PieceSummary } from "@/lib/editorial-pieces";
+import { newPieceUrl } from "@/lib/editorial-routes";
 
 interface Props {
   pieces: PieceSummary[];
@@ -70,7 +71,7 @@ export default function PiecesList({ pieces: initial, nowIso }: Props) {
           </p>
         </div>
         <div className="flex justify-center">
-          <Button size="lg" render={<a href="/admin/redaccion" />}>
+          <Button size="lg" render={<a href={newPieceUrl()} />}>
             <PenLine />
             Escribir algo nuevo
           </Button>

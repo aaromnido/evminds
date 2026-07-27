@@ -1,6 +1,7 @@
 import { CircleCheck, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChannelResultCard from "./ChannelResultCard";
+import { newPieceUrl } from "@/lib/editorial-routes";
 
 interface Props {
   title: string;
@@ -58,7 +59,7 @@ export default function ChannelStepDone({ title, hint, piece, onEdit }: Props) {
       <ChannelResultCard {...piece} onEdit={onEdit} />
 
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button size="lg" render={<a href="/admin/redaccion" />}>
+        <Button size="lg" render={<a href={newPieceUrl()} />}>
           <PenLine />
           Crear nuevo artículo
         </Button>

@@ -1,0 +1,55 @@
+---
+/**
+ * Redacción — step ① of the writing wizard: choose what to write about.
+ *
+ * **Lives at `/nueva` since phase 2b** (2026-07-27), because starting a piece is
+ * an action and the section's landing belongs to what already exists.
+ *
+ * The wizard belongs to "Redacción", not to "Ideas" (Fer, 2026-07-25): writing is
+ * the process, and ideas are the raw material it starts from. The separate
+ * "Ideas" section will list the bank of saved ideas and is not designed yet.
+ *
+ * PROTOTYPE (task A3, UI-first phase): fed by `editorial-mocks.ts`, not by
+ * Supabase. The `editorial_candidates` table does not exist yet. To wire this up
+ * for real, replace `buildMockIdeas(nowIso)` with the query and delete the mock
+ * module. See `.claude/design/ai-editorial-agent-ui.md`.
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import PickIdeaStep from "@/components/admin/editorial/PickIdeaStep.tsx";
+import PiecesInProgress from "@/components/admin/editorial/PiecesInProgress.tsx";
+import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
+import { buildMockIdeas } from "@/lib/editorial-mocks";
+import { fetchPieceSummaries } from "@/lib/editorial-pieces";
+
+// Single clock reference shared with the island, so the relative labels ("hace
+// 6 h") render identically on the server and after hydration.
+const nowIso = new Date().toISOString();
+const ideas = buildMockIdeas(nowIso);
+
+// What is still unfinished, capped like "Guardadas y propias" below: this block
+// is real data on a screen that is still mock ideas, which is exactly the seam
+// phase 2 was supposed to close first.
+const PIECES_SHOWN = 3;
+const supabase = Astro.locals.supabase;
+const { pieces, total } = supabase
+  ? await fetchPieceSummaries(supabase, { status: "in_progress", limit: PIECES_SHOWN })
+  : { pieces: [], total: 0 };
+---
+
+<AdminShell
+  title="Escribir · Admin"
+  pageTitle="Escribir algo nuevo"
+  pageDescription="Elige sobre qué escribir: una propuesta del curador o un tema tuyo."
+>
+  <div class="flex flex-col gap-6">
+    <WizardSteps current={1} />
+    {
+      /* Above everything, and rendered with no `client:` directive — cards and
+        links only, so it costs zero JavaScript. First because a piece in progress
+        is work you owe: buried under the proposals, you start writing the same
+        thing twice. */
+    }
+    <PiecesInProgress pieces={pieces} total={total} nowIso={nowIso} />
+    <PickIdeaStep client:load ideas={ideas} nowIso={nowIso} />
+  </div>
+</AdminShell>

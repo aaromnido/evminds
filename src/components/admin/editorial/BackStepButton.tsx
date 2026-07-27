@@ -13,8 +13,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface Props {
-  /** Where "back" lands. Defaults to the start of the wizard. */
-  href?: string;
+  /**
+   * Where "back" lands. **Required, with no default** (phase 2b): a shared
+   * component whose default destination is right for one screen is a trap in the
+   * next one — it does not error, it just takes you somewhere else, which is
+   * exactly the bug this had when it sent step ④ to the brief instead of step ③.
+   */
+  href: string;
   /**
    * True when there is typed work that leaving would throw away. Nothing is
    * persisted in these steps, so this is the only thing standing between a
@@ -63,7 +68,7 @@ interface Props {
  * goes, and asking anyway would train the reflex of dismissing dialogs unread.
  */
 export default function BackStepButton({
-  href = "/admin/redaccion",
+  href,
   dirty,
   confirmTitle = "¿Salir sin generar el texto?",
   confirmDescription = "Lo que has escrito en este paso todavía no se guarda en ningún sitio, así que se perderá. La idea de la que partiste sigue en su lista.",

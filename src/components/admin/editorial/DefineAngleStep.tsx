@@ -11,6 +11,7 @@ import WizardSteps, { buildWizardSteps } from "./WizardSteps";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
 import { mockExpandAngle, mockImproveSeoTitle, mockReadReferenceLink } from "@/lib/editorial-mocks";
+import { channelUrl, newPieceUrl, piecesUrl } from "@/lib/editorial-routes";
 import { isBriefValid, validateBrief } from "@/lib/editorial-validation";
 import type { IdeaCandidate, PublishChannel, ReferenceLink } from "@/lib/editorial-types";
 
@@ -222,7 +223,7 @@ export default function DefineAngleStep({
       setSavingBrief(false);
       return;
     }
-    window.location.href = "/admin/redaccion/piezas";
+    window.location.href = piecesUrl();
   }
 
   /**
@@ -245,9 +246,10 @@ export default function DefineAngleStep({
       return;
     }
 
-    const params = new URLSearchParams({ canales: channels.join(","), pieza: id });
-    if (idea) params.set("idea", idea.id);
-    window.location.href = `/admin/redaccion/texto?${params}`;
+    // Straight to the first chosen channel's screen. Nothing travels in the URL
+    // any more: the piece's row answers which channels it has and where it came
+    // from.
+    window.location.href = channelUrl(id, channels[0]);
   }
 
   /**
@@ -284,6 +286,9 @@ export default function DefineAngleStep({
             dialog says that instead of the "nothing is saved anywhere" line,
             which stopped being true with phase 2. */}
         <BackStepButton
+          // From an existing piece you came from the list; from a new one, from
+          // the topic picker.
+          href={pieceId ? piecesUrl() : newPieceUrl()}
           dirty={dirty}
           confirmTitle={pieceId ? "¿Salir sin guardar el enfoque?" : undefined}
           confirmDescription={
@@ -322,10 +327,7 @@ export default function DefineAngleStep({
           {!idea && (
             <p className="text-xs text-muted-foreground">
               ¿Prefieres partir de una propuesta?{" "}
-              <a
-                href="/admin/redaccion"
-                className="underline underline-offset-4 hover:no-underline"
-              >
+              <a href={newPieceUrl()} className="underline underline-offset-4 hover:no-underline">
                 Mira las ideas de hoy
               </a>
               .

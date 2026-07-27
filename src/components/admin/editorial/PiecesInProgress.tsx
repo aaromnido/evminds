@@ -1,6 +1,7 @@
 import CardsSection from "./CardsSection";
 import PieceCard from "./PieceCard";
 import type { PieceSummary } from "@/lib/editorial-pieces";
+import { piecesUrl } from "@/lib/editorial-routes";
 
 interface Props {
   /** Already capped by the page: this component does not decide how many. */
@@ -37,17 +38,11 @@ export default function PiecesInProgress({ pieces, total, nowIso }: Props) {
       count={total}
       action={
         total > pieces.length ? (
-          <a
-            href="/admin/redaccion/piezas"
-            className="text-xs underline underline-offset-4 hover:no-underline"
-          >
+          <a href={piecesUrl()} className="text-xs underline underline-offset-4 hover:no-underline">
             Ver todas ({total})
           </a>
         ) : (
-          <a
-            href="/admin/redaccion/piezas"
-            className="text-xs underline underline-offset-4 hover:no-underline"
-          >
+          <a href={piecesUrl()} className="text-xs underline underline-offset-4 hover:no-underline">
             Ver todas las piezas
           </a>
         )

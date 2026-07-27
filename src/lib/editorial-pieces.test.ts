@@ -65,12 +65,14 @@ describe("buildPieceSummary", () => {
   });
 
   describe("where it resumes", () => {
+    // The URL shape changed in phase 2b: the piece and the channel are the path,
+    // and there is nothing else to carry.
+    const PIECE = "11111111-1111-4111-8111-111111111111";
+
     it("goes to the first channel still open", () => {
       const summary = buildPieceSummary(piece(), [draft({ status: "done" })]);
 
-      expect(summary.href).toContain("canal=evminds");
-      expect(summary.href).toContain("pieza=11111111-1111-4111-8111-111111111111");
-      expect(summary.href).toContain("canales=motor%2Cevminds");
+      expect(summary.href).toBe(`/admin/redaccion/pieza/${PIECE}/evminds`);
     });
 
     it("goes to the last channel when everything is closed", () => {
@@ -81,13 +83,13 @@ describe("buildPieceSummary", () => {
 
       // Not a dead end: a finished piece stays editable and reschedulable, which
       // is the requirement that made durable drafts necessary in the first place.
-      expect(summary.href).toContain("canal=evminds");
+      expect(summary.href).toBe(`/admin/redaccion/pieza/${PIECE}/evminds`);
     });
 
     it("treats a channel with no row as the place to go", () => {
       const summary = buildPieceSummary(piece(), []);
 
-      expect(summary.href).toContain("canal=motor");
+      expect(summary.href).toBe(`/admin/redaccion/pieza/${PIECE}/motor`);
     });
   });
 });
