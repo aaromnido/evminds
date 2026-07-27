@@ -75,9 +75,8 @@ export default function DefineAngleStep({
       error: null,
     })),
   );
-  // Motor.es is ticked by default: it is the only channel in the MVP and the
-  // reason the flow exists, so the common case needs no decision.
-  const [channels, setChannels] = useState<PublishChannel[]>(briefChannels ?? ["motor"]);
+  // Motor.es and EVminds are ticked by default.
+  const [channels, setChannels] = useState<PublishChannel[]>(briefChannels ?? ["motor", "evminds"]);
   const [generating, setGenerating] = useState(false);
   const [savingBrief, setSavingBrief] = useState(false);
   const { toast, showToast, dismiss } = useToast();

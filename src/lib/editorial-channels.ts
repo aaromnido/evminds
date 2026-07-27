@@ -147,5 +147,5 @@ export function parseChannels(raw: string | null): PublishChannel[] {
     .map((c) => c.trim())
     .filter((c): c is PublishChannel => c === "motor" || c === "evminds");
   const ordered = orderChannels(parsed);
-  return ordered.length ? ordered : ["motor"];
+  return ordered.length ? ordered : ["motor", "evminds"];
 }
