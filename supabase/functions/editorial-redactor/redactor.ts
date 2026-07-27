@@ -104,6 +104,47 @@ function demoteH1(markdown: string): string {
   return markdown.replace(/^#(?!#)[ \t]*/gm, '## ');
 }
 
+/**
+ * Strips any Markdown link in the prose whose URL isn't literally present in
+ * the reference content, keeping the link's visible text so the sentence
+ * still reads (Fer, 2026-07-27: a fabricated citation link inside "Cuerpo
+ * noticia" turned out to be a dead page).
+ *
+ * Enforced in code, not trusted to the prompt: the prompt already says never
+ * to invent one, but with no real reference material today (R1 link fetching
+ * isn't wired into this call yet, so `referenceContent` is normally ""), the
+ * model kept inventing a link to satisfy the house style's "con enlace cuando
+ * lo hay" — this is the backstop for exactly that case.
+ */
+function stripUnverifiedLinks(markdown: string, referenceContent: string): string {
+  // No `https?://` requirement on purpose: a fabricated "link" is just as
+  // often a bare domain ("tesla.com/superchargers") as a full URL.
+  return markdown.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (match, text, url) =>
+    referenceContent.includes(url) ? match : text,
+  );
+}
+
+/**
+ * Cuts the body dead at the first sign of a "Fuentes consultadas" or
+ * "Noticias relacionadas" section, whatever heading level or formatting the
+ * model gave it. Totally banned, no exceptions, even with a real fetched
+ * source (Fer, 2026-07-27, after two rounds of catching this in a
+ * screenshot): he adds his own sources by hand when he wants them, the
+ * redactor never writes either section, full stop.
+ *
+ * A truncation rather than a targeted removal, and deliberately not anchored
+ * to any particular heading syntax — round 1 of this fix matched only `##`
+ * and the section survived because the model used a different level. Both
+ * phrases are always the last thing in the piece by Motor.es' own convention
+ * (`motor-es-style-guide.md`, "Práctica propia, no regla suya"), so cutting
+ * everything from the first occurrence onward is safe and catches both in one
+ * pass regardless of how either is formatted.
+ */
+function stripFabricatedClosingSections(markdown: string): string {
+  const match = markdown.match(/fuentes consultadas|noticias relacionadas/i);
+  return match ? markdown.slice(0, match.index).trimEnd() : markdown;
+}
+
 function buildBriefBlock(input: RedactorInput): string {
   const lines = [`Titular de partida: ${input.briefTitle}`, `Ángulo: ${input.briefAngle}`];
   if (input.referenceContent.trim()) {
@@ -120,6 +161,8 @@ function buildMotorPrompt(input: RedactorInput): string {
   return `Eres el redactor editorial de Motor.es (un medio externo, no EVminds), escribiendo bajo la guía de estilo y la línea editorial de Fernando Val que siguen a continuación. Sigue TODAS sus reglas.
 
 REGLA INQUEBRANTABLE sobre fuentes y enlaces: NUNCA inventes un medio, un redactor, una cita, un enlace ni una URL que no te haya sido dada explícitamente en el contenido de referencia de más abajo. Esto vale igual para el texto (entradilla y cuerpo) que para los campos del formulario: ni "fuente" ni "url fuente" forman parte de lo que generas — no existen como campos de salida, Fer los añade él mismo, a mano, cuando los hay. Si no tienes una fuente real y verificable que citar, no cites ninguna: mejor un texto sin cita que una cita o un enlace inventados.
+
+PROHIBIDO SIN EXCEPCIÓN: un bloque "Fuentes consultadas" o una sección de "Noticias relacionadas" al final del cuerpo. Esto NO es condicional a si tienes fuentes reales o no — aunque las tuvieras, tampoco los añadas. Fer los añade él mismo, a mano, cuando quiere tenerlos. La práctica de la casa que se menciona más abajo describe algo que hace Fer, no algo que tengas que reproducir tú. El cuerpo termina en el último párrafo del contenido, sin ningún bloque de cierre de ningún tipo.
 
 ${STYLE_GUIDE}
 
@@ -162,7 +205,7 @@ ${input.motorDraft.body}\n`
 
   return `Eres el redactor editorial de EVminds, escribiendo bajo la guía de estilo y la línea editorial de Fernando Val que siguen a continuación. Sigue TODAS sus reglas.
 
-REGLA INQUEBRANTABLE sobre fuentes y enlaces: NUNCA inventes un medio, una cita, un enlace ni una URL que no te haya sido dada explícitamente en el contenido de referencia o en el texto de Motor.es de más abajo (si los hay). Si no tienes una fuente real y verificable que citar, no cites ninguna: mejor un texto sin cita que una cita o un enlace inventados.
+REGLA INQUEBRANTABLE sobre fuentes y enlaces: NUNCA inventes un medio, una cita, un enlace ni una URL que no te haya sido dada explícitamente en el contenido de referencia o en el texto de Motor.es de más abajo (si los hay). Si no tienes una fuente real y verificable que citar, no cites ninguna: mejor un texto sin cita que una cita o un enlace inventados. Y PROHIBIDO SIN EXCEPCIÓN, tengas fuentes o no: un bloque "Fuentes consultadas" o una sección de "Noticias relacionadas" al final. Fer los añade él mismo, a mano, si quiere tenerlos.
 
 ${STYLE_GUIDE}
 
@@ -235,8 +278,10 @@ function parseMotor(raw: unknown, input: RedactorInput): MotorDraftResult | null
     discoverTitle: str(obj, 'titulo_discover'),
     metaTitle: str(obj, 'meta_titulo'),
     metaDescription: str(obj, 'meta_descripcion'),
-    lead,
-    body: demoteH1(body),
+    lead: stripUnverifiedLinks(lead, input.referenceContent),
+    body: stripFabricatedClosingSections(
+      demoteH1(stripUnverifiedLinks(body, input.referenceContent)),
+    ),
     brand: str(obj, 'marca'),
     model: str(obj, 'modelo'),
     // NEVER the model's guess (Fer, 2026-07-27: he clicked a model-invented
@@ -249,7 +294,7 @@ function parseMotor(raw: unknown, input: RedactorInput): MotorDraftResult | null
   };
 }
 
-function parseEvminds(raw: unknown): EvmindsDraftResult | null {
+function parseEvminds(raw: unknown, input: RedactorInput): EvmindsDraftResult | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
 
@@ -257,7 +302,12 @@ function parseEvminds(raw: unknown): EvmindsDraftResult | null {
   const body = str(obj, 'cuerpo');
   if (!title || !body) return null;
 
-  return { title, body: demoteH1(body) };
+  return {
+    title,
+    body: stripFabricatedClosingSections(
+      demoteH1(stripUnverifiedLinks(body, input.referenceContent)),
+    ),
+  };
 }
 
 /**
@@ -336,7 +386,8 @@ export async function generateDraft(
       return null;
     }
 
-    const result = input.channel === 'motor' ? parseMotor(parsed, input) : parseEvminds(parsed);
+    const result =
+      input.channel === 'motor' ? parseMotor(parsed, input) : parseEvminds(parsed, input);
     if (!result) {
       console.error('Gemini response failed schema validation:', text);
       return null;

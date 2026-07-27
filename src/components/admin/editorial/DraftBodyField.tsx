@@ -157,11 +157,11 @@ export default function DraftBodyField({
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        {visual
-          ? "Escribe directamente sobre el texto. Se guarda como Markdown, y en «Markdown» ves y editas la fuente."
-          : "Se guarda como texto plano con Markdown. Los subtítulos van con ##."}
-      </p>
+      {!visual && (
+        <p className="text-xs text-muted-foreground">
+          Se guarda como texto plano con Markdown. Los subtítulos van con ##.
+        </p>
+      )}
     </div>
   );
 }
