@@ -24,12 +24,7 @@ import WizardSteps, { buildWizardSteps } from "./WizardSteps";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
-import {
-  mockImageVariants,
-  mockPostRecord,
-  MOCK_HERO_IMAGE,
-  type MockImageVariant,
-} from "@/lib/editorial-mocks";
+import { mockImageVariants, MOCK_HERO_IMAGE, type MockImageVariant } from "@/lib/editorial-mocks";
 import { getChannel, type ChannelSpec } from "@/lib/editorial-channels";
 import type {
   ChannelDraftState,
@@ -694,11 +689,26 @@ export default function PublishChannelStep({
           setListTitleEdited(true);
         }
       } else {
-        // Excerpt/category/tags: still `mockPostRecord`, not part of this pass.
-        const record = mockPostRecord(data.title, data.body);
-        setExcerpt(record.excerpt);
-        setCategory(record.category);
-        setTags(record.tags);
+        // A separate call from the main draft (Fer's call, 2026-07-27), so its
+        // failure doesn't discard an otherwise-good title/body: caught on its
+        // own, leaving the record fields for Fer to fill by hand.
+        try {
+          const res = await fetch("/admin/redaccion/post-record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: data.title, body: data.body }),
+          });
+          const record = await res.json().catch(() => ({}));
+          if (!res.ok || record?.ok !== true) throw new Error();
+          setExcerpt(record.excerpt);
+          setCategory(record.category);
+          setTags(record.tags);
+        } catch {
+          showToast(
+            "No se ha podido rellenar extracto, categoría y tags. Complétalos a mano.",
+            "error",
+          );
+        }
       }
 
       setGenerated(true);

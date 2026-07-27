@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.editorial-describe-image]
 verify_jwt = false
+
+[functions.editorial-post-record]
+verify_jwt = false
