@@ -13,6 +13,7 @@ import FieldError from "./FieldError";
 import HeroImageBlock from "./HeroImageBlock";
 import LeadField from "./LeadField";
 import PostRecordFields from "./PostRecordFields";
+import PublicationRecordFields from "./PublicationRecordFields";
 import QuickDatePicker from "./QuickDatePicker";
 import ScheduleField from "./ScheduleField";
 import StepActions from "./StepActions";
@@ -177,6 +178,9 @@ function buildSeed({
       sourceName: motor?.sourceName ?? briefSourceName ?? "",
       sourceUrl: motor?.sourceUrl ?? briefSourceUrl ?? "",
       cmsTags: motor?.tags ?? [],
+      published: motor?.published ?? false,
+      publishedDate: motor?.publishedDate ?? "",
+      publishedUrl: motor?.publishedUrl ?? "",
       slug: evminds?.slug || slugify(title),
       slugEdited: Boolean(evminds?.slug && evminds.slug !== slugify(title)),
       excerpt: evminds?.excerpt ?? "",
@@ -212,6 +216,9 @@ function buildSeed({
     sourceName: briefSourceName ?? "",
     sourceUrl: briefSourceUrl ?? "",
     cmsTags: draft.cms?.tags ?? [],
+    published: false,
+    publishedDate: "",
+    publishedUrl: "",
     slug: slugify(draft.title),
     slugEdited: false,
     excerpt: record.excerpt,
@@ -313,6 +320,12 @@ export default function PublishChannelStep({
   const [sourceName, setSourceName] = useState(seed.sourceName);
   const [sourceUrl, setSourceUrl] = useState(seed.sourceUrl);
   const [cmsTags, setCmsTags] = useState<string[]>(seed.cmsTags);
+  // Our own record of what happened on Motor.es' site, not one of their CMS
+  // columns — see `PublicationRecordFields`. Never validated, never blocking:
+  // it is bookkeeping, filled in whenever Fer actually publishes over there.
+  const [published, setPublished] = useState(seed.published);
+  const [publishedDate, setPublishedDate] = useState(seed.publishedDate);
+  const [publishedUrl, setPublishedUrl] = useState(seed.publishedUrl);
 
   /**
    * What each field held the last time it was copied.
@@ -384,6 +397,9 @@ export default function PublishChannelStep({
         sourceName,
         sourceUrl,
         tags: cmsTags,
+        published,
+        publishedDate,
+        publishedUrl,
       }
     : { slug, excerpt, category, tags, imageAlt };
 
@@ -989,6 +1005,24 @@ export default function PublishChannelStep({
                 middle would interrupt the mirrored spine for something you will
                 never be looking for in sequence. */}
             {imageBlock}
+
+            {/* Ours, not theirs — so it sits after the mirrored spine rather than
+                inside it. Often filled on a later visit, once Fer has actually
+                pasted the piece into their CMS (Fer, 2026-07-27). */}
+            <StepSection
+              title="Registro de publicación"
+              hint="Para llevar la cuenta de lo que de verdad ha salido en Motor.es."
+            >
+              <PublicationRecordFields
+                published={published}
+                onPublishedChange={setPublished}
+                publishedDate={publishedDate}
+                onPublishedDateChange={setPublishedDate}
+                publishedUrl={publishedUrl}
+                onPublishedUrlChange={setPublishedUrl}
+                disabled={busy}
+              />
+            </StepSection>
           </>
         ) : (
           <>

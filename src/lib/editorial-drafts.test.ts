@@ -151,6 +151,9 @@ describe("channelDraftFromRow / channelDraftToRow", () => {
         sourceName: "",
         sourceUrl: "",
         tags: ["Carga"],
+        published: false,
+        publishedDate: "",
+        publishedUrl: "",
       },
     });
   });

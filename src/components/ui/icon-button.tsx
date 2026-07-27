@@ -12,6 +12,7 @@ interface IconButtonProps
   href?: string;
   target?: string;
   rel?: string;
+  "aria-label"?: string;
 }
 
 export function IconButton({
@@ -24,6 +25,7 @@ export function IconButton({
   rel,
   variant,
   size,
+  "aria-label": ariaLabel,
   ...props
 }: IconButtonProps) {
   const content = (
@@ -39,6 +41,7 @@ export function IconButton({
         href={href}
         target={target}
         rel={rel}
+        aria-label={ariaLabel}
         className={cn(buttonVariants({ variant, size }), "gap-2", className)}
       >
         {content}
@@ -47,7 +50,13 @@ export function IconButton({
   }
 
   return (
-    <Button variant={variant} size={size} className={cn("gap-2", className)} {...props}>
+    <Button
+      variant={variant}
+      size={size}
+      aria-label={ariaLabel}
+      className={cn("gap-2", className)}
+      {...props}
+    >
       {content}
     </Button>
   );

@@ -33,6 +33,17 @@ export interface MotorChannelPayload {
   sourceName: string;
   sourceUrl: string;
   tags: string[];
+  /**
+   * Our own record of what actually happened on Motor.es' site — not one of
+   * their CMS columns, so it sits apart from the fields above. Fer asked for it
+   * (2026-07-27) to keep the real publish date and the live link, and it doubles
+   * as the redactor's signal for whether there is a genuinely published text for
+   * EVminds to adapt, rather than guessing from this draft's own `done` status.
+   */
+  published: boolean;
+  /** `YYYY-MM-DD`, empty until set. The real date, distinct from `publishDate` above (the expected day). */
+  publishedDate: string;
+  publishedUrl: string;
 }
 
 /** What a `posts` row needs and someone else's CMS does not. */
@@ -58,6 +69,11 @@ export type ChannelDraftStatus = "draft" | "done" | "scheduled";
 function str(source: Record<string, unknown>, key: string): string {
   const value = source[key];
   return typeof value === "string" ? value : "";
+}
+
+/** Reads a boolean field out of raw jsonb. Anything else defaults to `false`. */
+function bool(source: Record<string, unknown>, key: string): boolean {
+  return source[key] === true;
 }
 
 /**
@@ -90,6 +106,9 @@ export function parseMotorPayload(raw: unknown): MotorChannelPayload {
     sourceName: str(source, "sourceName"),
     sourceUrl: str(source, "sourceUrl"),
     tags: strArray(source, "tags"),
+    published: bool(source, "published"),
+    publishedDate: str(source, "publishedDate"),
+    publishedUrl: str(source, "publishedUrl"),
   };
 }
 
