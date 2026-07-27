@@ -24,7 +24,7 @@ export default function StepSection({ title, hint, aside, children, className }:
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="grid gap-1">
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
-          {hint && <p className="max-w-[68ch] text-xs text-muted-foreground">{hint}</p>}
+          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
         {aside}
       </div>

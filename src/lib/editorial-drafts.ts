@@ -53,6 +53,14 @@ export interface EvmindsChannelPayload {
   category: PostCategory;
   tags: string[];
   imageAlt: string;
+  /**
+   * What Fer typed under "Qué ha cambiado esta semana" (Fer, 2026-07-27):
+   * reader comments, a confirmed or denied figure, a new number — the material
+   * that only exists because EVminds is written a week after Motor.es. Optional,
+   * never validated, read by the redactor call when generating this channel's
+   * text.
+   */
+  weeklyNotes: string;
 }
 
 export type ChannelPayload = MotorChannelPayload | EvmindsChannelPayload;
@@ -124,6 +132,7 @@ export function parseEvmindsPayload(raw: unknown): EvmindsChannelPayload {
     category: isValidPostCategory(category) ? category : VALID_POST_CATEGORIES[0],
     tags: strArray(source, "tags"),
     imageAlt: str(source, "imageAlt"),
+    weeklyNotes: str(source, "weeklyNotes"),
   };
 }
 

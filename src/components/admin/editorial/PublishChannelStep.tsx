@@ -9,6 +9,7 @@ import CmsSearchFields from "./CmsSearchFields";
 import CopyProgress from "./CopyProgress";
 import DraftBodyField from "./DraftBodyField";
 import DraftTextBlock from "./DraftTextBlock";
+import EvmindsPreGenerateStep from "./EvmindsPreGenerateStep";
 import FieldError from "./FieldError";
 import HeroImageBlock from "./HeroImageBlock";
 import LeadField from "./LeadField";
@@ -190,13 +191,52 @@ function buildSeed({
       // A restored alt was already written (by the AI or by hand), so it must not
       // be regenerated on arrival over an image that has not changed.
       altEdited: Boolean(evminds?.imageAlt),
+      // Present even with an empty title: the row can already exist from an
+      // autosave of the note alone, written before "Generar" was ever pressed.
+      weeklyNotes: evminds?.weeklyNotes ?? "",
     };
   }
 
-  // The draft was already generated at the end of step ②, so it is here on
-  // arrival: making the user wait a second time for the same work would be a
-  // fake loading state. It is generated PER CHANNEL — one brief, two different
-  // texts — so the two pieces don't compete with each other in search results.
+  // EVminds with nothing stored yet: no text to seed, and none is generated
+  // here. Unlike every other channel, EVminds waits for an explicit "Generar"
+  // (`EvmindsPreGenerateStep`) so "Qué ha cambiado esta semana" can reach the
+  // prompt BEFORE the call fires, not after (Fer, 2026-07-27) — auto-generating
+  // on arrival, like every other channel does, would leave no moment for the
+  // note to exist yet.
+  if (channel === "evminds") {
+    return {
+      title: "",
+      body: "",
+      imageUrl: "",
+      publishDate: defaultPublishDate,
+      listTitle: "",
+      listTitleEdited: false,
+      discoverTitle: "",
+      metaTitle: "",
+      metaDescription: "",
+      lead: "",
+      brand: "",
+      model: "",
+      sourceName: briefSourceName ?? "",
+      sourceUrl: briefSourceUrl ?? "",
+      cmsTags: [],
+      published: false,
+      publishedDate: "",
+      publishedUrl: "",
+      slug: "",
+      slugEdited: false,
+      excerpt: "",
+      category: VALID_POST_CATEGORIES[0],
+      tags: [],
+      imageAlt: "",
+      altEdited: false,
+      weeklyNotes: "",
+    };
+  }
+
+  // Motor.es: the draft was already generated at the end of step ②, so it is
+  // here on arrival — making the user wait a second time for the same work
+  // would be a fake loading state.
   const draft = mockGenerateDraft(channel, briefTitle, briefAngle);
   const record = mockPostRecord(draft.title, draft.body);
 
@@ -226,6 +266,7 @@ function buildSeed({
     tags: record.tags,
     imageAlt: "",
     altEdited: false,
+    weeklyNotes: "",
   };
 }
 
@@ -353,6 +394,10 @@ export default function PublishChannelStep({
   const [describingAlt, setDescribingAlt] = useState(false);
   const [slug, setSlug] = useState(seed.slug);
   const [slugEdited, setSlugEdited] = useState(seed.slugEdited);
+  // "Qué ha cambiado esta semana" — EVminds only. Lives in state (and the
+  // autosave) from the very first render, before the text even exists, so
+  // typing it and leaving without pressing "Generar" does not lose it.
+  const [weeklyNotes, setWeeklyNotes] = useState(seed.weeklyNotes);
   // Errors on these show on blur, like step ②: complaining about an empty field
   // on arrival would be scolding someone for not having typed yet.
   const [excerptTouched, setExcerptTouched] = useState(false);
@@ -366,6 +411,14 @@ export default function PublishChannelStep({
   const [generatingImage, setGeneratingImage] = useState(false);
   const [variants, setVariants] = useState<MockImageVariant[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+  // Whether EVminds already has a text of its own. Every other channel starts
+  // `true` (nothing to wait for); EVminds starts `true` only when resumed with
+  // an actual title, and `false` otherwise — computed once from the seed, not
+  // derived from the live `title`, so clearing the field mid-edit can never
+  // send the screen back to the pre-generate step by accident.
+  const [generated, setGenerated] = useState(channel !== "evminds" || Boolean(seed.title));
+  const [generatingEvminds, setGeneratingEvminds] = useState(false);
 
   const [improvingSeo, setImprovingSeo] = useState(false);
   const [writingMetaDescription, setWritingMetaDescription] = useState(false);
@@ -401,7 +454,7 @@ export default function PublishChannelStep({
         publishedDate,
         publishedUrl,
       }
-    : { slug, excerpt, category, tags, imageAlt };
+    : { slug, excerpt, category, tags, imageAlt, weeklyNotes };
 
   const { state: saveState, saveNow } = useDraftAutosave({
     pieceId,
@@ -463,7 +516,8 @@ export default function PublishChannelStep({
   if (errors.excerpt || errors.slug) missing.push("completa la ficha del artículo");
   if (errors.schedule) missing.push("elige cuándo se publica");
 
-  const busy = handingOff || navigating || editing || generatingImage || savingDraft;
+  const busy =
+    handingOff || navigating || editing || generatingImage || savingDraft || generatingEvminds;
 
   /** Set only when there is another channel screen after this one. */
   const nextSpec = nextChannel ? getChannel(nextChannel) : null;
@@ -585,6 +639,38 @@ export default function PublishChannelStep({
     setTitle(next);
     if (!slugEdited) setSlug(slugify(next));
     if (!listTitleEdited) setListTitle(next);
+  }
+
+  /**
+   * EVminds' own trigger, pressed from `EvmindsPreGenerateStep`.
+   *
+   * Everything this needs — the brief, `weeklyNotes`, and (once the real
+   * redactor call replaces the mock) the sibling Motor.es draft when it is
+   * `published` — is already in scope or in state by the time this runs, which
+   * is the whole point of gating on an explicit action instead of generating on
+   * arrival: the note has had a chance to exist first.
+   *
+   * PROTOTYPE: `mockGenerateDraft` ignores `weeklyNotes`, same as it ignores
+   * the angle today. Phase 3 replaces this body with the real call and keeps
+   * the trigger.
+   */
+  function handleGenerateEvminds() {
+    setGeneratingEvminds(true);
+    window.setTimeout(() => {
+      const draft = mockGenerateDraft(channel, briefTitle, briefAngle);
+      const record = mockPostRecord(draft.title, draft.body);
+      applyTitle(draft.title);
+      setBody(draft.body);
+      // Goes through the same path as picking a new upload: it is what also
+      // kicks off the alt-text description, which the mount-time effect could
+      // not do since there was no image yet when it ran.
+      handleImageChange(MOCK_HERO_IMAGE);
+      setExcerpt(record.excerpt);
+      setCategory(record.category);
+      setTags(record.tags);
+      setGenerated(true);
+      setGeneratingEvminds(false);
+    }, EDIT_IMAGE_DELAY_MS);
   }
 
   /** Last chance to fix the headline, in case step ② skipped the SEO pass. */
@@ -869,9 +955,19 @@ export default function PublishChannelStep({
         />
       </div>
 
-      <div className="grid gap-4">
-        {spec.needsCmsFields ? (
-          /* Motor.es' form, mirrored top to bottom.
+      {channel === "evminds" && !generated ? (
+        <EvmindsPreGenerateStep
+          briefTitle={briefTitle}
+          briefAngle={briefAngle}
+          weeklyNotes={weeklyNotes}
+          onWeeklyNotesChange={setWeeklyNotes}
+          onGenerate={handleGenerateEvminds}
+          generating={generatingEvminds}
+        />
+      ) : (
+        <div className="grid gap-4">
+          {spec.needsCmsFields ? (
+            /* Motor.es' form, mirrored top to bottom.
              The order is theirs, not ours (Fer, 2026-07-26): if the piece is
              transcribed from top to bottom, an order that differs from the CMS's
              makes you jump around, which is the exact friction this screen exists
@@ -880,234 +976,235 @@ export default function PublishChannelStep({
              because that is where their "Publicar" row sits — and that trade was
              made on purpose: the rhythm was my preference, not jumping is Fer's
              stated pain. */
-          <>
-            <StepSection
-              title="Los titulares"
-              hint="Los tres títulos de Motor.es, en el orden de su formulario."
-              aside={<CopyProgress {...progressOf(headlineFields)} />}
-            >
-              <CmsHeadlineFields
-                title={title}
-                onTitleChange={applyTitle}
-                listTitle={listTitle}
-                onListTitleChange={(next) => {
-                  setListTitle(next);
-                  setListTitleEdited(true);
-                }}
-                discoverTitle={discoverTitle}
-                onDiscoverTitleChange={setDiscoverTitle}
-                copy={{
-                  title: bindCopy("title", title),
-                  listTitle: bindCopy("listTitle", listTitle),
-                  discoverTitle: bindCopy("discoverTitle", discoverTitle),
-                }}
-                improvingSeo={improvingSeo}
-                onImproveSeo={handleImproveSeo}
-                titleError={errors.title}
-                disabled={busy}
-              />
-            </StepSection>
-
-            <StepSection
-              title="Cómo se ve en Google"
-              hint="Los dos son opcionales y lo normal es dejarlos vacíos: solo se usan para cambiar lo que Google enseña."
-              aside={<CopyProgress {...progressOf(searchFields)} />}
-            >
-              <CmsSearchFields
-                metaTitle={metaTitle}
-                onMetaTitleChange={setMetaTitle}
-                metaDescription={metaDescription}
-                onMetaDescriptionChange={setMetaDescription}
-                fallbackTitle={title}
-                copy={{
-                  metaTitle: bindCopy("metaTitle", metaTitle),
-                  metaDescription: bindCopy("metaDescription", metaDescription),
-                }}
-                writingMetaDescription={writingMetaDescription}
-                onWriteMetaDescription={handleWriteMetaDescription}
-                // Their own hint is the rule: the meta title is for when the
-                // headline overruns, so the helper only exists in that case.
-                shorteningTitle={shorteningTitle}
-                onShortenTitle={title.length > CMS_TITLE_MAX ? handleShortenTitle : undefined}
-                disabled={busy}
-              />
-            </StepSection>
-
-            {scheduleBlock}
-
-            <StepSection
-              title={`El texto para ${spec.name}`}
-              hint={spec.draftHint}
-              aside={<CopyProgress {...progressOf(textFields)} />}
-            >
-              <div className="grid gap-5">
-                <LeadField
-                  value={lead}
-                  onChange={(next) => {
-                    setLead(next);
-                    setLeadTouched(true);
+            <>
+              <StepSection
+                title="Los titulares"
+                hint="Los tres títulos de Motor.es, en el orden de su formulario."
+                aside={<CopyProgress {...progressOf(headlineFields)} />}
+              >
+                <CmsHeadlineFields
+                  title={title}
+                  onTitleChange={applyTitle}
+                  listTitle={listTitle}
+                  onListTitleChange={(next) => {
+                    setListTitle(next);
+                    setListTitleEdited(true);
                   }}
-                  {...bindRichCopy("lead", lead)}
-                  error={leadTouched ? errors.lead : null}
+                  discoverTitle={discoverTitle}
+                  onDiscoverTitleChange={setDiscoverTitle}
+                  copy={{
+                    title: bindCopy("title", title),
+                    listTitle: bindCopy("listTitle", listTitle),
+                    discoverTitle: bindCopy("discoverTitle", discoverTitle),
+                  }}
+                  improvingSeo={improvingSeo}
+                  onImproveSeo={handleImproveSeo}
+                  titleError={errors.title}
                   disabled={busy}
                 />
-                <DraftBodyField
-                  label="Cuerpo noticia"
-                  value={body}
-                  onChange={setBody}
-                  copied={Boolean(body.trim()) && copiedValues.body === body}
-                  onCopy={(text) => {
-                    copyPlain(text);
-                    markCopied("body", body);
+              </StepSection>
+
+              <StepSection
+                title="Cómo se ve en Google"
+                hint="Los dos son opcionales y lo normal es dejarlos vacíos: solo se usan para cambiar lo que Google enseña."
+                aside={<CopyProgress {...progressOf(searchFields)} />}
+              >
+                <CmsSearchFields
+                  metaTitle={metaTitle}
+                  onMetaTitleChange={setMetaTitle}
+                  metaDescription={metaDescription}
+                  onMetaDescriptionChange={setMetaDescription}
+                  fallbackTitle={title}
+                  copy={{
+                    metaTitle: bindCopy("metaTitle", metaTitle),
+                    metaDescription: bindCopy("metaDescription", metaDescription),
                   }}
-                  onPreview={() => setPreviewOpen(true)}
-                  // Previewing without the hero image would be showing a piece
-                  // that cannot be published, and hiding the reason why.
-                  previewBlockedReason={
-                    errors.image ? "Para previsualizar hace falta la imagen de cabecera." : null
-                  }
+                  writingMetaDescription={writingMetaDescription}
+                  onWriteMetaDescription={handleWriteMetaDescription}
+                  // Their own hint is the rule: the meta title is for when the
+                  // headline overruns, so the helper only exists in that case.
+                  shorteningTitle={shorteningTitle}
+                  onShortenTitle={title.length > CMS_TITLE_MAX ? handleShortenTitle : undefined}
                   disabled={busy}
                 />
-                <FieldError message={errors.body} />
-              </div>
-            </StepSection>
+              </StepSection>
 
-            <StepSection
-              title="Marca, fuente y tags"
-              hint="El final de su formulario. La marca y el modelo allí son desplegables: esto te dice cuáles buscar."
-              aside={<CopyProgress {...progressOf(recordFields)} />}
-            >
-              <CmsRecordFields
-                brand={brand}
-                onBrandChange={setBrand}
-                model={model}
-                onModelChange={setModel}
-                sourceName={sourceName}
-                onSourceNameChange={setSourceName}
-                sourceUrl={sourceUrl}
-                onSourceUrlChange={setSourceUrl}
-                tags={cmsTags}
-                onTagsChange={setCmsTags}
-                copy={{
-                  brand: bindCopy("brand", brand),
-                  model: bindCopy("model", model),
-                  sourceName: bindCopy("sourceName", sourceName),
-                  sourceUrl: bindCopy("sourceUrl", sourceUrl),
-                  tags: bindCopy("tags", tagsValue),
-                }}
-                disabled={busy}
-              />
-            </StepSection>
+              {scheduleBlock}
 
-            {/* Last, and that is deliberate: over there the image lives in the
+              <StepSection
+                title={`El texto para ${spec.name}`}
+                hint={spec.draftHint}
+                aside={<CopyProgress {...progressOf(textFields)} />}
+              >
+                <div className="grid gap-5">
+                  <LeadField
+                    value={lead}
+                    onChange={(next) => {
+                      setLead(next);
+                      setLeadTouched(true);
+                    }}
+                    {...bindRichCopy("lead", lead)}
+                    error={leadTouched ? errors.lead : null}
+                    disabled={busy}
+                  />
+                  <DraftBodyField
+                    label="Cuerpo noticia"
+                    value={body}
+                    onChange={setBody}
+                    copied={Boolean(body.trim()) && copiedValues.body === body}
+                    onCopy={(text) => {
+                      copyPlain(text);
+                      markCopied("body", body);
+                    }}
+                    onPreview={() => setPreviewOpen(true)}
+                    // Previewing without the hero image would be showing a piece
+                    // that cannot be published, and hiding the reason why.
+                    previewBlockedReason={
+                      errors.image ? "Para previsualizar hace falta la imagen de cabecera." : null
+                    }
+                    disabled={busy}
+                  />
+                  <FieldError message={errors.body} />
+                </div>
+              </StepSection>
+
+              <StepSection
+                title="Marca, fuente y tags"
+                hint="El final de su formulario. La marca y el modelo allí son desplegables: esto te dice cuáles buscar."
+                aside={<CopyProgress {...progressOf(recordFields)} />}
+              >
+                <CmsRecordFields
+                  brand={brand}
+                  onBrandChange={setBrand}
+                  model={model}
+                  onModelChange={setModel}
+                  sourceName={sourceName}
+                  onSourceNameChange={setSourceName}
+                  sourceUrl={sourceUrl}
+                  onSourceUrlChange={setSourceUrl}
+                  tags={cmsTags}
+                  onTagsChange={setCmsTags}
+                  copy={{
+                    brand: bindCopy("brand", brand),
+                    model: bindCopy("model", model),
+                    sourceName: bindCopy("sourceName", sourceName),
+                    sourceUrl: bindCopy("sourceUrl", sourceUrl),
+                    tags: bindCopy("tags", tagsValue),
+                  }}
+                  disabled={busy}
+                />
+              </StepSection>
+
+              {/* Last, and that is deliberate: over there the image lives in the
                 right-hand column ("Fotos relacionadas"), so it is a separate job
                 rather than a step in the top-to-bottom pass. Putting it in the
                 middle would interrupt the mirrored spine for something you will
                 never be looking for in sequence. */}
-            {imageBlock}
+              {imageBlock}
 
-            {/* Ours, not theirs — so it sits after the mirrored spine rather than
+              {/* Ours, not theirs — so it sits after the mirrored spine rather than
                 inside it. Often filled on a later visit, once Fer has actually
                 pasted the piece into their CMS (Fer, 2026-07-27). */}
-            <StepSection
-              title="Registro de publicación"
-              hint="Para llevar la cuenta de lo que de verdad ha salido en Motor.es."
-            >
-              <PublicationRecordFields
-                published={published}
-                onPublishedChange={setPublished}
-                publishedDate={publishedDate}
-                onPublishedDateChange={setPublishedDate}
-                publishedUrl={publishedUrl}
-                onPublishedUrlChange={setPublishedUrl}
-                disabled={busy}
-              />
-            </StepSection>
-          </>
-        ) : (
-          <>
-            <StepSection title={`El texto para ${spec.name}`} hint={spec.draftHint}>
-              <DraftTextBlock
-                title={title}
-                body={body}
-                onTitleChange={applyTitle}
-                onBodyChange={setBody}
-                onPreview={() => setPreviewOpen(true)}
-                previewBlockedReason={
-                  errors.image ? "Para previsualizar hace falta la imagen de cabecera." : null
-                }
-                improvingSeo={improvingSeo}
-                onImproveSeo={handleImproveSeo}
-                disabled={busy}
-              />
-              <FieldError message={errors.title ?? errors.body} />
-            </StepSection>
-
-            {imageBlock}
-
-            {/* Only on a channel we host: these are the `posts` columns, and they
-                have no meaning for a text handed to someone else's CMS. */}
-            {spec.needsPostRecord && (
               <StepSection
-                title="La ficha del artículo"
-                hint="Cómo se encuentra la pieza en evminds.es. La rellena la IA; repásala."
+                title="Registro de publicación"
+                hint="Para llevar la cuenta de lo que de verdad ha salido en Motor.es."
               >
-                <PostRecordFields
-                  slug={slug}
-                  onSlugChange={setSlug}
-                  onSlugManualEdit={() => setSlugEdited(true)}
-                  excerpt={excerpt}
-                  onExcerptChange={setExcerpt}
-                  onExcerptBlur={() => setExcerptTouched(true)}
-                  excerptError={excerptTouched ? errors.excerpt : null}
-                  category={category}
-                  onCategoryChange={setCategory}
-                  tags={tags}
-                  onTagsChange={setTags}
-                  slugError={errors.slug}
+                <PublicationRecordFields
+                  published={published}
+                  onPublishedChange={setPublished}
+                  publishedDate={publishedDate}
+                  onPublishedDateChange={setPublishedDate}
+                  publishedUrl={publishedUrl}
+                  onPublishedUrlChange={setPublishedUrl}
                   disabled={busy}
                 />
               </StepSection>
-            )}
+            </>
+          ) : (
+            <>
+              <StepSection title={`El texto para ${spec.name}`} hint={spec.draftHint}>
+                <DraftTextBlock
+                  title={title}
+                  body={body}
+                  onTitleChange={applyTitle}
+                  onBodyChange={setBody}
+                  onPreview={() => setPreviewOpen(true)}
+                  previewBlockedReason={
+                    errors.image ? "Para previsualizar hace falta la imagen de cabecera." : null
+                  }
+                  improvingSeo={improvingSeo}
+                  onImproveSeo={handleImproveSeo}
+                  disabled={busy}
+                />
+                <FieldError message={errors.title ?? errors.body} />
+              </StepSection>
 
-            {scheduleBlock}
-          </>
-        )}
+              {imageBlock}
 
-        {/* What this button does changes with position in the chosen channels,
+              {/* Only on a channel we host: these are the `posts` columns, and they
+                have no meaning for a text handed to someone else's CMS. */}
+              {spec.needsPostRecord && (
+                <StepSection
+                  title="La ficha del artículo"
+                  hint="Cómo se encuentra la pieza en evminds.es. La rellena la IA; repásala."
+                >
+                  <PostRecordFields
+                    slug={slug}
+                    onSlugChange={setSlug}
+                    onSlugManualEdit={() => setSlugEdited(true)}
+                    excerpt={excerpt}
+                    onExcerptChange={setExcerpt}
+                    onExcerptBlur={() => setExcerptTouched(true)}
+                    excerptError={excerptTouched ? errors.excerpt : null}
+                    category={category}
+                    onCategoryChange={setCategory}
+                    tags={tags}
+                    onTagsChange={setTags}
+                    slugError={errors.slug}
+                    disabled={busy}
+                  />
+                </StepSection>
+              )}
+
+              {scheduleBlock}
+            </>
+          )}
+
+          {/* What this button does changes with position in the chosen channels,
             not with the channel itself: mid-wizard it only advances (Fer,
             2026-07-25), and only the last screen actually finishes. */}
-        <StepActions
-          label={nextSpec ? `Seguir con ${nextSpec.name}` : spec.finalLabel}
-          runningLabel={nextSpec ? "Cargando…" : spec.finalRunningLabel}
-          running={nextSpec ? navigating : handingOff}
-          onClick={handlePrimary}
-          icon={nextSpec ? undefined : spec.handoff === "copy" ? <Check /> : <CalendarClock />}
-          trailingIcon={nextSpec ? <ArrowRight data-icon="inline-end" /> : undefined}
-          missing={missing}
-          missingPrefix={nextSpec ? "Antes de seguir" : "Antes de terminar"}
-          readyHint={
-            nextSpec
-              ? `El texto y la imagen de ${spec.name} se quedan como están; podrás volver a retocarlos después.`
-              : spec.handoff === "copy"
-                ? "Se guarda la copia de respaldo y la pieza queda terminada por nuestro lado. Publicarla es meterla en su CMS."
-                : "Quedará programado y podrás cambiar la fecha después desde Artículos."
-          }
-          minWidth="16rem"
-          secondary={{
-            label: "Guardar borrador",
-            runningLabel: "Guardando…",
-            running: savingDraft || saveState === "saving",
-            onClick: handleSaveDraft,
-            // Nothing pending: the button says so and goes inert, which is also
-            // how the autosave becomes visible without a second widget saying the
-            // same thing in different words.
-            done: saveState === "clean",
-            doneLabel: "Borrador guardado",
-            minWidth: "13rem",
-          }}
-        />
-      </div>
+          <StepActions
+            label={nextSpec ? `Seguir con ${nextSpec.name}` : spec.finalLabel}
+            runningLabel={nextSpec ? "Cargando…" : spec.finalRunningLabel}
+            running={nextSpec ? navigating : handingOff}
+            onClick={handlePrimary}
+            icon={nextSpec ? undefined : spec.handoff === "copy" ? <Check /> : <CalendarClock />}
+            trailingIcon={nextSpec ? <ArrowRight data-icon="inline-end" /> : undefined}
+            missing={missing}
+            missingPrefix={nextSpec ? "Antes de seguir" : "Antes de terminar"}
+            readyHint={
+              nextSpec
+                ? `El texto y la imagen de ${spec.name} se quedan como están; podrás volver a retocarlos después.`
+                : spec.handoff === "copy"
+                  ? "Se guarda la copia de respaldo y la pieza queda terminada por nuestro lado. Publicarla es meterla en su CMS."
+                  : "Quedará programado y podrás cambiar la fecha después desde Artículos."
+            }
+            minWidth="16rem"
+            secondary={{
+              label: "Guardar borrador",
+              runningLabel: "Guardando…",
+              running: savingDraft || saveState === "saving",
+              onClick: handleSaveDraft,
+              // Nothing pending: the button says so and goes inert, which is also
+              // how the autosave becomes visible without a second widget saying the
+              // same thing in different words.
+              done: saveState === "clean",
+              doneLabel: "Borrador guardado",
+              minWidth: "13rem",
+            }}
+          />
+        </div>
+      )}
 
       <ArticlePreviewSheet
         open={previewOpen}

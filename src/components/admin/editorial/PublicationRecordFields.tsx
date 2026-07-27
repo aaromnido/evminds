@@ -106,7 +106,7 @@ export default function PublicationRecordFields({
         </div>
       </div>
 
-      <p className="max-w-[68ch] text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Márcalo cuando ya esté en su web. Así EVminds sabe que hay un texto real que adaptar, no
         solo un borrador nuestro.
       </p>
