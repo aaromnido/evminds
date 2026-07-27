@@ -10,13 +10,13 @@ import TopicFields from "./TopicFields";
 import WizardSteps, { buildWizardSteps } from "./WizardSteps";
 import Toast from "@/components/ui/toast";
 import { useToast } from "@/lib/use-toast";
-import { mockExpandAngle, mockImproveSeoTitle, mockReadReferenceLink } from "@/lib/editorial-mocks";
+import { mockReadReferenceLink } from "@/lib/editorial-mocks";
+import { SEO_TITLE_MAX } from "@/lib/editorial-validation";
 import { channelUrl, newPieceUrl, piecesUrl } from "@/lib/editorial-routes";
 import { isBriefValid, validateBrief } from "@/lib/editorial-validation";
 import type { IdeaCandidate, PublishChannel, ReferenceLink } from "@/lib/editorial-types";
 
-/** Fake latencies (prototype only). */
-const EXPAND_DELAY_MS = 1100;
+/** Fake latency, R1 only for now (real fetch lands in a later pass). */
 const READ_DELAY_MS = 1200;
 
 interface Props {
@@ -49,7 +49,9 @@ interface Props {
  * The step indicator lives inside this island rather than on the page, so that
  * ticking EVminds visibly turns the wizard from three steps into four.
  *
- * PROTOTYPE: every action is simulated in local state — no backend.
+ * "Desarrollar con IA" and "Mejorar SEO" call the real `editorial-expand-angle`
+ * / `editorial-improve-seo-title` functions. R1's link reading is still
+ * simulated (`mockReadReferenceLink`); its real wiring lands separately.
  */
 export default function DefineAngleStep({
   idea,
@@ -139,12 +141,22 @@ export default function DefineAngleStep({
     setLinks((prev) => prev.filter((l) => l.id !== link.id));
   }
 
-  function handleExpand() {
+  async function handleExpand() {
     setExpanding(true);
-    window.setTimeout(() => {
-      setAngle(mockExpandAngle(title, angle));
+    try {
+      const res = await fetch("/admin/redaccion/expand-angle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, angle }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setAngle(data.angle);
+    } catch {
+      showToast("No se ha podido desarrollar el enfoque.", "error");
+    } finally {
       setExpanding(false);
-    }, EXPAND_DELAY_MS);
+    }
   }
 
   /**
@@ -153,12 +165,22 @@ export default function DefineAngleStep({
    * one Ctrl+Z away in the input, and a "which of these two do you prefer"
    * comparison would be a second decision on a screen that already has three.
    */
-  function handleImproveSeo() {
+  async function handleImproveSeo() {
     setImprovingSeo(true);
-    window.setTimeout(() => {
-      setTitle(mockImproveSeoTitle(title));
+    try {
+      const res = await fetch("/admin/redaccion/improve-seo-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, maxLength: SEO_TITLE_MAX }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setTitle(data.title);
+    } catch {
+      showToast("No se ha podido mejorar el titular.", "error");
+    } finally {
       setImprovingSeo(false);
-    }, EXPAND_DELAY_MS);
+    }
   }
 
   /**

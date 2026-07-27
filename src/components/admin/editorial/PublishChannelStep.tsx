@@ -27,10 +27,7 @@ import { useToast } from "@/lib/use-toast";
 import {
   mockImageVariants,
   mockDescribeImage,
-  mockImproveSeoTitle,
   mockPostRecord,
-  mockShortenTitleForSearch,
-  mockWriteMetaDescription,
   MOCK_HERO_IMAGE,
   type MockImageVariant,
 } from "@/lib/editorial-mocks";
@@ -737,38 +734,66 @@ export default function PublishChannelStep({
   }
 
   /** Last chance to fix the headline, in case step ② skipped the SEO pass. */
-  function handleImproveSeo() {
+  async function handleImproveSeo() {
     setImprovingSeo(true);
-    window.setTimeout(() => {
-      applyTitle(mockImproveSeoTitle(title));
+    try {
+      const res = await fetch("/admin/redaccion/improve-seo-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, maxLength: CMS_TITLE_MAX }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      applyTitle(data.title);
+    } catch {
+      showToast("No se ha podido mejorar el titular.", "error");
+    } finally {
       setImprovingSeo(false);
-    }, EDIT_IMAGE_DELAY_MS);
+    }
   }
 
   /**
    * Writes the meta description on demand (Fer, 2026-07-26).
    *
-   * PROTOTYPE: `mockWriteMetaDescription`. The real version is one more
-   * structured call in phase 3, and it has to be told explicitly that this is one
-   * sentence for a search result and NOT the entradilla — asking twice for "a
-   * summary" with two different lengths is how you get the same text truncated
-   * differently.
+   * Built from the headline and NOT from the entradilla, which is the whole
+   * point of the two being different asks: one sentence for a search result
+   * versus a paragraph that opens the article.
    */
-  function handleWriteMetaDescription() {
+  async function handleWriteMetaDescription() {
     setWritingMetaDescription(true);
-    window.setTimeout(() => {
-      setMetaDescription(mockWriteMetaDescription(title));
+    try {
+      const res = await fetch("/admin/redaccion/write-meta-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setMetaDescription(data.metaDescription);
+    } catch {
+      showToast("No se ha podido escribir la meta descripción.", "error");
+    } finally {
       setWritingMetaDescription(false);
-    }, EDIT_IMAGE_DELAY_MS);
+    }
   }
 
   /** Shortens the headline into the meta title. Only offered when it overruns 65. */
-  function handleShortenTitle() {
+  async function handleShortenTitle() {
     setShorteningTitle(true);
-    window.setTimeout(() => {
-      setMetaTitle(mockShortenTitleForSearch(title));
+    try {
+      const res = await fetch("/admin/redaccion/shorten-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setMetaTitle(data.metaTitle);
+    } catch {
+      showToast("No se ha podido acortar el titular.", "error");
+    } finally {
       setShorteningTitle(false);
-    }, EDIT_IMAGE_DELAY_MS);
+    }
   }
 
   function handleEditImage() {
