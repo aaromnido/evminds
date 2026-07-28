@@ -1,23 +1,19 @@
-import { useState } from "react";
-import { ArrowLeft, ChevronDown, History, Plus } from "lucide-react";
+import { ArrowLeft, ChevronDown, History, Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import Toast from "@/components/ui/toast";
+import { newAngleUrl } from "@/lib/editorial-routes";
+import type { IdeaCandidate, IdeaDraftInput } from "@/lib/editorial-types";
+import { useToast } from "@/lib/use-toast";
 import { cn } from "@/lib/utils";
-import IdeaCard from "./IdeaCard";
-import IdeasEmptyState from "./IdeasEmptyState";
 import CardsSection from "./CardsSection";
 import CreateIdeaDrawer from "./CreateIdeaDrawer";
+import IdeaCard from "./IdeaCard";
+import IdeasEmptyState from "./IdeasEmptyState";
 import RegenerateIdeasDialog from "./RegenerateIdeasDialog";
-import Toast from "@/components/ui/toast";
-import { useToast } from "@/lib/use-toast";
-import { buildMockIdeas, buildOwnIdea } from "@/lib/editorial-mocks";
-import type { IdeaCandidate, IdeaDraftInput } from "@/lib/editorial-types";
-import type { SaveState } from "./SaveIdeaButton";
-import { newAngleUrl } from "@/lib/editorial-routes";
 
-/** Fake latencies (prototype only). */
-const PICK_DELAY_MS = 700;
-const REGENERATE_DELAY_MS = 1400;
-const SAVE_DELAY_MS = 600;
+/** How long "Deshacer" stays live before a dismissed idea is actually deleted. */
+const DISMISS_UNDO_MS = 5000;
 
 /**
  * How many stored ideas show before collapsing the rest.
@@ -32,110 +28,196 @@ const SAVE_DELAY_MS = 600;
 const KEPT_PREVIEW = 3;
 
 interface Props {
-  ideas: IdeaCandidate[];
+  /** "Guardadas y propias" — everything with status `saved`, from step ①'s SSR query. */
+  kept: IdeaCandidate[];
+  /** "Ya escritas o caducadas" — `picked` + `expired`, capped, same SSR query. */
+  history: IdeaCandidate[];
   nowIso: string;
 }
 
 /**
  * Step ① of the editorial wizard: the ideas you can work from today.
  *
- * Persistence model (Fer, 2026-07-25) — the reason the actions are what they are:
- * a curator proposal is **transient** until you either write about it or save it
- * for later. Discarding it, or regenerating the batch, drops it for good; nothing
- * of that reaches the database. Ideas written by hand are persisted from birth.
- * The two sections make that split visible.
+ * Persistence model (Fer, 2026-07-25, phase 5 2026-07-28) — the reason the
+ * actions are what they are: a curator proposal is transient until you either
+ * write about it or save it for later. Discarding it, or regenerating the
+ * batch, drops it for good (real DELETE — see `dismiss-idea.ts`). Ideas
+ * written by hand are persisted from birth.
  *
- * PROTOTYPE: every action is simulated in local state — no backend.
+ * "Propuestas de hoy" is fetched client-side from `curate-ideas.ts`, not
+ * server-rendered: that call may hit Gemini (cache miss), and every other AI
+ * wait in this wizard already happens after the page has painted rather than
+ * blocking SSR.
  */
-export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
-  const [ideas, setIdeas] = useState<IdeaCandidate[]>(initialIdeas);
+export default function PickIdeaStep({
+  kept: initialKept,
+  history: initialHistory,
+  nowIso,
+}: Props) {
+  const [kept, setKept] = useState<IdeaCandidate[]>(initialKept);
+  const [history, setHistory] = useState<IdeaCandidate[]>(initialHistory);
+  const [proposals, setProposals] = useState<IdeaCandidate[]>([]);
+  const [loadingProposals, setLoadingProposals] = useState(true);
+  const [proposalsError, setProposalsError] = useState(false);
+
   const [view, setView] = useState<"pending" | "history">("pending");
   const [pickingId, setPickingId] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [batch, setBatch] = useState<1 | 2>(1);
-  const [ownCount, setOwnCount] = useState(0);
-  /**
-   * Save progress per idea of the current batch. Held apart from `status` on
-   * purpose: saving must NOT make the card jump to another section under the
-   * cursor. The regrouping happens when the batch is replaced.
-   */
-  const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
+  const [savingIds, setSavingIds] = useState<Record<string, true>>({});
   const { toast, showToast, dismiss } = useToast();
 
   const [showAllKept, setShowAllKept] = useState(false);
 
-  const proposals = ideas.filter((i) => i.status === "pending");
-  const kept = ideas.filter((i) => i.status === "saved");
-  const history = ideas.filter((i) => i.status === "picked" || i.status === "expired");
+  // Pending dismiss timeouts, keyed by idea id, so "Deshacer" can cancel the
+  // real delete before it fires.
+  const dismissTimers = useRef<Record<string, number>>({});
+  useEffect(() => {
+    const timers = dismissTimers.current;
+    return () => {
+      Object.values(timers).forEach((id) => window.clearTimeout(id));
+    };
+  }, []);
 
-  const visibleKept = showAllKept ? kept : kept.slice(0, KEPT_PREVIEW);
-  const hiddenKeptCount = kept.length - visibleKept.length;
+  async function loadProposals(force: boolean) {
+    if (force) setRegenerating(true);
+    else setLoadingProposals(true);
+    setProposalsError(false);
+
+    try {
+      const res = await fetch("/admin/redaccion/curate-ideas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+
+      if (force) {
+        // The replaced batch becomes history immediately, so "Ver historial"
+        // is honest without a full page reload.
+        setHistory((prev) => [
+          ...proposals.map((p) => ({ ...p, status: "expired" as const })),
+          ...prev,
+        ]);
+      }
+      setProposals(data.candidates as IdeaCandidate[]);
+    } catch {
+      setProposalsError(true);
+    } finally {
+      setLoadingProposals(false);
+      setRegenerating(false);
+    }
+  }
+
+  useEffect(() => {
+    loadProposals(false);
+  }, []);
 
   function handlePick(idea: IdeaCandidate) {
     setPickingId(idea.id);
-    // Simulated hand-off. The real version persists the idea server-side and
-    // lands on step ② with it already loaded.
-    window.setTimeout(() => {
-      window.location.href = newAngleUrl(idea.id);
-    }, PICK_DELAY_MS);
+    fetch("/admin/redaccion/pick-idea", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: idea.id }),
+    })
+      .then((res) => res.json().catch(() => ({})))
+      .then((data) => {
+        if (data?.ok !== true) throw new Error();
+        window.location.href = newAngleUrl(idea.id);
+      })
+      .catch(() => {
+        setPickingId(null);
+        showToast("No se ha podido elegir esta idea. Inténtalo de nuevo.", "error");
+      });
   }
 
-  /** Keep it for later. One-way: the button ends up spent, not toggleable. */
+  /** Keep it for later: persisted immediately, so the card moves section on success. */
   function handleSave(idea: IdeaCandidate) {
-    setSaveStates((prev) => ({ ...prev, [idea.id]: "saving" }));
-    window.setTimeout(() => {
-      setSaveStates((prev) => ({ ...prev, [idea.id]: "saved" }));
-      showToast("Idea guardada para otra ocasión.");
-    }, SAVE_DELAY_MS);
+    setSavingIds((prev) => ({ ...prev, [idea.id]: true }));
+    fetch("/admin/redaccion/save-idea", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: idea.id }),
+    })
+      .then((res) => res.json().catch(() => ({})))
+      .then((data) => {
+        if (data?.ok !== true) throw new Error();
+        setProposals((prev) => prev.filter((i) => i.id !== idea.id));
+        setKept((prev) => [{ ...idea, status: "saved" as const }, ...prev]);
+        showToast("Idea guardada para otra ocasión.");
+      })
+      .catch(() => showToast("No se ha podido guardar la idea.", "error"))
+      .finally(() => {
+        setSavingIds(({ [idea.id]: _dropped, ...rest }) => rest);
+      });
   }
 
   /**
-   * Discarding removes it outright — an unsaved idea is never stored. Because
-   * that is irreversible, the toast carries the only way back: an undo that
-   * restores the list exactly as it was, position included.
+   * Discarding removes it outright — an unsaved idea is never stored. The
+   * card leaves the list right away; the real DELETE is deferred behind the
+   * undo window so "Deshacer" never has to resurrect a row that is already
+   * gone (see `DISMISS_UNDO_MS`).
    */
   function handleDismiss(idea: IdeaCandidate) {
-    // Snapshot before mutating: restoring the whole array brings the card back in
-    // its original position, not appended at the end.
-    const before = ideas;
-    setIdeas(before.filter((i) => i.id !== idea.id));
-    setSaveStates(({ [idea.id]: _dropped, ...rest }) => rest);
+    const before = proposals;
+    setProposals(before.filter((i) => i.id !== idea.id));
+
+    const timerId = window.setTimeout(() => {
+      delete dismissTimers.current[idea.id];
+      fetch("/admin/redaccion/dismiss-idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: idea.id }),
+      }).catch(() => {
+        // The card is already gone from view; a failed cleanup delete is not
+        // worth surfacing after the fact.
+      });
+    }, DISMISS_UNDO_MS);
+    dismissTimers.current[idea.id] = timerId;
+
     showToast("Idea descartada.", "info", {
       label: "Deshacer",
-      onClick: () => setIdeas(before),
+      onClick: () => {
+        const pending = dismissTimers.current[idea.id];
+        if (pending !== undefined) {
+          window.clearTimeout(pending);
+          delete dismissTimers.current[idea.id];
+        }
+        setProposals(before);
+      },
     });
   }
 
   function handleRegenerate() {
-    setRegenerating(true);
-    const nextBatch: 1 | 2 = batch === 1 ? 2 : 1;
-    window.setTimeout(() => {
-      const fresh = buildMockIdeas(nowIso, nextBatch).filter((i) => i.status === "pending");
-      setIdeas((prev) => [
-        ...fresh,
-        // Saved proposals graduate to stored ideas; the rest of the batch is
-        // dropped for good. Already-stored ideas pass through untouched.
-        ...prev
-          .filter((i) => i.status !== "pending" || saveStates[i.id] === "saved")
-          .map((i) => (i.status === "pending" ? { ...i, status: "saved" as const } : i)),
-      ]);
-      setSaveStates({});
-      setBatch(nextBatch);
-      setRegenerating(false);
-    }, REGENERATE_DELAY_MS);
+    loadProposals(true);
   }
 
-  function handleCreate(input: IdeaDraftInput) {
-    const idea = buildOwnIdea(input, nowIso, `own-${ownCount + 1}`);
-    setOwnCount((n) => n + 1);
-    setIdeas((prev) => [idea, ...prev]);
-    setView("pending");
-    showToast("Idea creada y guardada.");
+  async function handleCreate(input: IdeaDraftInput): Promise<boolean> {
+    try {
+      const res = await fetch("/admin/redaccion/create-idea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+      setKept((prev) => [data.idea as IdeaCandidate, ...prev]);
+      setView("pending");
+      showToast("Idea creada y guardada.");
+      return true;
+    } catch {
+      return false;
+    }
   }
+
+  const visibleKept = showAllKept ? kept : kept.slice(0, KEPT_PREVIEW);
+  const hiddenKeptCount = kept.length - visibleKept.length;
 
   const nothingToShow =
-    view === "pending" ? proposals.length + kept.length === 0 : history.length === 0;
+    view === "pending"
+      ? !loadingProposals && proposals.length + kept.length === 0
+      : history.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -210,21 +292,36 @@ export default function PickIdeaStep({ ideas: initialIdeas, nowIso }: Props) {
 
               <CardsSection
                 title="Propuestas de hoy"
-                hint="No se guardan: si no eliges ni guardas, desaparecen."
+                hint={
+                  proposalsError
+                    ? "No se han podido cargar. Inténtalo de nuevo."
+                    : "No se guardan: si no eliges ni guardas, desaparecen."
+                }
                 count={proposals.length}
               >
-                {proposals.map((idea) => (
-                  <IdeaCard
-                    key={idea.id}
-                    idea={idea}
-                    nowIso={nowIso}
-                    picking={pickingId === idea.id}
-                    saveState={saveStates[idea.id] ?? "idle"}
-                    onPick={handlePick}
-                    onSave={handleSave}
-                    onDismiss={handleDismiss}
-                  />
-                ))}
+                {loadingProposals ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    Buscando propuestas de hoy…
+                  </div>
+                ) : proposalsError ? (
+                  <Button variant="outline" size="lg" onClick={() => loadProposals(false)}>
+                    Reintentar
+                  </Button>
+                ) : (
+                  proposals.map((idea) => (
+                    <IdeaCard
+                      key={idea.id}
+                      idea={idea}
+                      nowIso={nowIso}
+                      picking={pickingId === idea.id}
+                      saveState={savingIds[idea.id] ? "saving" : "idle"}
+                      onPick={handlePick}
+                      onSave={handleSave}
+                      onDismiss={handleDismiss}
+                    />
+                  ))
+                )}
               </CardsSection>
             </>
           ) : (

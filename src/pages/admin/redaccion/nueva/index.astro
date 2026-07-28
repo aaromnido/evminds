@@ -1,4 +1,7 @@
 ---
+import PickIdeaStep from "@/components/admin/editorial/PickIdeaStep.tsx";
+import PiecesInProgress from "@/components/admin/editorial/PiecesInProgress.tsx";
+import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
 /**
  * Redacción — step ① of the writing wizard: choose what to write about.
  *
@@ -9,31 +12,27 @@
  * the process, and ideas are the raw material it starts from. The separate
  * "Ideas" section will list the bank of saved ideas and is not designed yet.
  *
- * PROTOTYPE (task A3, UI-first phase): fed by `editorial-mocks.ts`, not by
- * Supabase. The `editorial_candidates` table does not exist yet. To wire this up
- * for real, replace `buildMockIdeas(nowIso)` with the query and delete the mock
- * module. See `.claude/design/ai-editorial-agent-ui.md`.
+ * Real data since phase 5 (2026-07-28): `kept`/`history` are queried here
+ * (cheap, no Gemini call). "Propuestas de hoy" is deliberately NOT fetched
+ * here — it goes through `curate-ideas.ts` client-side, since that call may
+ * hit Gemini on a cache miss and every other AI wait in this wizard already
+ * happens after the page has painted.
  */
 import AdminShell from "@/layouts/AdminShell.astro";
-import PickIdeaStep from "@/components/admin/editorial/PickIdeaStep.tsx";
-import PiecesInProgress from "@/components/admin/editorial/PiecesInProgress.tsx";
-import WizardSteps from "@/components/admin/editorial/WizardSteps.tsx";
-import { buildMockIdeas } from "@/lib/editorial-mocks";
+import { fetchIdeaHistory, fetchKeptIdeas } from "@/lib/editorial-ideas";
 import { fetchPieceSummaries } from "@/lib/editorial-pieces";
 
 // Single clock reference shared with the island, so the relative labels ("hace
 // 6 h") render identically on the server and after hydration.
 const nowIso = new Date().toISOString();
-const ideas = buildMockIdeas(nowIso);
 
-// What is still unfinished, capped like "Guardadas y propias" below: this block
-// is real data on a screen that is still mock ideas, which is exactly the seam
-// phase 2 was supposed to close first.
 const PIECES_SHOWN = 3;
 const supabase = Astro.locals.supabase;
 const { pieces, total } = supabase
   ? await fetchPieceSummaries(supabase, { status: "in_progress", limit: PIECES_SHOWN })
   : { pieces: [], total: 0 };
+const kept = supabase ? await fetchKeptIdeas(supabase) : [];
+const history = supabase ? await fetchIdeaHistory(supabase) : [];
 ---
 
 <AdminShell
@@ -50,6 +49,6 @@ const { pieces, total } = supabase
         thing twice. */
     }
     <PiecesInProgress pieces={pieces} total={total} nowIso={nowIso} />
-    <PickIdeaStep client:load ideas={ideas} nowIso={nowIso} />
+    <PickIdeaStep client:load kept={kept} history={history} nowIso={nowIso} />
   </div>
 </AdminShell>

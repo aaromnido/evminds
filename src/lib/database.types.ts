@@ -37,6 +37,17 @@ type EditorialPieceStatus = "in_progress" | "done";
  */
 type EditorialChannelStatus = "draft" | "done" | "scheduled";
 
+/** Mirrors `IdeaOrigin` in src/lib/editorial-types.ts. Migration 54. */
+type EditorialCandidateOrigin = "curator" | "own";
+
+/**
+ * `pending` is a one-day cache of a curator batch, not durable content — see
+ * migration 54. `rejected` is deliberately not a state this app writes: a
+ * dismissed idea is deleted outright (Fer, 2026-07-28: discards are not
+ * remembered), but the CHECK constraint only allows the four values below.
+ */
+type EditorialCandidateStatus = "pending" | "picked" | "saved" | "expired";
+
 export interface Database {
   public: {
     Tables: {
@@ -237,6 +248,52 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["editorial_channel_drafts"]["Insert"]>;
         Relationships: [];
       };
+      /**
+       * The curator's idea bank (step ① of the wizard). See migration 54 for the
+       * full persistence model — in short, `pending` rows are a cache with a
+       * shelf life (`expires_at`), only `picked`/`saved`/`own` rows are durable.
+       */
+      editorial_candidates: {
+        Row: {
+          id: string;
+          origin: EditorialCandidateOrigin;
+          /** NULL only for `origin: "own"` — see the CHECK in migration 54. */
+          source_url: string | null;
+          source_title: string | null;
+          source_name: string | null;
+          source_excerpt: string | null;
+          proposed_title_es: string;
+          angle: string;
+          rationale: string;
+          reference_urls: string[];
+          status: EditorialCandidateStatus;
+          fetched_at: string;
+          picked_at: string | null;
+          /** Only meaningful while `status: "pending"`. */
+          expires_at: string | null;
+          created_at: string;
+        };
+        /** Columns with a DB default are optional here, so an insert can omit them. */
+        Insert: Omit<
+          Database["public"]["Tables"]["editorial_candidates"]["Row"],
+          | "id"
+          | "created_at"
+          | "rationale"
+          | "reference_urls"
+          | "status"
+          | "fetched_at"
+          | "picked_at"
+          | "expires_at"
+        > &
+          Partial<
+            Pick<
+              Database["public"]["Tables"]["editorial_candidates"]["Row"],
+              "rationale" | "reference_urls" | "status" | "fetched_at" | "picked_at" | "expires_at"
+            >
+          >;
+        Update: Partial<Database["public"]["Tables"]["editorial_candidates"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       // No database views are used by the app. The key is present (empty) so the
@@ -288,6 +345,16 @@ export interface Database {
           n_red_video: number;
           n_total_video: number;
         };
+      };
+      /**
+       * Fuzzy dedup for the curator (migration 55): which of `candidate_titles`
+       * already collide (word_similarity) with a `posts.title` published in the
+       * last `days` days. Same accent-fold + lowercase technique as
+       * `search_articles`, applied to our own Spanish titles on both sides.
+       */
+      covered_post_titles: {
+        Args: { candidate_titles: string[]; days?: number; threshold?: number };
+        Returns: string[];
       };
     };
   };

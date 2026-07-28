@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -7,14 +10,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import AiAssistButton from "./AiAssistButton";
 import Toast from "@/components/ui/toast";
-import { useToast } from "@/lib/use-toast";
 import type { IdeaDraftInput } from "@/lib/editorial-types";
+import { useToast } from "@/lib/use-toast";
+import AiAssistButton from "./AiAssistButton";
 
 const EMPTY: IdeaDraftInput = {
   proposed_title_es: "",
@@ -26,7 +26,8 @@ const EMPTY: IdeaDraftInput = {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (input: IdeaDraftInput) => void;
+  /** Persists the idea for real; returns whether it succeeded. */
+  onCreate: (input: IdeaDraftInput) => Promise<boolean>;
 }
 
 /**
@@ -44,6 +45,7 @@ interface Props {
 export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props) {
   const [draft, setDraft] = useState<IdeaDraftInput>(EMPTY);
   const [expanding, setExpanding] = useState(false);
+  const [creating, setCreating] = useState(false);
   const { toast, showToast, dismiss } = useToast();
 
   const canExpand = draft.proposed_title_es.trim().length > 0 || draft.angle.trim().length > 0;
@@ -80,10 +82,16 @@ export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props
     }
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!canCreate) return;
-    onCreate(draft);
-    close();
+    setCreating(true);
+    const ok = await onCreate(draft);
+    setCreating(false);
+    if (ok) {
+      close();
+    } else {
+      showToast("No se ha podido crear la idea.", "error");
+    }
   }
 
   return (
@@ -171,8 +179,8 @@ export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props
             <Button type="button" variant="outline" onClick={close}>
               Cancelar
             </Button>
-            <Button type="button" onClick={handleCreate} disabled={!canCreate}>
-              Crear idea
+            <Button type="button" onClick={handleCreate} disabled={!canCreate || creating}>
+              {creating ? "Creando…" : "Crear idea"}
             </Button>
           </SheetFooter>
         </SheetContent>
