@@ -1,73 +1,58 @@
-import { ArrowLeft, ChevronDown, History, Loader2, Plus } from "lucide-react";
+import { Lightbulb, Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast";
-import { newAngleUrl } from "@/lib/editorial-routes";
+import { ideasUrl, newAngleUrl } from "@/lib/editorial-routes";
 import type { IdeaCandidate, IdeaDraftInput } from "@/lib/editorial-types";
 import { useToast } from "@/lib/use-toast";
 import { cn } from "@/lib/utils";
 import CardsSection from "./CardsSection";
-import CreateIdeaDrawer from "./CreateIdeaDrawer";
 import IdeaCard from "./IdeaCard";
+import IdeaFormDrawer from "./IdeaFormDrawer";
 import IdeasEmptyState from "./IdeasEmptyState";
 import RegenerateIdeasDialog from "./RegenerateIdeasDialog";
 
 /** How long "Deshacer" stays live before a dismissed idea is actually deleted. */
 const DISMISS_UNDO_MS = 5000;
 
-/**
- * How many stored ideas show before collapsing the rest.
- *
- * Stored ideas go FIRST because they are the user's own committed intentions,
- * while proposals are just machine suggestions — burying what you chose under
- * what you were offered is how "save for later" piles die. But they are also
- * unbounded, and today's proposals expire in 48 h, so an ever-growing bank on top
- * would push the perishable half below the fold. The cap is what keeps both
- * visible.
- */
-const KEPT_PREVIEW = 3;
-
 interface Props {
-  /** "Guardadas y propias" — everything with status `saved`, from step ①'s SSR query. */
-  kept: IdeaCandidate[];
-  /** "Ya escritas o caducadas" — `picked` + `expired`, capped, same SSR query. */
-  history: IdeaCandidate[];
   nowIso: string;
 }
 
 /**
  * Step ① of the editorial wizard: the ideas you can work from today.
  *
+ * **Only today's fresh proposals live here** (phase 7, 2026-07-28) — saving,
+ * writing your own idea for good, editing, deleting and the history of what
+ * was already written or let expire all moved to the Ideas section
+ * (`/admin/redaccion/ideas`). "Redacción elige, Ideas gestiona."
+ *
  * Persistence model (Fer, 2026-07-25, phase 5 2026-07-28) — the reason the
  * actions are what they are: a curator proposal is transient until you either
  * write about it or save it for later. Discarding it, or regenerating the
- * batch, drops it for good (real DELETE — see `dismiss-idea.ts`). Ideas
- * written by hand are persisted from birth.
+ * batch, drops it for good (real DELETE — see `dismiss-idea.ts`).
  *
  * "Propuestas de hoy" is fetched client-side from `curate-ideas.ts`, not
  * server-rendered: that call may hit Gemini (cache miss), and every other AI
  * wait in this wizard already happens after the page has painted rather than
  * blocking SSR.
  */
-export default function PickIdeaStep({
-  kept: initialKept,
-  history: initialHistory,
-  nowIso,
-}: Props) {
-  const [kept, setKept] = useState<IdeaCandidate[]>(initialKept);
-  const [history, setHistory] = useState<IdeaCandidate[]>(initialHistory);
+export default function PickIdeaStep({ nowIso }: Props) {
   const [proposals, setProposals] = useState<IdeaCandidate[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [proposalsError, setProposalsError] = useState(false);
 
-  const [view, setView] = useState<"pending" | "history">("pending");
+  // "Crear una idea" persists straight away (see `create-idea.ts`), but this
+  // screen no longer keeps a "Guardadas y propias" section to show it in — so
+  // instead of vanishing into the Ideas section unseen, it shows up here too,
+  // for this visit only. The Ideas section is where it lives for good.
+  const [justCreated, setJustCreated] = useState<IdeaCandidate[]>([]);
+
   const [pickingId, setPickingId] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [savingIds, setSavingIds] = useState<Record<string, true>>({});
   const { toast, showToast, dismiss } = useToast();
-
-  const [showAllKept, setShowAllKept] = useState(false);
 
   // Pending dismiss timeouts, keyed by idea id, so "Deshacer" can cancel the
   // real delete before it fires.
@@ -92,15 +77,6 @@ export default function PickIdeaStep({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.ok !== true) throw new Error();
-
-      if (force) {
-        // The replaced batch becomes history immediately, so "Ver historial"
-        // is honest without a full page reload.
-        setHistory((prev) => [
-          ...proposals.map((p) => ({ ...p, status: "expired" as const })),
-          ...prev,
-        ]);
-      }
       setProposals(data.candidates as IdeaCandidate[]);
     } catch {
       setProposalsError(true);
@@ -132,7 +108,7 @@ export default function PickIdeaStep({
       });
   }
 
-  /** Keep it for later: persisted immediately, so the card moves section on success. */
+  /** Keep it for later: persisted immediately — it moves to the Ideas section. */
   function handleSave(idea: IdeaCandidate) {
     setSavingIds((prev) => ({ ...prev, [idea.id]: true }));
     fetch("/admin/redaccion/save-idea", {
@@ -144,8 +120,7 @@ export default function PickIdeaStep({
       .then((data) => {
         if (data?.ok !== true) throw new Error();
         setProposals((prev) => prev.filter((i) => i.id !== idea.id));
-        setKept((prev) => [{ ...idea, status: "saved" as const }, ...prev]);
-        showToast("Idea guardada para otra ocasión.");
+        showToast("Idea guardada. La verás en el banco de ideas.");
       })
       .catch(() => showToast("No se ha podido guardar la idea.", "error"))
       .finally(() => {
@@ -202,8 +177,7 @@ export default function PickIdeaStep({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.ok !== true) throw new Error();
-      setKept((prev) => [data.idea as IdeaCandidate, ...prev]);
-      setView("pending");
+      setJustCreated((prev) => [data.idea as IdeaCandidate, ...prev]);
       showToast("Idea creada y guardada.");
       return true;
     } catch {
@@ -211,130 +185,90 @@ export default function PickIdeaStep({
     }
   }
 
-  const visibleKept = showAllKept ? kept : kept.slice(0, KEPT_PREVIEW);
-  const hiddenKeptCount = kept.length - visibleKept.length;
-
-  const nothingToShow =
-    view === "pending"
-      ? !loadingProposals && proposals.length + kept.length === 0
-      : history.length === 0;
+  const nothingToShow = !loadingProposals && proposals.length + justCreated.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Same shape as the two actions on the right: outline + icon + size lg. */}
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => setView(view === "pending" ? "history" : "pending")}
-        >
-          {view === "pending" ? (
-            <>
-              <History />
-              Ver historial
-            </>
-          ) : (
-            <>
-              <ArrowLeft />
-              Volver a mis ideas
-            </>
-          )}
+        <Button variant="outline" size="lg" render={<a href={ideasUrl()} />}>
+          <Lightbulb />
+          Ver banco de ideas
         </Button>
 
-        {view === "pending" && (
-          <div className="flex flex-wrap items-center gap-2">
-            <RegenerateIdeasDialog
-              pendingCount={proposals.length}
-              running={regenerating}
-              onConfirm={handleRegenerate}
-            />
-            {/* size="lg" to match the actions inside the cards below. */}
-            <Button size="lg" onClick={() => setDrawerOpen(true)}>
-              <Plus />
-              Crear una idea
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <RegenerateIdeasDialog
+            pendingCount={proposals.length}
+            running={regenerating}
+            onConfirm={handleRegenerate}
+          />
+          {/* size="lg" to match the actions inside the cards below. */}
+          <Button size="lg" onClick={() => setDrawerOpen(true)}>
+            <Plus />
+            Crear una idea
+          </Button>
+        </div>
       </div>
 
       {nothingToShow ? (
-        <IdeasEmptyState view={view} onCreate={() => setDrawerOpen(true)} />
+        <IdeasEmptyState onCreate={() => setDrawerOpen(true)} />
       ) : (
         <div className={cn("grid gap-8", (pickingId || regenerating) && "pointer-events-none")}>
-          {view === "pending" ? (
-            <>
-              <CardsSection
-                title="Guardadas y propias"
-                hint="Tus ideas. Siguen aquí hasta que escribas sobre ellas."
-                count={kept.length}
-              >
-                {/* No onDismiss on purpose: a stored idea is deleted from the
-                    Ideas section, not discarded from the picker. */}
-                {visibleKept.map((idea) => (
-                  <IdeaCard
-                    key={idea.id}
-                    idea={idea}
-                    nowIso={nowIso}
-                    picking={pickingId === idea.id}
-                    onPick={handlePick}
-                  />
-                ))}
-                {hiddenKeptCount > 0 && (
-                  <div>
-                    <Button variant="outline" size="lg" onClick={() => setShowAllKept(true)}>
-                      <ChevronDown />
-                      Ver {hiddenKeptCount} idea{hiddenKeptCount === 1 ? "" : "s"} más
-                    </Button>
-                  </div>
-                )}
-              </CardsSection>
+          <CardsSection
+            title="Propuestas de hoy"
+            hint={
+              proposalsError
+                ? "No se han podido cargar. Inténtalo de nuevo."
+                : "No se guardan: si no eliges ni guardas, desaparecen."
+            }
+            count={proposals.length}
+          >
+            {loadingProposals ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Buscando propuestas de hoy…
+              </div>
+            ) : proposalsError ? (
+              <Button variant="outline" size="lg" onClick={() => loadProposals(false)}>
+                Reintentar
+              </Button>
+            ) : (
+              proposals.map((idea) => (
+                <IdeaCard
+                  key={idea.id}
+                  idea={idea}
+                  nowIso={nowIso}
+                  picking={pickingId === idea.id}
+                  saveState={savingIds[idea.id] ? "saving" : "idle"}
+                  onPick={handlePick}
+                  onSave={handleSave}
+                  onDismiss={handleDismiss}
+                />
+              ))
+            )}
+          </CardsSection>
 
-              <CardsSection
-                title="Propuestas de hoy"
-                hint={
-                  proposalsError
-                    ? "No se han podido cargar. Inténtalo de nuevo."
-                    : "No se guardan: si no eliges ni guardas, desaparecen."
-                }
-                count={proposals.length}
-              >
-                {loadingProposals ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
-                    Buscando propuestas de hoy…
-                  </div>
-                ) : proposalsError ? (
-                  <Button variant="outline" size="lg" onClick={() => loadProposals(false)}>
-                    Reintentar
-                  </Button>
-                ) : (
-                  proposals.map((idea) => (
-                    <IdeaCard
-                      key={idea.id}
-                      idea={idea}
-                      nowIso={nowIso}
-                      picking={pickingId === idea.id}
-                      saveState={savingIds[idea.id] ? "saving" : "idle"}
-                      onPick={handlePick}
-                      onSave={handleSave}
-                      onDismiss={handleDismiss}
-                    />
-                  ))
-                )}
-              </CardsSection>
-            </>
-          ) : (
-            <CardsSection title="Ya escritas o caducadas" count={history.length}>
-              {history.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} nowIso={nowIso} variant="history" />
+          {justCreated.length > 0 && (
+            <CardsSection
+              title="Acabas de crear"
+              hint="Ya están guardadas. Siempre puedes verlas en el banco de ideas."
+              count={justCreated.length}
+            >
+              {justCreated.map((idea) => (
+                <IdeaCard
+                  key={idea.id}
+                  idea={idea}
+                  nowIso={nowIso}
+                  picking={pickingId === idea.id}
+                  onPick={handlePick}
+                />
               ))}
             </CardsSection>
           )}
         </div>
       )}
 
-      <CreateIdeaDrawer open={drawerOpen} onOpenChange={setDrawerOpen} onCreate={handleCreate} />
+      <IdeaFormDrawer open={drawerOpen} onOpenChange={setDrawerOpen} onSubmit={handleCreate} />
       <Toast toast={toast} onDismiss={dismiss} />
     </div>
   );

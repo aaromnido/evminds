@@ -57,7 +57,7 @@ export function channelUrl(pieceId: string, channel: PublishChannel): string {
   return `${REDACCION_BASE}/pieza/${pieceId}/${channel}`;
 }
 
-/** The idea bank. Not built yet (phase 7); the sidebar entry is disabled. */
+/** The idea bank: saved and own ideas, plus their history (phase 7). */
 export function ideasUrl(): string {
   return `${REDACCION_BASE}/ideas`;
 }

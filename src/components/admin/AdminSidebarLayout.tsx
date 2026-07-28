@@ -28,7 +28,19 @@ interface Props {
   pageDescription?: string;
   /** Optional primary action rendered on the right of the top bar. */
   actionLabel?: string;
+  /** For pure navigation: renders the action as a link. */
   actionHref?: string;
+  /**
+   * For a client-side action (open a drawer/modal) instead of navigation:
+   * renders the action as a button that dispatches `window` `CustomEvent`s
+   * under this name. Needed because this header is its own hydrated island
+   * (`AdminShell.astro` mounts it with `client:load`, separately from
+   * whatever the page slots in below) — it cannot hold or call into a
+   * different island's React state directly, so a `CustomEvent` is the
+   * bridge. The content island listens with `window.addEventListener`.
+   * Mutually exclusive with `actionHref`; pass exactly one.
+   */
+  actionEventName?: string;
   /** Initial sidebar open state (read server-side from the sidebar_state
    * cookie) so the collapsed state survives View Transition re-hydration. */
   defaultOpen?: boolean;
@@ -48,6 +60,7 @@ export default function AdminSidebarLayout({
   pageDescription,
   actionLabel,
   actionHref,
+  actionEventName,
   defaultOpen = true,
   children,
 }: Props) {
@@ -166,6 +179,16 @@ export default function AdminSidebarLayout({
                 <Plus />
                 {actionLabel}
               </a>
+            )}
+            {actionLabel && actionEventName && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent(actionEventName))}
+                className={buttonVariants({ size: "lg", className: "shrink-0" })}
+              >
+                <Plus />
+                {actionLabel}
+              </button>
             )}
           </div>
         </header>

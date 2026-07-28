@@ -10,7 +10,11 @@ interface Props {
   pageDescription?: string;
   /** Optional primary action on the right of the top bar. */
   actionLabel?: string;
+  /** For pure navigation. Mutually exclusive with `actionEventName` — see
+   * `AdminSidebarLayout` for why the action needs one or the other. */
   actionHref?: string;
+  /** For a client-side action (open a drawer/modal) in the page's own island. */
+  actionEventName?: string;
 }
 
 const {
@@ -19,6 +23,7 @@ const {
   pageDescription,
   actionLabel,
   actionHref,
+  actionEventName,
 } = Astro.props;
 
 // Set by the middleware on authenticated admin requests.
@@ -41,6 +46,7 @@ const sidebarDefaultOpen = Astro.cookies.get("sidebar_state")?.value !== "false"
     pageDescription={pageDescription}
     actionLabel={actionLabel}
     actionHref={actionHref}
+    actionEventName={actionEventName}
   >
     <slot />
   </AdminSidebarLayout>

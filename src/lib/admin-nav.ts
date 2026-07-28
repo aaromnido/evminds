@@ -59,7 +59,7 @@ export const NAV_ITEMS: NavItem[] = [
     ready: true,
     children: [
       { title: "Tus piezas", href: piecesUrl(), ready: true },
-      { title: "Ideas", href: ideasUrl(), ready: false },
+      { title: "Ideas", href: ideasUrl(), ready: true },
       // **The whole wizard**, not only its entry: everything under `/nueva`
       // (step ① and the brief) and every `/pieza/<id>/…` screen (steps ③/④ and
       // the brief of an existing piece). Two prefixes rather than a list of

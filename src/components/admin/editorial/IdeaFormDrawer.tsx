@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import Toast from "@/components/ui/toast";
-import type { IdeaDraftInput } from "@/lib/editorial-types";
+import type { IdeaCandidate, IdeaDraftInput } from "@/lib/editorial-types";
 import { useToast } from "@/lib/use-toast";
 import AiAssistButton from "./AiAssistButton";
 
@@ -23,15 +23,30 @@ const EMPTY: IdeaDraftInput = {
   reference_urls: "",
 };
 
+function toDraftInput(idea: IdeaCandidate): IdeaDraftInput {
+  return {
+    proposed_title_es: idea.proposed_title_es,
+    angle: idea.angle,
+    rationale: idea.rationale,
+    reference_urls: idea.reference_urls.join("\n"),
+  };
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Persists the idea for real; returns whether it succeeded. */
-  onCreate: (input: IdeaDraftInput) => Promise<boolean>;
+  /** Present for editing an existing (always `saved`) idea; omit to create one. */
+  initial?: IdeaCandidate | null;
+  /** Persists the change for real (create or update); returns whether it succeeded. */
+  onSubmit: (input: IdeaDraftInput) => Promise<boolean>;
 }
 
 /**
- * Side drawer to write your own idea (entry route B).
+ * Side drawer to write your own idea (entry route B), generalized (Ideas
+ * section, phase 7) to also edit an existing saved one — same fields either
+ * way, since the only thing that ever changes on an idea is its text.
+ * `CreateIdeaDrawer` was its name before this; renamed rather than forked,
+ * same reasoning as `IdeasSection` → `CardsSection`.
  *
  * Width, per Fer's spec: at most half the viewport from `sm` up, and never wider
  * than `100vw - 24px` below that, so it always reads as a drawer and never as a
@@ -42,26 +57,28 @@ interface Props {
  * you are never staring at empty fields. Backed by `editorial-expand-idea`, one
  * structured Gemini call with the style guide and editorial line as context.
  */
-export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props) {
-  const [draft, setDraft] = useState<IdeaDraftInput>(EMPTY);
+export default function IdeaFormDrawer({ open, onOpenChange, initial = null, onSubmit }: Props) {
+  const mode = initial ? "edit" : "create";
+  const [draft, setDraft] = useState<IdeaDraftInput>(initial ? toDraftInput(initial) : EMPTY);
   const [expanding, setExpanding] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { toast, showToast, dismiss } = useToast();
 
+  // Re-seed every time it opens, for whichever idea (or blank) it opens with —
+  // the drawer stays mounted between one edit and the next "crear"/"editar".
+  useEffect(() => {
+    if (open) {
+      setDraft(initial ? toDraftInput(initial) : EMPTY);
+      setExpanding(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial]);
+
   const canExpand = draft.proposed_title_es.trim().length > 0 || draft.angle.trim().length > 0;
-  const canCreate = draft.proposed_title_es.trim().length > 0 && draft.angle.trim().length > 0;
+  const canSubmit = draft.proposed_title_es.trim().length > 0 && draft.angle.trim().length > 0;
 
   function set<K extends keyof IdeaDraftInput>(key: K, value: IdeaDraftInput[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function close() {
-    onOpenChange(false);
-    // Reset after the close animation so the fields don't flash empty.
-    window.setTimeout(() => {
-      setDraft(EMPTY);
-      setExpanding(false);
-    }, 200);
   }
 
   async function handleExpand() {
@@ -82,30 +99,39 @@ export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props
     }
   }
 
-  async function handleCreate() {
-    if (!canCreate) return;
-    setCreating(true);
-    const ok = await onCreate(draft);
-    setCreating(false);
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    const ok = await onSubmit(draft);
+    setSubmitting(false);
     if (ok) {
-      close();
+      onOpenChange(false);
     } else {
-      showToast("No se ha podido crear la idea.", "error");
+      showToast(
+        mode === "create"
+          ? "No se ha podido crear la idea."
+          : "No se han podido guardar los cambios.",
+        "error",
+      );
     }
   }
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="right"
           className="w-[calc(100vw-24px)]! gap-0 p-0 sm:max-w-[50vw]!"
-          aria-label="Crear una idea"
+          aria-label={mode === "create" ? "Crear una idea" : "Editar idea"}
         >
           <SheetHeader className="border-b border-border px-6 py-5">
-            <SheetTitle className="text-lg">Crear una idea</SheetTitle>
+            <SheetTitle className="text-lg">
+              {mode === "create" ? "Crear una idea" : "Editar idea"}
+            </SheetTitle>
             <SheetDescription>
-              Escribe la idea como te salga, aunque sea una frase. Luego la IA puede desarrollarla.
+              {mode === "create"
+                ? "Escribe la idea como te salga, aunque sea una frase. Luego la IA puede desarrollarla."
+                : "Cambia lo que haga falta. Si viene de una noticia, esa fuente no se toca."}
             </SheetDescription>
           </SheetHeader>
 
@@ -176,11 +202,17 @@ export default function CreateIdeaDrawer({ open, onOpenChange, onCreate }: Props
           </div>
 
           <SheetFooter className="flex-row justify-end gap-2 border-t border-border px-6 py-4">
-            <Button type="button" variant="outline" onClick={close}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="button" onClick={handleCreate} disabled={!canCreate || creating}>
-              {creating ? "Creando…" : "Crear idea"}
+            <Button type="button" onClick={handleSubmit} disabled={!canSubmit || submitting}>
+              {submitting
+                ? mode === "create"
+                  ? "Creando…"
+                  : "Guardando…"
+                : mode === "create"
+                  ? "Crear idea"
+                  : "Guardar cambios"}
             </Button>
           </SheetFooter>
         </SheetContent>

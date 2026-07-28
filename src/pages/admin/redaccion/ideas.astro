@@ -1,0 +1,29 @@
+---
+import AdminShell from "@/layouts/AdminShell.astro";
+import IdeasList, { IDEAS_CREATE_EVENT } from "@/components/admin/editorial/IdeasList.tsx";
+import { fetchIdeaHistory, fetchKeptIdeas } from "@/lib/editorial-ideas";
+
+/**
+ * Ideas — the bank of saved and own ideas, plus their history (task A3, phase
+ * 7). Split off the wizard's step ① (design note 2026-07-25, resolved
+ * 2026-07-28): step ① now only shows today's fresh proposals, and everything
+ * durable — save, write your own, edit, delete, or look back at what was
+ * already written or let expire — lives here. "Redacción elige, Ideas
+ * gestiona": this is the only screen that can edit or delete an idea.
+ */
+
+const supabase = Astro.locals.supabase;
+const nowIso = new Date().toISOString();
+const kept = supabase ? await fetchKeptIdeas(supabase) : [];
+const history = supabase ? await fetchIdeaHistory(supabase) : [];
+---
+
+<AdminShell
+  title="Ideas · Admin"
+  pageTitle="Ideas"
+  pageDescription="Lo que guardaste, lo tuyo propio, y lo que ya escribiste o caducó."
+  actionLabel="Crear una idea"
+  actionEventName={IDEAS_CREATE_EVENT}
+>
+  <IdeasList client:load kept={kept} history={history} nowIso={nowIso} />
+</AdminShell>

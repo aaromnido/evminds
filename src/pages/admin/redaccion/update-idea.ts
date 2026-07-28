@@ -2,15 +2,17 @@ import type { APIRoute } from "astro";
 import { mapCandidateRow } from "@/lib/editorial-ideas";
 
 /**
- * POST /admin/redaccion/create-idea
+ * POST /admin/redaccion/update-idea
  *
- * `IdeaFormDrawer` (create mode) — Fer writing his own idea by hand. Persisted from birth
- * as `saved` (mirrors `buildOwnIdea`'s mock behaviour): an idea Fer typed
- * himself was never a transient proposal to begin with.
+ * The Ideas section's edit: text fields only, and only on `saved` rows — history
+ * (`picked`/`expired`) is closed, not editable. Applies to any `saved` idea
+ * regardless of origin (curator-sourced or Fer's own): the source fields
+ * (`source_url`/`source_name`/`source_excerpt`) are never part of this call, so
+ * there is nothing origin-specific to protect against.
  *
- * Body JSON: { proposed_title_es, angle, rationale, reference_urls }
- * (`reference_urls` as typed, one URL per line — split here, same as the
- * piece-level R1 links).
+ * Body JSON: { id, proposed_title_es, angle, rationale, reference_urls }
+ * (`reference_urls` as typed, one URL per line — split here, same as
+ * `create-idea.ts`.)
  * Response: { ok: true, idea: IdeaCandidate } | { error }
  */
 
@@ -26,6 +28,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const input = body as Record<string, unknown>;
+  const id = input.id;
+  if (
+    typeof id !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  ) {
+    return json({ error: "Falta la idea a editar." }, 400);
+  }
+
   const proposedTitleEs = str(input.proposed_title_es);
   const angle = str(input.angle);
   const rationale = str(input.rationale);
@@ -41,25 +51,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { data, error } = await supabase
       .from("editorial_candidates")
-      .insert({
-        origin: "own",
-        source_url: null,
-        source_title: null,
-        source_name: null,
-        source_excerpt: null,
+      .update({
         proposed_title_es: proposedTitleEs,
         angle,
         rationale,
         reference_urls: referenceUrls,
-        status: "saved",
       })
+      .eq("id", id)
+      .eq("status", "saved")
       .select("*")
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) return json({ error: "Esta idea ya no está disponible." }, 409);
     return json({ ok: true, idea: mapCandidateRow(data) });
   } catch (err) {
-    console.error("create-idea error:", err);
-    return json({ error: "No se pudo crear la idea." }, 500);
+    console.error("update-idea error:", err);
+    return json({ error: "No se pudo guardar los cambios." }, 500);
   }
 };
 

@@ -1,4 +1,4 @@
-import { ArrowRight, Loader2, X } from "lucide-react";
+import { ArrowRight, Loader2, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import IdeaCardMeta from "./IdeaCardMeta";
@@ -9,16 +9,25 @@ import type { IdeaCandidate } from "@/lib/editorial-types";
 interface Props {
   idea: IdeaCandidate;
   nowIso: string;
-  /** "history" drops the actions and the countdown, keeping it read-only. */
+  /** "history" mutes the card and hides the countdown pill — purely visual,
+   * the actions shown are still whatever handlers are passed in. */
   variant?: "actionable" | "history";
   /** True while this card's "escribir" action is in flight. */
   picking?: boolean;
   /** Progress of this card's save action. */
   saveState?: SaveState;
+  /** True while this card's delete is in flight. */
+  deleting?: boolean;
+  /** Omit to hide the primary action (history cards: already turned into a piece). */
   onPick?: (idea: IdeaCandidate) => void;
   /** Omit to hide the save button (ideas that are already stored for good). */
   onSave?: (idea: IdeaCandidate) => void;
+  /** Only for transient proposals — see the note below. */
   onDismiss?: (idea: IdeaCandidate) => void;
+  /** Ideas section only: edit the title/angle/rationale/links. */
+  onEdit?: (idea: IdeaCandidate) => void;
+  /** Ideas section only: remove it from the bank or the history for good. */
+  onDelete?: (idea: IdeaCandidate) => void;
 }
 
 /**
@@ -28,8 +37,11 @@ interface Props {
  * where to spend hours of writing, not scanned for what to fix (see
  * `.claude/design/ai-editorial-agent-ui.md`).
  *
- * Three actions, and only two of them persist the idea: writing about it and
- * saving it for later keep it; discarding lets it disappear for good.
+ * Every action is independent of the others — each renders only if its handler
+ * is passed, mirroring how `onSave`/`onDismiss` already worked before `onEdit`/
+ * `onDelete` (Ideas section, phase 7) joined them. `variant` no longer gates
+ * which buttons show; it only mutes the card and hides the expiry pill, so a
+ * history card can still offer "Borrar" while looking closed.
  */
 export default function IdeaCard({
   idea,
@@ -37,18 +49,22 @@ export default function IdeaCard({
   variant = "actionable",
   picking = false,
   saveState = "idle",
+  deleting = false,
   onPick,
   onSave,
   onDismiss,
+  onEdit,
+  onDelete,
 }: Props) {
   const readOnly = variant === "history";
+  const hasActions = Boolean(onPick || onSave || onDismiss || onEdit || onDelete);
 
   return (
     <article
       className={cn(
         "grid gap-4 rounded-xl border border-border bg-card p-5 transition-colors",
         readOnly ? "opacity-70" : "hover:border-foreground/25",
-        picking && "border-foreground/40",
+        (picking || deleting) && "border-foreground/40",
       )}
     >
       <IdeaCardMeta idea={idea} nowIso={nowIso} showExpiry={!readOnly} />
@@ -65,22 +81,37 @@ export default function IdeaCard({
         <IdeaProseField label="Por qué ahora">{idea.rationale}</IdeaProseField>
       </div>
 
-      {!readOnly && (
+      {hasActions && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button
-            size="lg"
-            onClick={() => onPick?.(idea)}
-            disabled={picking}
-            aria-label={`Escribir sobre: ${idea.proposed_title_es}`}
-          >
-            {picking ? <Loader2 className="animate-spin" /> : null}
-            {picking ? "Preparando…" : "Escribir sobre esto"}
-            {!picking && <ArrowRight data-icon="inline-end" />}
-          </Button>
+          {onPick && (
+            <Button
+              size="lg"
+              onClick={() => onPick(idea)}
+              disabled={picking}
+              aria-label={`Escribir sobre: ${idea.proposed_title_es}`}
+            >
+              {picking ? <Loader2 className="animate-spin" /> : null}
+              {picking ? "Preparando…" : "Escribir sobre esto"}
+              {!picking && <ArrowRight data-icon="inline-end" />}
+            </Button>
+          )}
 
           {/* Omitted for ideas already stored for good (saved earlier, or own). */}
           {onSave && (
             <SaveIdeaButton state={saveState} onSave={() => onSave(idea)} disabled={picking} />
+          )}
+
+          {/* Ideas section only: the bank manages its own text, the picker never does. */}
+          {onEdit && (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => onEdit(idea)}
+              disabled={picking || deleting}
+            >
+              <Pencil />
+              Editar
+            </Button>
           )}
 
           {/* Only for transient proposals. On a stored idea, "descartar" would be
@@ -96,6 +127,20 @@ export default function IdeaCard({
             >
               <X />
               Descartar
+            </Button>
+          )}
+
+          {/* Ideas section only: a real, permanent delete — see `DeleteIdeaDialog`. */}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => onDelete(idea)}
+              disabled={deleting}
+              className="text-muted-foreground"
+            >
+              {deleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              {deleting ? "Borrando…" : "Borrar"}
             </Button>
           )}
         </div>
