@@ -294,6 +294,23 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["editorial_candidates"]["Insert"]>;
         Relationships: [];
       };
+      /**
+       * Short-lived exclusion cache, NOT part of the idea bank (migration 56).
+       * `curate-ideas.ts` reads it so "Volver a generar" doesn't immediately
+       * re-propose an article just dismissed; nothing else reads this table.
+       */
+      editorial_dismissed_urls: {
+        Row: {
+          source_url: string;
+          dismissed_at: string;
+        };
+        Insert: {
+          source_url: string;
+          dismissed_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["editorial_dismissed_urls"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       // No database views are used by the app. The key is present (empty) so the

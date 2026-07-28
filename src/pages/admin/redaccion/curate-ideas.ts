@@ -18,6 +18,14 @@ import { toDisplayName } from "@/lib/sources";
  * load. This route reuses an unexpired batch unless `force` is set — which is
  * what "Volver a generar" sends.
  *
+ * VARIETY FIX (Fer, 2026-07-29): "Volver a generar" was immediately
+ * re-proposing whatever had just been superseded or dismissed, since neither
+ * counted as "covered" — only `picked`/`saved` did. The candidate-article
+ * pool now also excludes `expired` rows and `editorial_dismissed_urls`
+ * entries (migration 56) from the last `CACHE_HOURS`, so a fresh regenerate
+ * can't just hand back the same batch. Past that window either can resurface
+ * again, unchanged from the original design.
+ *
  * Body: { force?: boolean }
  * Response: { ok: true, candidates: IdeaCandidate[] } | { error }
  */
@@ -73,6 +81,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .in("status", ["picked", "saved"])
     .not("source_url", "is", null);
   const covered = new Set((coveredRows ?? []).map((r) => r.source_url));
+
+  // Short-lived exclusion (Fer, 2026-07-29): without this, "Volver a generar"
+  // immediately re-proposed whatever had just been superseded or dismissed,
+  // since neither is `picked`/`saved`. Both are excluded only within the same
+  // `CACHE_HOURS` a batch already lives for — after that they can resurface
+  // exactly as the original design intended.
+  const recentCutoff = new Date(Date.now() - CACHE_HOURS * 60 * 60 * 1000).toISOString();
+  const { data: recentlyExpiredRows } = await supabase
+    .from("editorial_candidates")
+    .select("source_url")
+    .eq("status", "expired")
+    .gt("fetched_at", recentCutoff)
+    .not("source_url", "is", null);
+  for (const row of recentlyExpiredRows ?? []) covered.add(row.source_url);
+
+  const { data: recentlyDismissedRows } = await supabase
+    .from("editorial_dismissed_urls")
+    .select("source_url")
+    .gt("dismissed_at", recentCutoff);
+  for (const row of recentlyDismissedRows ?? []) covered.add(row.source_url);
 
   const since = new Date(Date.now() - RECENCY_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { data: articleRows } = await supabase
