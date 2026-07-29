@@ -94,7 +94,7 @@ export const BRAND_MEDIA_PORTALS: readonly BrandMediaPortal[] = [
   {
     name: "Kia",
     portal: "Kia Europe Press",
-    url: "https://www.press-eu.kia.com/document/1126#/passenger-cars/the-kia-ev2-1",
+    url: "https://www.press-eu.kia.com",
     access: "public",
   },
   {
