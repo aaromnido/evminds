@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { downloadableImageUrl } from "@/lib/image-utils";
 import BrandPressPicker from "./BrandPressPicker";
+import ImageFilterStrip from "./ImageFilterStrip";
+import { supportsImageFilters } from "@/lib/image-filters";
 
 interface Props {
   value: string;
@@ -158,6 +160,15 @@ export default function ImageDropZone({
           question. Once there IS an image the drop zone turns into preview mode
           and this goes away — replacing a photo means removing it first. */}
       {!value && <BrandPressPicker className="pt-0.5" />}
+
+      {/* The mirror image of the picker above: the house grades, and only once
+          there IS an image (Phase 6A.2). Guarded on the URL because the wizard
+          still hands out a same-origin `MOCK_HERO_IMAGE` that Cloudinary can do
+          nothing with — a strip of eight identical thumbnails would be worse
+          than no strip at all. */}
+      {value && supportsImageFilters(value) && (
+        <ImageFilterStrip value={value} onChange={onChange} className="pt-0.5" />
+      )}
 
       <Input
         value={value}
