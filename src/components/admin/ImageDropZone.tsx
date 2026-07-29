@@ -3,6 +3,7 @@ import { Download, ImagePlus, UploadCloud, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { downloadableImageUrl } from "@/lib/image-utils";
+import BrandPressPicker from "./BrandPressPicker";
 
 interface Props {
   value: string;
@@ -150,6 +151,13 @@ export default function ImageDropZone({
           </div>
         </div>
       )}
+
+      {/* Third way of getting a photo, and only while there is none: the brand's
+          official press room (Phase 6A.1). It sits between "drag one in" and
+          "paste a URL" because that is the order of the three answers to the same
+          question. Once there IS an image the drop zone turns into preview mode
+          and this goes away — replacing a photo means removing it first. */}
+      {!value && <BrandPressPicker className="pt-0.5" />}
 
       <Input
         value={value}
