@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarClock, Check, Eye, Wand2 } from "lucide-react";
 import ArticlePreviewSheet from "./ArticlePreviewSheet";
 import BackStepButton from "./BackStepButton";
@@ -56,6 +56,16 @@ import type { PublishChannel } from "@/lib/editorial-types";
  * loading state that lies.
  */
 const EDIT_IMAGE_DELAY_MS = 1600;
+
+/**
+ * Aborts a hung redactor call instead of leaving the screen waiting on it
+ * forever (2026-07-30: a real call had no timeout at any layer, and a stalled
+ * Gemini fetch — a known failure mode, connection open, never resolving nor
+ * rejecting — left `generatingDraft` stuck `true` with no error to show and
+ * no "Reintentar" button to press). A real call finishes in ~10-15s, so this
+ * only ever fires on a genuine stall.
+ */
+const REDACTOR_TIMEOUT_MS = 60_000;
 
 interface Props {
   /** Channel this screen is for. */
@@ -370,6 +380,9 @@ export default function PublishChannelStep({
   // instant this renders); EVminds starts idle and waits for its button.
   const [generatingDraft, setGeneratingDraft] = useState(channel === "motor" && !seed.title);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // Holds the in-flight redactor call's controller so the loader's manual
+  // "Cancelar" button can abort it directly, without waiting on the timeout.
+  const abortControllerRef = useRef<AbortController | null>(null);
   // "Volver a generar" on the body field alone (Fer, 2026-07-27) — a separate
   // flag from `generatingDraft`, which is reserved for the first, full-screen
   // generation. This one is scoped and small: a toast on success or failure,
@@ -624,24 +637,46 @@ export default function PublishChannelStep({
    * full-screen error for the first generation, a toast for a scoped retry).
    */
   async function requestRedactor() {
-    const res = await fetch("/admin/redaccion/generate-draft", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        pieceId,
-        channel,
-        briefTitle,
-        briefAngle,
-        sourceName: briefSourceName ?? "",
-        sourceUrl: briefSourceUrl ?? "",
-        ...(channel === "evminds" ? { weeklyNotes } : {}),
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data?.ok !== true) {
-      throw new Error(typeof data?.error === "string" ? data.error : "La generación ha fallado.");
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const timeoutId = window.setTimeout(() => controller.abort(), REDACTOR_TIMEOUT_MS);
+    try {
+      const res = await fetch("/admin/redaccion/generate-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pieceId,
+          channel,
+          briefTitle,
+          briefAngle,
+          sourceName: briefSourceName ?? "",
+          sourceUrl: briefSourceUrl ?? "",
+          ...(channel === "evminds" ? { weeklyNotes } : {}),
+        }),
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) {
+        throw new Error(typeof data?.error === "string" ? data.error : "La generación ha fallado.");
+      }
+      return data;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new Error(
+          "La generación ha tardado demasiado y se ha cancelado. Puedes reintentarlo.",
+        );
+      }
+      throw err;
+    } finally {
+      window.clearTimeout(timeoutId);
+      abortControllerRef.current = null;
     }
-    return data;
+  }
+
+  /** Lets the full-screen loader bail out of a hung call on demand, instead of
+   * only ever timing out on its own after `REDACTOR_TIMEOUT_MS`. */
+  function handleCancelGeneration() {
+    abortControllerRef.current?.abort();
   }
 
   /**
@@ -1114,7 +1149,7 @@ export default function PublishChannelStep({
 
       {!generated ? (
         generatingDraft ? (
-          <DraftGeneratingLoader />
+          <DraftGeneratingLoader onCancel={handleCancelGeneration} />
         ) : channel === "evminds" ? (
           <div className="grid gap-4">
             {generateError && <FieldError message={generateError} />}
