@@ -37,9 +37,27 @@ export type HeadlineTone = 'green' | 'amber' | 'red';
 // any specific powertrain (infrastructure, policy, etc.).
 export type Powertrain = 'bev' | 'phev' | 'erev' | 'hev' | 'ice' | 'na';
 
+/**
+ * Why a failed attempt failed, when it did — undefined on success. Lets a
+ * caller (the admin "Regenerar IA" button) show something more useful than a
+ * generic "failed", and lets a safety block or a truncated response be told
+ * apart from a genuine network/HTTP error (2026-07-30: neither was
+ * distinguished before, so a Gemini safety block looked identical to a
+ * transient outage — and being deterministic for the same input, it
+ * recurred on every single retry with no way to tell why).
+ */
+export type SummaryFailureReason =
+  | 'missing_api_key'
+  | 'timeout'
+  | 'http_error'
+  | 'safety_block'
+  | 'max_tokens'
+  | 'invalid_response';
+
 export interface SummaryResult {
   summary: string | null;
   warnings: SummaryWarning[];
+  failureReason?: SummaryFailureReason;
   /** Soft 1-2 sentence invitation to comment, tied to the article's key debate. */
   discussionPrompt?: string;
   /** SEO-optimized headline (brand+model first, ≤75 chars). Feeds <title>/og:title/<h1>. */
@@ -80,10 +98,19 @@ export const VALID_POWERTRAINS: ReadonlySet<Powertrain> = new Set<Powertrain>([
 
 const EMPTY: SummaryResult = { summary: null, warnings: [] };
 
+function fail(reason: SummaryFailureReason): SummaryResult {
+  return { summary: null, warnings: [], failureReason: reason };
+}
+
 const MAX_ATTEMPTS = 5;
 const RETRYABLE_STATUS = new Set([429, 503]);
 // Linear backoff between attempts: 500ms, 1s, 1.5s, 2s (total worst case ~5s).
 const RETRY_DELAY_MS = 500;
+// Aborts a single Gemini attempt instead of waiting on it forever — a real
+// call (thinkingBudget: 0) finishes in ~2-5s, so this only ever fires on a
+// genuine stall, and a stalled attempt still gets retried like a 429/503
+// would, up to MAX_ATTEMPTS.
+const GEMINI_TIMEOUT_MS = 25_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -379,7 +406,7 @@ export async function generateSummary(
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) {
     console.error('GEMINI_API_KEY missing; skipping AI summary');
-    return EMPTY;
+    return fail('missing_api_key');
   }
 
   const isEnglish = lang.toLowerCase().startsWith('en');
@@ -404,13 +431,33 @@ export async function generateSummary(
 
   try {
     let response: Response | null = null;
+    let timedOut = false;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+      try {
+        response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
+        if (!(fetchErr instanceof DOMException && fetchErr.name === 'AbortError')) throw fetchErr;
+        if (attempt < MAX_ATTEMPTS) {
+          console.warn(
+            `Gemini request timed out (${GEMINI_TIMEOUT_MS}ms) on attempt ${attempt}/${MAX_ATTEMPTS}; retrying`,
+          );
+          continue;
+        }
+        console.error(`Gemini request timed out (${GEMINI_TIMEOUT_MS}ms) on final attempt`);
+        timedOut = true;
+        response = null;
+        break;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (response.ok) break;
 
@@ -424,20 +471,43 @@ export async function generateSummary(
 
       const errBody = await response.text();
       console.error(`Gemini API error (${response.status}): ${errBody}`);
-      return EMPTY;
+      return fail('http_error');
     }
+
+    if (timedOut) return fail('timeout');
 
     if (!response || !response.ok) {
       const status = response?.status ?? 'unknown';
       console.error(`Gemini API exhausted retries (last status: ${status})`);
-      return EMPTY;
+      return fail('http_error');
     }
 
     const data = await response.json();
+
+    // Gemini can return 200 OK with no usable content: blocked before
+    // generation (`promptFeedback.blockReason`) or cut short mid-generation
+    // (`finishReason`). Both used to fall through to the generic "missing
+    // text content" branch below, logged identically to a truncated/garbled
+    // response — indistinguishable from each other, and since the same
+    // article produces the same prompt every time, a genuine safety block
+    // recurred on every single retry with no visible reason why.
+    const blockReason = data?.promptFeedback?.blockReason;
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    if (blockReason || finishReason === 'SAFETY' || finishReason === 'RECITATION') {
+      console.error(
+        `Gemini blocked the response (blockReason=${blockReason ?? 'none'}, finishReason=${finishReason ?? 'none'})`,
+      );
+      return fail('safety_block');
+    }
+    if (finishReason === 'MAX_TOKENS') {
+      console.error('Gemini response truncated by MAX_TOKENS');
+      return fail('max_tokens');
+    }
+
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (typeof text !== 'string') {
       console.error('Gemini response missing text content:', JSON.stringify(data));
-      return EMPTY;
+      return fail('invalid_response');
     }
 
     let parsed: unknown;
@@ -445,19 +515,19 @@ export async function generateSummary(
       parsed = JSON.parse(text);
     } catch {
       console.error('Gemini response not valid JSON:', text);
-      return EMPTY;
+      return fail('invalid_response');
     }
 
     const validated = parseAndValidate(parsed);
     if (!validated) {
       console.error('Gemini response failed schema validation:', text);
-      return EMPTY;
+      return fail('invalid_response');
     }
 
     return validated;
   } catch (error) {
     console.error('AI summary error:', error);
-    return EMPTY;
+    return fail('http_error');
   }
 }
 
@@ -520,13 +590,33 @@ export async function generateSeoTitle(
 
   try {
     let response: Response | null = null;
+    let timedOut = false;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+      try {
+        response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
+        if (!(fetchErr instanceof DOMException && fetchErr.name === 'AbortError')) throw fetchErr;
+        if (attempt < MAX_ATTEMPTS) {
+          console.warn(
+            `Gemini SEO title request timed out (${GEMINI_TIMEOUT_MS}ms) on attempt ${attempt}/${MAX_ATTEMPTS}; retrying`,
+          );
+          continue;
+        }
+        console.error(`Gemini SEO title request timed out (${GEMINI_TIMEOUT_MS}ms) on final attempt`);
+        timedOut = true;
+        response = null;
+        break;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (response.ok) break;
 
@@ -543,13 +633,27 @@ export async function generateSeoTitle(
       return null;
     }
 
-    if (!response || !response.ok) {
-      const status = response?.status ?? 'unknown';
+    if (timedOut || !response || !response.ok) {
+      const status = response?.status ?? (timedOut ? 'timeout' : 'unknown');
       console.error(`Gemini API exhausted retries (last status: ${status})`);
       return null;
     }
 
     const data = await response.json();
+
+    const blockReason = data?.promptFeedback?.blockReason;
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    if (blockReason || finishReason === 'SAFETY' || finishReason === 'RECITATION') {
+      console.error(
+        `Gemini SEO title blocked (blockReason=${blockReason ?? 'none'}, finishReason=${finishReason ?? 'none'})`,
+      );
+      return null;
+    }
+    if (finishReason === 'MAX_TOKENS') {
+      console.error('Gemini SEO title response truncated by MAX_TOKENS');
+      return null;
+    }
+
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (typeof text !== 'string') {
       console.error('Gemini SEO title response missing text content:', JSON.stringify(data));

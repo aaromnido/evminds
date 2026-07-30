@@ -89,7 +89,7 @@ serve(async (req) => {
 
     if (!result.summary) {
       return json(
-        { error: 'AI generation failed (no summary returned)' },
+        { error: 'AI generation failed (no summary returned)', reason: result.failureReason ?? null },
         502,
       );
     }

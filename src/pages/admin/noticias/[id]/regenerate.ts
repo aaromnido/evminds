@@ -34,7 +34,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return json({ error: data.error || "La regeneración falló." }, res.status);
+      return json(
+        { error: data.error || "La regeneración falló.", reason: data.reason ?? null },
+        res.status,
+      );
     }
 
     // Regeneration can change the title/tone shown on listing cards too, so

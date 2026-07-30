@@ -50,6 +50,32 @@ interface Props {
 const fieldClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
 
+/**
+ * Turns `ai-summary.ts`'s `failureReason` into something Fer can act on,
+ * instead of the generic "La regeneración falló." every cause used to share
+ * (2026-07-30: a Gemini safety block looked identical to a transient outage,
+ * and being deterministic for the same input, it recurred on every retry
+ * with no visible reason why).
+ */
+function describeRegenFailure(error: unknown, reason: unknown): string {
+  switch (reason) {
+    case "safety_block":
+      return "Gemini ha bloqueado el contenido por su filtro de seguridad. Es probable que vuelva a fallar en cada reintento: mejor redactar el resumen a mano.";
+    case "timeout":
+      return "Gemini ha tardado demasiado en responder. Puede ser algo puntual, prueba a reintentar.";
+    case "max_tokens":
+      return "La respuesta de Gemini se ha cortado por exceder el límite de tokens.";
+    case "http_error":
+      return "Error de la API de Gemini (límite de peticiones o fallo del servicio). Prueba a reintentar en un momento.";
+    case "invalid_response":
+      return "Gemini ha devuelto una respuesta que no se pudo interpretar.";
+    case "missing_api_key":
+      return "Falta la clave de la API de Gemini en el servidor.";
+    default:
+      return typeof error === "string" && error ? error : "La regeneración falló.";
+  }
+}
+
 export default function NewsEditor({ id, article, error, categories = [] }: Props) {
   const [excerpt, setExcerpt] = useState(article.excerpt ?? "");
   const [aiSummary, setAiSummary] = useState(article.ai_summary ?? "");
@@ -108,7 +134,7 @@ export default function NewsEditor({ id, article, error, categories = [] }: Prop
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "La regeneración falló.");
+        throw new Error(describeRegenFailure(data.error, data.reason));
       }
       // Reload so the (uncontrolled) summary/prompt fields — and any title/excerpt
       // translation — reflect what the function just wrote to the DB.
