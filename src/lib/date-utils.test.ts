@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDate, formatShortDate, formatRelativeTime } from "./date-utils";
+import { formatDate, formatShortDate, formatShortDateTime, formatRelativeTime } from "./date-utils";
 
 describe("formatDate", () => {
   it("formats an ISO timestamp to a long Spanish date", () => {
@@ -11,6 +11,17 @@ describe("formatDate", () => {
 describe("formatShortDate", () => {
   it("formats an ISO timestamp to a zero-padded numeric Spanish date", () => {
     expect(formatShortDate("2026-01-05T12:00:00Z")).toBe("05/01/2026");
+  });
+});
+
+describe("formatShortDateTime", () => {
+  it("formats an ISO timestamp to a zero-padded numeric Spanish date and time in Europe/Madrid", () => {
+    // CET (UTC+1) in January: 09:30 UTC → 10:30 Madrid.
+    expect(formatShortDateTime("2026-01-20T09:30:00Z")).toBe("20/01/2026, 10:30");
+  });
+
+  it("accounts for CEST (UTC+2) in summer", () => {
+    expect(formatShortDateTime("2026-07-15T09:30:00Z")).toBe("15/07/2026, 11:30");
   });
 });
 

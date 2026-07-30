@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { madridPublishInstant } from "./madrid-time";
+import { madridLocalToUtcIso, madridPublishInstant, utcIsoToMadridLocal } from "./madrid-time";
 
 describe("madridPublishInstant", () => {
   it("is UTC+1 (07:00 UTC) in winter, CET", () => {
@@ -30,5 +30,35 @@ describe("madridPublishInstant", () => {
   it("throws on a malformed date instead of silently publishing at the epoch", () => {
     expect(() => madridPublishInstant("not-a-date")).toThrow();
     expect(() => madridPublishInstant("")).toThrow();
+  });
+});
+
+describe("madridLocalToUtcIso", () => {
+  it("converts a Madrid wall-clock datetime-local value to its UTC instant (CET, winter)", () => {
+    expect(madridLocalToUtcIso("2026-01-20T10:30")).toBe("2026-01-20T09:30:00.000Z");
+  });
+
+  it("accounts for CEST (UTC+2) in summer", () => {
+    expect(madridLocalToUtcIso("2026-08-10T08:00")).toBe("2026-08-10T06:00:00.000Z");
+  });
+
+  it("throws on a malformed value instead of silently returning the epoch", () => {
+    expect(() => madridLocalToUtcIso("not-a-date")).toThrow();
+    expect(() => madridLocalToUtcIso("")).toThrow();
+  });
+});
+
+describe("utcIsoToMadridLocal", () => {
+  it("converts a UTC instant to its Madrid wall-clock datetime-local value (CET, winter)", () => {
+    expect(utcIsoToMadridLocal("2026-01-20T09:30:00Z")).toBe("2026-01-20T10:30");
+  });
+
+  it("accounts for CEST (UTC+2) in summer", () => {
+    expect(utcIsoToMadridLocal("2026-08-10T06:00:00Z")).toBe("2026-08-10T08:00");
+  });
+
+  it("round-trips with madridLocalToUtcIso", () => {
+    const local = "2026-08-10T08:00";
+    expect(utcIsoToMadridLocal(madridLocalToUtcIso(local))).toBe(local);
   });
 });

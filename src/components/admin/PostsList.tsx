@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatShortDate } from "@/lib/date-utils";
+import { formatShortDateTime } from "@/lib/date-utils";
 import { getPostStatusBadge } from "@/lib/post-status";
 
 export interface PostListItem {
@@ -103,7 +103,7 @@ export default function PostsList({ posts, error, nowIso, q, page, totalPages, t
                     <TableRow>
                       <TableHead className="w-full min-w-[60vw] md:min-w-0">Título</TableHead>
                       <TableHead className="hidden md:table-cell">Categoría</TableHead>
-                      <TableHead>Actualizado</TableHead>
+                      <TableHead>Publicación</TableHead>
                       <TableHead>Estado</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -120,8 +120,8 @@ export default function PostsList({ posts, error, nowIso, q, page, totalPages, t
                           <TableCell className="hidden text-muted-foreground md:table-cell">
                             {p.category}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {formatShortDate(p.updated_at)}
+                          <TableCell className="text-muted-foreground whitespace-nowrap">
+                            {p.published_at ? formatShortDateTime(p.published_at) : "—"}
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -208,7 +208,7 @@ function PostsListSkeleton() {
           <TableRow>
             <TableHead className="w-full min-w-[60vw] md:min-w-0">Título</TableHead>
             <TableHead className="hidden md:table-cell">Categoría</TableHead>
-            <TableHead>Actualizado</TableHead>
+            <TableHead>Publicación</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="w-px" />
           </TableRow>

@@ -2,6 +2,7 @@
 import AdminShell from "@/layouts/AdminShell.astro";
 import PostEditor, { type PostFormValues } from "@/components/admin/PostEditor.tsx";
 import { parsePostForm, validatePostForm } from "@/lib/post-form";
+import { utcIsoToMadridLocal } from "@/lib/madrid-time";
 import { purgeTags } from "@/lib/cache-purge";
 
 const supabase = Astro.locals.supabase;
@@ -88,8 +89,9 @@ if (!formValues && !notFound && supabase && id) {
       image_url: row.image_url ?? "",
       image_alt: row.image_alt ?? "",
       status: row.status,
-      // ISO → datetime-local ("YYYY-MM-DDTHH:mm"). Shows UTC; refine later if needed.
-      published_at: row.published_at ? String(row.published_at).slice(0, 16) : "",
+      // ISO (UTC) → datetime-local, converted to Madrid wall-clock so the
+      // time shown matches what was actually picked when scheduling.
+      published_at: row.published_at ? utcIsoToMadridLocal(row.published_at) : "",
     };
   }
 }

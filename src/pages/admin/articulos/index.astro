@@ -24,7 +24,9 @@ if (supabase) {
     });
   if (q) query = query.ilike("title", `%${q}%`);
   const { data, error, count } = await query
-    .order("updated_at", { ascending: false })
+    // Matches the "Publicación" column now shown in the list. Drafts with no
+    // published_at yet sort last, not first (Postgres' DESC default).
+    .order("published_at", { ascending: false, nullsFirst: false })
     .range(from, to);
   if (error) errorMsg = error.message;
   // Cast: hand-written Database type infers `never` on .from() (see typecheck

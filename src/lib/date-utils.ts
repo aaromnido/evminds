@@ -25,6 +25,25 @@ export function formatShortDate(isoString: string): string {
 }
 
 /**
+ * Format ISO timestamp to a short numeric Spanish date + time (compact, for
+ * dense admin lists). Pinned to Europe/Madrid so the displayed wall-clock time
+ * matches what the user expects regardless of the server's own timezone.
+ * @example formatShortDateTime("2026-01-20T09:30:00Z") → "20/01/2026, 10:30"
+ */
+export function formatShortDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Madrid",
+  }).format(date);
+}
+
+/**
  * Format ISO timestamp to relative time in Spanish
  * @example formatRelativeTime("2024-01-20T10:30:00Z") → "hace 2 días"
  */

@@ -1,0 +1,213 @@
+---
+// Click-to-zoom lightbox for images inside body content rendered via set:html
+// (e.g. article-prose). Delegates clicks so it also catches <img> tags that
+// aren't in the DOM at mount time.
+interface Props {
+  selector?: string;
+}
+const { selector = ".article-prose" } = Astro.props;
+---
+
+<div class="image-lightbox" data-image-lightbox data-lightbox-selector={selector} hidden>
+  <div class="image-lightbox__backdrop" data-lightbox-close></div>
+  <div class="image-lightbox__panel">
+    <div class="image-lightbox__frame">
+      <button type="button" class="image-lightbox__close" data-lightbox-close aria-label="Cerrar">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <img class="image-lightbox__image" data-lightbox-image src="" alt="" />
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .image-lightbox[hidden] {
+    display: none;
+  }
+
+  .image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+
+  .image-lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--navy-2) 80%, transparent);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: lightbox-fade 0.15s ease;
+  }
+
+  .image-lightbox__panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    pointer-events: none;
+  }
+
+  /* Shrink-wraps to the image's rendered size, so the close button (anchored
+     to this frame) sits on the image's own corner, not the viewport's. */
+  .image-lightbox__frame {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .image-lightbox__image {
+    pointer-events: auto;
+    display: block;
+    max-width: calc(100vw - 64px);
+    max-height: calc(100vh - 64px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    animation: lightbox-pop 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .image-lightbox__close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: color-mix(in srgb, var(--sepia-light) 92%, transparent);
+    color: var(--navy-2);
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    transition:
+      transform 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .image-lightbox__close:hover {
+    background: var(--sepia-light);
+    transform: scale(1.08);
+  }
+
+  @keyframes lightbox-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes lightbox-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .image-lightbox__panel {
+      padding: 16px;
+    }
+
+    .image-lightbox__image {
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+    }
+
+    .image-lightbox__close {
+      top: -10px;
+      right: -10px;
+      width: 38px;
+      height: 38px;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    // Bind document-level listeners only once; the modal element is re-queried
+    // live on every interaction so this survives any DOM replacement.
+    if (window.__imageLightboxInit) return;
+    window.__imageLightboxInit = true;
+
+    function els() {
+      return {
+        modal: document.querySelector("[data-image-lightbox]"),
+        img: document.querySelector("[data-lightbox-image]"),
+      };
+    }
+
+    function isOpen() {
+      var m = document.querySelector("[data-image-lightbox]");
+      return m && !m.hidden;
+    }
+
+    function open(src, alt) {
+      var e = els();
+      if (!e.modal || !e.img) return;
+      e.img.src = src;
+      e.img.alt = alt || "";
+      e.modal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+
+    function close() {
+      var e = els();
+      if (!e.modal) return;
+      e.modal.hidden = true;
+      document.body.style.overflow = "";
+      if (e.img) e.img.src = "";
+    }
+
+    document.addEventListener("click", function (ev) {
+      if (ev.target.closest && ev.target.closest("[data-lightbox-close]")) {
+        ev.preventDefault();
+        close();
+        return;
+      }
+
+      var modal = document.querySelector("[data-image-lightbox]");
+      var selector = modal && modal.getAttribute("data-lightbox-selector");
+      if (!selector) return;
+
+      var img = ev.target.closest ? ev.target.closest(selector + " img") : null;
+      if (img) {
+        open(img.currentSrc || img.src, img.alt);
+      }
+    });
+
+    document.addEventListener("keydown", function (ev) {
+      if (!isOpen()) return;
+      if (ev.key === "Escape" || ev.key === "Esc") {
+        ev.preventDefault();
+        close();
+      }
+    });
+  })();
+</script>

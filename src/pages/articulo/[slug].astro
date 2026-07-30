@@ -6,6 +6,7 @@ import Badge from "@/components/Badge.astro";
 import NewsCard from "@/components/NewsCard.astro";
 import ShareButtons from "@/components/ShareButtons.astro";
 import DisqusComments from "@/components/DisqusComments.astro";
+import ImageLightbox from "@/components/ImageLightbox.astro";
 import { formatDate } from "@/lib/date-utils";
 import { calculateReadingTime } from "@/lib/reading-time";
 import { getArticleUrl, getNewsUrl } from "@/lib/article-url";
@@ -243,6 +244,8 @@ const relatedArticles = ownArticles
 
     <Footer />
   </main>
+
+  <ImageLightbox selector=".article-prose" />
 </BaseLayout>
 
 <style>
@@ -397,6 +400,15 @@ const relatedArticles = ownArticles
     border-radius: 12px;
     margin: 28px 0;
     display: block;
+    cursor: zoom-in;
+    transition:
+      opacity 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .article-prose :global(img:hover) {
+    opacity: 0.9;
+    box-shadow: 0 8px 24px rgba(25, 27, 65, 0.18);
   }
 
   .article-prose :global(a) {

@@ -4,6 +4,7 @@ import NewsCreateForm, {
   type SourceOption,
   type NewsCreateValues,
 } from "@/components/admin/NewsCreateForm.tsx";
+import { madridLocalToUtcIso } from "@/lib/madrid-time";
 
 const supabase = Astro.locals.supabase;
 
@@ -48,6 +49,19 @@ if (supabase && Astro.request.method === "POST") {
   if (!articleUrl) missing.push("URL");
   if (!publishedAtRaw) missing.push("fecha");
 
+  // The datetime-local input is timezone-naive Madrid wall-clock time, so it
+  // must go through madridLocalToUtcIso rather than a bare `new Date()` — the
+  // latter parses it in the server process's own timezone (UTC on Netlify),
+  // silently shifting the published time by Madrid's offset (1-2h with DST).
+  let publishedAt = "";
+  if (publishedAtRaw) {
+    try {
+      publishedAt = madridLocalToUtcIso(publishedAtRaw);
+    } catch {
+      missing.push("fecha (formato no válido)");
+    }
+  }
+
   if (missing.length) {
     errorMsg = `Faltan campos obligatorios: ${missing.join(", ")}.`;
   } else {
@@ -60,7 +74,7 @@ if (supabase && Astro.request.method === "POST") {
       content_type: contentType,
       article_url: articleUrl,
       image_url: imageUrl || null,
-      published_at: new Date(publishedAtRaw).toISOString(),
+      published_at: publishedAt,
       youtube_video_id: contentType === "video" && youtubeId ? youtubeId : null,
     };
     const { error } = await supabase.from("articles").insert(payload);

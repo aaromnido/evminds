@@ -52,9 +52,28 @@ describe("parsePostForm", () => {
     expect(() => new Date(parsed.payload.published_at as string).toISOString()).not.toThrow();
   });
 
-  it("converts a valid published_at to ISO", () => {
-    const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-01-20T10:30" }));
-    expect(parsed.payload.published_at).toContain("2026-01-20");
+  it("converts a valid published_at (Madrid wall-clock) to its UTC instant", () => {
+    // CET (UTC+1) in January: 10:00 Madrid → 09:00 UTC.
+    const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-01-20T10:00" }));
+    expect(parsed.payload.published_at).toBe("2026-01-20T09:00:00.000Z");
+  });
+
+  it("accounts for CEST (UTC+2) in summer", () => {
+    const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-07-20T10:00" }));
+    expect(parsed.payload.published_at).toBe("2026-07-20T08:00:00.000Z");
+  });
+
+  // Scheduling is always on the hour, same rule as the redacción wizard's
+  // madridPublishInstant — whatever minute the picker sends is discarded
+  // before it ever reaches the DB, regardless of the real time of saving.
+  it("floors published_at to hh:00, discarding whatever minute was submitted", () => {
+    const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-01-20T10:37" }));
+    expect(parsed.payload.published_at).toBe("2026-01-20T09:00:00.000Z");
+  });
+
+  it("also floors the repopulated form value, so a failed-submit re-render shows the truncated hour", () => {
+    const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-01-20T10:37" }));
+    expect(parsed.values.published_at).toBe("2026-01-20T10:00");
   });
 
   // Regression caught in a past review: an invalid date must NOT throw RangeError

@@ -65,3 +65,46 @@ export function madridPublishInstant(dateStr: string, hour = 8): string {
   const offsetMin = offsetMinutesAt(guessUtc, TIME_ZONE);
   return new Date(guessUtc - offsetMin * 60000).toISOString();
 }
+
+/**
+ * The UTC instant (ISO string) for a Madrid wall-clock `YYYY-MM-DDTHH:mm`
+ * value — the shape a `<input type="datetime-local">` posts back as (it's
+ * timezone-naive; the browser has no idea it means Madrid time). Same
+ * round-trip technique as `madridPublishInstant`, generalized to arbitrary
+ * minutes instead of a fixed on-the-hour schedule.
+ *
+ * @example madridLocalToUtcIso("2026-08-10T08:00") → "2026-08-10T06:00:00.000Z" (CEST)
+ */
+export function madridLocalToUtcIso(localDateTime: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(localDateTime);
+  if (!match) {
+    throw new Error(`Fecha/hora no válida: "${localDateTime}".`);
+  }
+  const [, year, month, day, hour, minute] = match.map(Number);
+
+  const guessUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const offsetMin = offsetMinutesAt(guessUtc, TIME_ZONE);
+  return new Date(guessUtc - offsetMin * 60000).toISOString();
+}
+
+/**
+ * The reverse of `madridLocalToUtcIso`: a UTC ISO instant formatted as Madrid
+ * wall-clock `YYYY-MM-DDTHH:mm`, ready to drop straight into a
+ * `<input type="datetime-local">`'s `value`/`defaultValue`.
+ *
+ * @example utcIsoToMadridLocal("2026-08-10T06:00:00Z") → "2026-08-10T08:00" (CEST)
+ */
+export function utcIsoToMadridLocal(isoString: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(isoString));
+
+  const get = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}

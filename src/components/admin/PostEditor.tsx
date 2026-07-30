@@ -192,10 +192,12 @@ export default function PostEditor({
             id="published_at"
             name="published_at"
             type="datetime-local"
+            step={3600}
             defaultValue={post?.published_at ?? ""}
           />
           <p className="text-xs text-muted-foreground">
-            Futura = programado · vacío + publicado = ahora.
+            Futura = programado · vacío + publicado = ahora. Solo horas en punto: los minutos se
+            ignoran al guardar.
           </p>
         </div>
 
