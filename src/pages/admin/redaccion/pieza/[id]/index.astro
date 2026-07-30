@@ -1,0 +1,46 @@
+---
+/**
+ * Redacción — the brief of a piece that already exists.
+ *
+ * This is where "Volver atrás" from the first channel lands, and it has to arrive
+ * filled in: the brief is stored, so an empty form would be losing on screen what
+ * the database is holding — and, worse, saving from there without the piece would
+ * insert a SECOND piece about the same thing. Both were real bugs (2026-07-27).
+ *
+ * **It is the piece's root and not `/pieza/<id>/enfoque`** on purpose: that path
+ * would sit in the same slot as `[canal]`, and a channel named `enfoque` would be
+ * shadowed by it. Static segments beat dynamic ones until the day they quietly do
+ * not.
+ *
+ * A piece id that does not exist is a 404 rather than an empty form, because an
+ * empty form here looks exactly like a piece whose text was lost.
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import DefineAngleStep from "@/components/admin/editorial/DefineAngleStep.tsx";
+import { parseChannels } from "@/lib/editorial-channels";
+
+const { id } = Astro.params;
+const supabase = Astro.locals.supabase;
+
+const { data: piece } = supabase
+  ? await supabase.from("editorial_pieces").select("*").eq("id", id!).maybeSingle()
+  : { data: null };
+
+if (!piece) return Astro.redirect("/admin/redaccion");
+---
+
+<AdminShell
+  title="Enfoque · Admin"
+  pageTitle="Definir el enfoque"
+  pageDescription="Cambia lo que quieras del enfoque. El texto que ya has escrito se queda como está."
+>
+  <DefineAngleStep
+    client:load
+    idea={null}
+    pieceId={piece.id}
+    briefTitle={piece.brief_title}
+    briefAngle={piece.brief_angle}
+    briefLinks={piece.reference_urls}
+    briefChannels={parseChannels(piece.channels.join(","))}
+  />
+</AdminShell>

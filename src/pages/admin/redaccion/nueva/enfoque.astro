@@ -1,0 +1,43 @@
+---
+import DefineAngleStep from "@/components/admin/editorial/DefineAngleStep.tsx";
+/**
+ * Redacción — step ② for a piece that does NOT exist yet.
+ *
+ * Two entry routes:
+ *   - `?idea=<id>` → arrived from a picked curator proposal (route A)
+ *   - no params    → Fer's own topic, starting from scratch (route B)
+ *
+ * The brief of a piece that **does** exist is a different page — the piece's own
+ * root, `/admin/redaccion/pieza/[id]` — because that one is a resource and this
+ * one is not anything yet. Splitting them keeps each loader honest: this one
+ * reads an idea, that one reads a row, and neither has to ask which case it is in.
+ *
+ * Real data since phase 5 (2026-07-28). Note the idea is read by id with no
+ * status filter: `pick-idea.ts` already marked it `picked` before navigating
+ * here, so a status check would just fail to find the very row that sent us.
+ *
+ * The step indicator is rendered inside the island here (unlike step ①), because
+ * choosing a second channel adds a fourth step to it live.
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import { mapCandidateRow } from "@/lib/editorial-ideas";
+
+const ideaId = Astro.url.searchParams.get("idea");
+
+const supabase = Astro.locals.supabase;
+const { data: ideaRow } =
+  ideaId && supabase
+    ? await supabase.from("editorial_candidates").select("*").eq("id", ideaId).maybeSingle()
+    : { data: null };
+const idea = ideaRow ? mapCandidateRow(ideaRow) : undefined;
+---
+
+<AdminShell
+  title="Enfoque · Admin"
+  pageTitle="Definir el enfoque"
+  pageDescription={idea
+    ? "Ajusta qué quieres contar y dónde se publica antes de generar el texto."
+    : "Cuenta de qué quieres escribir y dónde se publica."}
+>
+  <DefineAngleStep client:load idea={idea ?? null} />
+</AdminShell>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, FilePenLine, Newspaper, LogOut, Plus } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -10,28 +10,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { buttonVariants } from "@/components/ui/button";
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  ready: boolean;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", href: "/admin", icon: LayoutDashboard, ready: true },
-  {
-    title: "Artículos propios",
-    href: "/admin/posts",
-    icon: FilePenLine,
-    ready: true,
-  },
-  { title: "Noticias", href: "/admin/noticias", icon: Newspaper, ready: true },
-];
+import { isChildActive, isParentActive, NAV_ITEMS } from "@/lib/admin-nav";
 
 interface Props {
   userEmail: string;
@@ -42,7 +28,19 @@ interface Props {
   pageDescription?: string;
   /** Optional primary action rendered on the right of the top bar. */
   actionLabel?: string;
+  /** For pure navigation: renders the action as a link. */
   actionHref?: string;
+  /**
+   * For a client-side action (open a drawer/modal) instead of navigation:
+   * renders the action as a button that dispatches `window` `CustomEvent`s
+   * under this name. Needed because this header is its own hydrated island
+   * (`AdminShell.astro` mounts it with `client:load`, separately from
+   * whatever the page slots in below) — it cannot hold or call into a
+   * different island's React state directly, so a `CustomEvent` is the
+   * bridge. The content island listens with `window.addEventListener`.
+   * Mutually exclusive with `actionHref`; pass exactly one.
+   */
+  actionEventName?: string;
   /** Initial sidebar open state (read server-side from the sidebar_state
    * cookie) so the collapsed state survives View Transition re-hydration. */
   defaultOpen?: boolean;
@@ -62,6 +60,7 @@ export default function AdminSidebarLayout({
   pageDescription,
   actionLabel,
   actionHref,
+  actionEventName,
   defaultOpen = true,
   children,
 }: Props) {
@@ -79,10 +78,7 @@ export default function AdminSidebarLayout({
             <SidebarGroupContent>
               <SidebarMenu className="gap-2">
                 {NAV_ITEMS.map((item) => {
-                  const active =
-                    item.href === "/admin"
-                      ? activePath === "/admin"
-                      : activePath.startsWith(item.href);
+                  const active = isParentActive(activePath, item.href);
                   return (
                     <SidebarMenuItem key={item.href}>
                       {item.ready ? (
@@ -108,6 +104,37 @@ export default function AdminSidebarLayout({
                           <item.icon />
                           <span>{item.title}</span>
                         </SidebarMenuButton>
+                      )}
+
+                      {/* Children only while their section is where you are: a
+                          permanently unfolded sub-tree turns a five-item sidebar
+                          into an eight-item one for no gain. They collapse with
+                          the sidebar too — `SidebarMenuSub` hides itself in icon
+                          mode, so there is nothing to handle here. */}
+                      {item.children && active && (
+                        <SidebarMenuSub>
+                          {item.children.map((child) => (
+                            <SidebarMenuSubItem key={child.href}>
+                              {child.ready ? (
+                                <SidebarMenuSubButton
+                                  render={<a href={child.href} />}
+                                  isActive={isChildActive(activePath, child)}
+                                >
+                                  <span>{child.title}</span>
+                                </SidebarMenuSubButton>
+                              ) : (
+                                <SidebarMenuSubButton
+                                  render={<span />}
+                                  aria-disabled
+                                  title={`${child.title} · próximamente`}
+                                  className="cursor-not-allowed opacity-60"
+                                >
+                                  <span>{child.title}</span>
+                                </SidebarMenuSubButton>
+                              )}
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
                       )}
                     </SidebarMenuItem>
                   );
@@ -152,6 +179,16 @@ export default function AdminSidebarLayout({
                 <Plus />
                 {actionLabel}
               </a>
+            )}
+            {actionLabel && actionEventName && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent(actionEventName))}
+                className={buttonVariants({ size: "lg", className: "shrink-0" })}
+              >
+                <Plus />
+                {actionLabel}
+              </button>
             )}
           </div>
         </header>

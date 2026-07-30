@@ -1,0 +1,52 @@
+Continuamos con la task A3 (agente editorial) de evminds, fase 3 (el redactor), ya con el
+redactor real desplegado y funcionando.
+
+## Lee esto primero
+
+`.claude/plans/plan-ai-editorial-agent-mvp.md` — el banner superior y la sección "Redactor Edge
+Function — technical contract" (2026-07-27) tienen el resumen completo de esta sesión: el
+redactor quedó construido, desplegado y enganchado a la UI en los dos canales, con
+`DraftGeneratingLoader` (el robot) para la espera y un botón "Volver a generar" en el cuerpo de
+Motor.es.
+
+## Lección importante, no la repitas
+
+Tres rondas de alucinaciones reales, cazadas por Fer a mano en el navegador, antes de que el
+redactor quedara limpio: fuentes/URLs inventadas, enlaces de cita inventados en el cuerpo, y
+bloques enteros de "Fuentes consultadas"/"Noticias relacionadas" fabricados (porque
+`motor-es-style-guide.md` documenta esa práctica como algo que hace Fer a mano, y el prompt se
+la copiaba tal cual). **La regla que queda de esto: para cualquier "nunca inventes X" en el
+prompt del redactor, no te fíes solo del texto del prompt — refuérzalo también en código**
+(`stripUnverifiedLinks`, `stripFabricatedClosingSections` en `redactor.ts`). Si tocas ese
+fichero, lee el bloque de la sección de arriba antes de nada.
+
+## Estado real
+
+- Redactor Edge Function: hecho y desplegado (`supabase/functions/editorial-redactor/`).
+- Proxy admin: hecho (`src/pages/admin/redaccion/generate-draft.ts`).
+- UI enganchada en los dos canales, con loader y regenerar-cuerpo: hecho
+  (`PublishChannelStep.tsx`, `DraftBodyField.tsx`, `DraftGeneratingLoader.tsx`).
+- `editorial-mocks.ts`: `mockGenerateDraft` y sus ayudantes de Motor.es, borrados.
+
+## Lo que falta de la fase 3 (todos siguen siendo mock)
+
+`mockImproveSeoTitle`, `mockPostRecord`, `mockDescribeImage`, `mockExpandAngle` /
+`mockExpandIdea`, `mockReadReferenceLink`, `mockWriteMetaDescription`, `mockShortenTitleForSearch`.
+
+## O, alternativamente, la fase 4
+
+"Programar la publicación" en EVminds todavía no crea la fila real en `posts` — sigue siendo
+un cambio de estado simulado. No se ha tocado esta sesión.
+
+## Cómo empezar
+
+Ninguna de las dos rutas de arriba está decidida. Antes de escribir nada, pregunta a Fer cuál
+de las dos quiere abordar ahora (el resto de mocks de fase 3, o la fase 4), en vez de asumir
+el orden del plan.
+
+## Cómo trabajamos (AGENTS.md del repo)
+
+Diálogo antes que código para cualquier decisión de diseño nueva. Pausa después de cada cambio
+atómico, gate completo (`check`+`lint`+`format:check`+`test`) antes de cada pausa, con el texto
+de commit en Conventional Commits — Fer hace los commits, nunca los hagas tú. `.claude/` está
+gitignored: no lo trates como algo a commitear. El servidor de dev es de Fer.

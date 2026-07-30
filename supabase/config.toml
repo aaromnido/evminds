@@ -6,3 +6,30 @@ verify_jwt = false
 
 [functions.regenerate-ai]
 verify_jwt = false
+
+[functions.editorial-redactor]
+verify_jwt = false
+
+[functions.editorial-expand-idea]
+verify_jwt = false
+
+[functions.editorial-expand-angle]
+verify_jwt = false
+
+[functions.editorial-improve-seo-title]
+verify_jwt = false
+
+[functions.editorial-write-meta-description]
+verify_jwt = false
+
+[functions.editorial-shorten-title]
+verify_jwt = false
+
+[functions.editorial-describe-image]
+verify_jwt = false
+
+[functions.editorial-post-record]
+verify_jwt = false
+
+[functions.editorial-curator]
+verify_jwt = false

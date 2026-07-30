@@ -173,14 +173,14 @@ export default function DashboardHome({
             {postsDrafts} {postsDrafts === 1 ? "borrador" : "borradores"}
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button className="w-full sm:w-auto" render={<a href="/admin/posts" />}>
+            <Button className="w-full sm:w-auto" render={<a href="/admin/articulos" />}>
               Gestionar artículos
               <ArrowRight />
             </Button>
             <Button
               variant="outline"
               className="w-full sm:w-auto"
-              render={<a href="/admin/posts/new" />}
+              render={<a href="/admin/articulos/new" />}
             >
               <Plus />
               Nuevo artículo
@@ -235,7 +235,7 @@ export default function DashboardHome({
                 return (
                   <a
                     key={p.id}
-                    href={`/admin/posts/${p.id}/edit`}
+                    href={`/admin/articulos/${p.id}/edit`}
                     className="flex items-center gap-3 rounded-lg px-2 py-2 -mx-2 transition-colors hover:bg-muted"
                   >
                     <span className="line-clamp-1 flex-1 text-sm">{p.title}</span>

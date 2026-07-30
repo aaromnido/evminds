@@ -32,22 +32,50 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 function AlertDialogContent({
   className,
   size = "default",
+  children,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm";
 }) {
+  /**
+   * Base UI deliberately refuses to close an AlertDialog on backdrop click or
+   * Escape (that is what separates it from a plain Dialog), and it doesn't even
+   * expose `disablePointerDismissal` here. Both gestures are expected behaviour
+   * in this admin, so we wire them by clicking a hidden Close part: that goes
+   * through the primitive's own close path, so it works for controlled and
+   * uncontrolled dialogs alike, and a consumer that blocks closing via
+   * `onOpenChange` (e.g. while a job runs) still wins.
+   */
+  const dismissRef = React.useRef<HTMLButtonElement>(null);
+  const dismiss = React.useCallback(() => dismissRef.current?.click(), []);
+
+  React.useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") dismiss();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [dismiss]);
+
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay onClick={dismiss} />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // NOTE: `p-8` here is coupled to AlertDialogFooter's `-mx-8 -mb-8`, which
+          // bleeds the footer band to the dialog edges. Change one and you must
+          // change the other, or the band ends up inset.
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-7 rounded-xl bg-popover p-8 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className,
         )}
         {...props}
-      />
+      >
+        {/* Target of the Escape / backdrop-click handlers above. */}
+        <AlertDialogPrimitive.Close ref={dismissRef} className="hidden" tabIndex={-1} />
+        {children}
+      </AlertDialogPrimitive.Popup>
     </AlertDialogPortal>
   );
 }
@@ -70,7 +98,8 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        // The negative margins must match AlertDialogContent's padding exactly.
+        "-mx-8 -mb-8 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-8 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}

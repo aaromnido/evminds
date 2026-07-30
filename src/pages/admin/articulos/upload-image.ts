@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { uploadImage } from "@/lib/cloudinary";
 
 /**
- * POST /admin/posts/upload-image
+ * POST /admin/articulos/upload-image
  *
  * Admin-only image upload for the post editor. Lives under /admin so the
  * middleware gate (admin role + verified JWT) protects it; the editor island

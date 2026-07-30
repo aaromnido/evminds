@@ -1,0 +1,33 @@
+---
+/**
+ * Redacción — the section's landing: every piece, open and finished.
+ *
+ * **This is the landing, not step ①** (phase 2b, 2026-07-27). It used to be the
+ * wizard's first step, which made a linear flow pretend to be a section: a
+ * section shows you what is in it, it does not drop you into a process. Starting
+ * one is an action, and it lives at `/nueva`.
+ *
+ * It is the other half of "Guardar borrador" — a piece that saves and cannot be
+ * found again is not saved in any way that matters — the only place a piece can
+ * be deleted, and how a finished piece is reopened to move its date when Motor.es
+ * moves theirs.
+ */
+import AdminShell from "@/layouts/AdminShell.astro";
+import PiecesList from "@/components/admin/editorial/PiecesList.tsx";
+import { fetchPieceSummaries } from "@/lib/editorial-pieces";
+import { newPieceUrl } from "@/lib/editorial-routes";
+
+const supabase = Astro.locals.supabase;
+const nowIso = new Date().toISOString();
+const { pieces } = supabase ? await fetchPieceSummaries(supabase) : { pieces: [] };
+---
+
+<AdminShell
+  title="Redacción · Admin"
+  pageTitle="Tus piezas"
+  pageDescription="Todo lo que has empezado a escribir, terminado o no."
+  actionLabel="Escribir algo nuevo"
+  actionHref={newPieceUrl()}
+>
+  <PiecesList client:load pieces={pieces} nowIso={nowIso} />
+</AdminShell>

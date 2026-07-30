@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
-import { ImagePlus, UploadCloud, X } from "lucide-react";
+import { Download, ImagePlus, UploadCloud, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { downloadableImageUrl } from "@/lib/image-utils";
+import BrandPressPicker from "./BrandPressPicker";
+import ImageFilterStrip from "./ImageFilterStrip";
+import { supportsImageFilters } from "@/lib/image-filters";
 
 interface Props {
   value: string;
@@ -9,14 +13,21 @@ interface Props {
   name?: string;
   uploadEndpoint?: string;
   folder?: string;
+  /**
+   * CSS `filter` applied to the preview only. Used by the editorial wizard to
+   * show the AI variation you picked on the big image, without touching the
+   * stored URL. Left unset everywhere else.
+   */
+  previewFilter?: string;
 }
 
 export default function ImageDropZone({
   value,
   onChange,
   name = "image_url",
-  uploadEndpoint = "/admin/posts/upload-image",
+  uploadEndpoint = "/admin/articulos/upload-image",
   folder = "news",
+  previewFilter,
 }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,8 +82,26 @@ export default function ImageDropZone({
 
       {value ? (
         <div className="relative overflow-hidden rounded-md border border-input">
-          <img src={value} alt="Vista previa" className="aspect-video w-full object-cover" />
+          <img
+            src={value}
+            alt="Vista previa"
+            className="aspect-video w-full object-cover transition-[filter] duration-200"
+            style={previewFilter ? { filter: previewFilter } : undefined}
+          />
           <div className="absolute right-2 top-2 flex gap-1">
+            {/* Cloudinary has to be told to send the file as an attachment;
+                a bare `download` attribute is ignored cross-origin. */}
+            <a
+              href={downloadableImageUrl(value)}
+              download
+              target="_blank"
+              rel="noreferrer noopener"
+              title="Descargar la imagen"
+              className="flex items-center justify-center rounded-md bg-background/90 p-1.5 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="sr-only">Descargar la imagen</span>
+            </a>
             <button
               type="button"
               disabled={uploading}
@@ -123,6 +152,22 @@ export default function ImageDropZone({
             )}
           </div>
         </div>
+      )}
+
+      {/* Third way of getting a photo, and only while there is none: the brand's
+          official press room (Phase 6A.1). It sits between "drag one in" and
+          "paste a URL" because that is the order of the three answers to the same
+          question. Once there IS an image the drop zone turns into preview mode
+          and this goes away — replacing a photo means removing it first. */}
+      {!value && <BrandPressPicker className="pt-0.5" />}
+
+      {/* The mirror image of the picker above: the house grades, and only once
+          there IS an image (Phase 6A.2). Guarded on the URL because the wizard
+          still hands out a same-origin `MOCK_HERO_IMAGE` that Cloudinary can do
+          nothing with — a strip of eight identical thumbnails would be worse
+          than no strip at all. */}
+      {value && supportsImageFilters(value) && (
+        <ImageFilterStrip value={value} onChange={onChange} className="pt-0.5" />
       )}
 
       <Input

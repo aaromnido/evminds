@@ -92,6 +92,21 @@ export default defineConfig({
   output: "server",
   adapter: netlify(),
 
+  // `/admin/posts` became `/admin/articulos` (phase 2b, 2026-07-27), so the panel
+  // speaks Spanish throughout. Kept as redirects rather than a clean break
+  // because Fer's bookmarks point at the old paths, and an admin URL that 404s
+  // reads as "the section is gone", not as "it moved".
+  //
+  // Only the two static paths live here. The dynamic one is in `netlify.toml`:
+  // Astro emits a redirect target of `/admin/articulos/:id/edit/index.html`,
+  // which assumes a prerendered page — and these are SSR, so that URL would 404.
+  // Verified by reading the built `dist/_redirects`, which is the only place that
+  // mistake is visible.
+  redirects: {
+    "/admin/posts": "/admin/articulos",
+    "/admin/posts/new": "/admin/articulos/new",
+  },
+
   vite: {
     plugins: [...tailwindcss()],
     resolve: {

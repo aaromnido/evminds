@@ -27,7 +27,7 @@ if (!supabase || !id) {
     if (!error) {
       const tags = current?.slug ? [`articulo-${current.slug}`, "listings"] : ["listings"];
       await purgeTags(tags);
-      return Astro.redirect("/admin/posts");
+      return Astro.redirect("/admin/articulos");
     }
     errorMsg = `No se pudo eliminar: ${error.message}`;
   } else {
@@ -54,7 +54,7 @@ if (!supabase || !id) {
           tags.add(`articulo-${parsed.payload.slug}`);
         }
         await purgeTags([...tags]);
-        return Astro.redirect("/admin/posts");
+        return Astro.redirect("/admin/articulos");
       }
     }
   }
@@ -94,7 +94,7 @@ if (!formValues && !notFound && supabase && id) {
   }
 }
 
-if (notFound) return Astro.redirect("/admin/posts");
+if (notFound) return Astro.redirect("/admin/articulos");
 ---
 
 <AdminShell
