@@ -4,13 +4,13 @@
  * **Why a round trip is safe here, when it usually isn't.** Converting between
  * two formats normally loses whatever one of them cannot express. What makes it
  * lossless in this screen is that the set of elements is small and *closed*:
- * paragraphs, H2/H3, bold, italic, inline code, links, lists and blockquotes.
- * That is exactly what `markdownToHtml` produces, exactly what TipTap's
- * StarterKit produces, and exactly what this reads back. Nothing outside the set
- * can appear, so nothing outside the set can be lost.
+ * paragraphs, H2/H3, bold, italic, inline code, links, lists, blockquotes and
+ * images. That is exactly what `markdownToHtml` produces, exactly what TipTap's
+ * StarterKit + Image extension produce, and exactly what this reads back.
+ * Nothing outside the set can appear, so nothing outside the set can be lost.
  *
  * If the visual editor ever grows a feature this does not know about (tables,
- * images, footnotes), it has to be added here **in the same commit** or it will
+ * footnotes), it has to be added here **in the same commit** or it will
  * silently vanish the next time the text is edited.
  *
  * Browser only: it parses with `DOMParser`, which is how it stays a reader of
@@ -56,6 +56,12 @@ function listBlock(el: Element, ordered: boolean): string {
 }
 
 function block(el: Element): string {
+  if (el.tagName === "IMG") {
+    const src = el.getAttribute("src")?.trim();
+    if (!src) return "";
+    return `![${el.getAttribute("alt")?.trim() ?? ""}](${src})`;
+  }
+
   const heading = HEADING.exec(el.tagName);
   if (heading) return `${"#".repeat(Number(heading[1]))} ${inline(el).trim()}`;
 

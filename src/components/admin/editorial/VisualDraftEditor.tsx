@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import {
   Bold,
   Heading2,
   Heading3,
+  ImagePlus,
   Italic,
   Link2,
   List,
@@ -17,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { markdownToHtml } from "@/lib/markdown";
 import { htmlToMarkdown } from "@/lib/html-to-markdown";
+import ImageUploadDialog from "../ImageUploadDialog";
 
 /**
  * Which formatting is on offer.
@@ -59,9 +62,13 @@ interface Props {
  * `html-to-markdown.ts` about it in the same commit, or it disappears silently
  * on the next edit.
  *
- * Images are deliberately NOT enabled, unlike `RichTextEditor` for `posts`: the
- * hero image is its own block with its own rules, and inline images have nowhere
- * to go in a Markdown hand-off.
+ * Images (2026-07-30, `tools: "full"` only, same gate as headings): Fer wants
+ * them inline in the body, same as his own Motor.es pieces. Reuses the same
+ * `ImageUploadDialog` (Cloudinary) `RichTextEditor` already uses for `posts` —
+ * no separate upload path. Never on `lead`: the entradilla is a single CMS
+ * paragraph field with nowhere to put a block image. `markdown.ts` and
+ * `html-to-markdown.ts` were taught the `![alt](src)` ↔ `<img>` round trip in
+ * the same commit, so this stays exactly as lossless as everything else here.
  *
  * `immediatelyRender: false` is required inside a hydrated Astro island, same as
  * in `RichTextEditor`.
@@ -80,6 +87,7 @@ export default function VisualDraftEditor({
    * every keystroke is what makes the caret jump to the start.
    */
   const lastEmitted = useRef<string | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const editor = useEditor(
     {
@@ -95,6 +103,10 @@ export default function VisualDraftEditor({
             HTMLAttributes: { target: "_blank", rel: "noreferrer noopener" },
           },
         }),
+        // Only the article body gets images, never the entradilla (see the
+        // doc comment above). `tools` is fixed for this instance's lifetime,
+        // same assumption the "full"-only heading buttons already rely on.
+        ...(tools === "full" ? [Image.configure({ HTMLAttributes: { loading: "lazy" } })] : []),
       ],
       content: markdownToHtml(value),
       immediatelyRender: false,
@@ -129,6 +141,10 @@ export default function VisualDraftEditor({
   }, [editor, disabled]);
 
   if (!editor) return null;
+
+  const insertImage = (src: string, alt: string) => {
+    editor.chain().focus().setImage({ src, alt }).run();
+  };
 
   const headingButtons = [
     {
@@ -192,6 +208,16 @@ export default function VisualDraftEditor({
       },
       active: editor.isActive("link"),
     },
+    ...(tools === "full"
+      ? [
+          {
+            label: "Imagen",
+            icon: <ImagePlus />,
+            run: () => setImageDialogOpen(true),
+            active: false,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -255,9 +281,17 @@ export default function VisualDraftEditor({
       >
         <EditorContent
           editor={editor}
-          className="[&_.tiptap]:grid [&_.tiptap]:gap-4 [&_.tiptap]:text-base [&_.tiptap]:leading-relaxed [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-sm [&_h2]:mt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h3]:mt-3 [&_h3]:text-xl [&_h3]:font-semibold [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
+          className="[&_.tiptap]:grid [&_.tiptap]:gap-4 [&_.tiptap]:text-base [&_.tiptap]:leading-relaxed [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-sm [&_h2]:mt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h3]:mt-3 [&_h3]:text-xl [&_h3]:font-semibold [&_img]:rounded-lg [&_img]:max-w-full [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
         />
       </div>
+
+      {tools === "full" && (
+        <ImageUploadDialog
+          open={imageDialogOpen}
+          onOpenChange={setImageDialogOpen}
+          onInsert={insertImage}
+        />
+      )}
     </div>
   );
 }
