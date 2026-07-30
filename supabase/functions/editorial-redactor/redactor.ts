@@ -156,6 +156,28 @@ function stripFabricatedClosingSections(markdown: string): string {
   return match ? markdown.slice(0, match.index).trimEnd() : markdown;
 }
 
+/**
+ * Appends a one-line mention of the piece's known original source, when
+ * there is one — never asks Gemini to write this itself. `sourceName`/
+ * `sourceUrl` are the same already-known, already-trusted values that fill
+ * Motor.es' `Fuente`/`Url fuente` CMS fields (never the model's own guess,
+ * see `parseMotor` below), so appending them here in code carries none of
+ * the fabricated-link risk `stripUnverifiedLinks` and
+ * `stripFabricatedClosingSections` exist to guard against (Fer, 2026-07-27).
+ * Runs last, after every other body transform, so nothing upstream can
+ * touch or truncate it.
+ */
+function appendSourceMention(
+  body: string,
+  sourceName: string | null,
+  sourceUrl: string | null,
+): string {
+  const url = sourceUrl?.trim();
+  if (!url) return body;
+  const label = sourceName?.trim() || url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+  return `${body}\n\n*Fuente original: [${label}](${url}).*`;
+}
+
 function buildBriefBlock(input: RedactorInput): string {
   const lines = [`Titular de partida: ${input.briefTitle}`, `Ángulo: ${input.briefAngle}`];
   if (input.referenceContent.trim()) {
@@ -217,6 +239,8 @@ ${input.motorDraft.body}\n`
   return `Eres el redactor editorial de EVminds, escribiendo bajo la guía de estilo y la línea editorial de Fernando Val que siguen a continuación. Sigue TODAS sus reglas.
 
 REGLA INQUEBRANTABLE sobre fuentes y enlaces: NUNCA inventes un medio, una cita, un enlace ni una URL que no te haya sido dada explícitamente en el contenido de referencia o en el texto de Motor.es de más abajo (si los hay). Si no tienes una fuente real y verificable que citar, no cites ninguna: mejor un texto sin cita que una cita o un enlace inventados. Y PROHIBIDO SIN EXCEPCIÓN, tengas fuentes o no: un bloque "Fuentes consultadas" o una sección de "Noticias relacionadas" al final. Fer los añade él mismo, a mano, si quiere tenerlos.
+
+REGLA sobre la flota de casa (e-Niro, Leaf, sapito): NO la menciones en cada pieza. Solo cuando de verdad ayuda a calibrar un dato concreto de este artículo. Si el artículo no tiene ese momento, no fuerces la comparación solo por costumbre.
 
 ${STYLE_GUIDE}
 
@@ -290,8 +314,12 @@ function parseMotor(raw: unknown, input: RedactorInput): MotorDraftResult | null
     metaTitle: str(obj, 'meta_titulo'),
     metaDescription: str(obj, 'meta_descripcion'),
     lead: stripUnverifiedLinks(lead, input.referenceContent),
-    body: stripFabricatedClosingSections(
-      demoteH1(stripUnverifiedLinks(body, input.referenceContent)),
+    body: appendSourceMention(
+      stripFabricatedClosingSections(
+        demoteH1(stripUnverifiedLinks(body, input.referenceContent)),
+      ),
+      input.sourceName,
+      input.sourceUrl,
     ),
     brand: str(obj, 'marca'),
     model: str(obj, 'modelo'),

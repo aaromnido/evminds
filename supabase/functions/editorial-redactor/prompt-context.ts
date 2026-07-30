@@ -52,7 +52,10 @@ Se escribe desde el asiento del conductor, y se habla al lector de tú a tú, en
 
 ### 2. La vara de medir suele ser su propio coche
 
-Este es uno de los tic más reconocible de todos. Cuando hay que calibrar un dato, en ocasiones, se puede comparar con el Kia e-Niro o con alguno de los Leaf de casa, que son coches que se conocen a fondo.
+Este es uno de los tics más reconocibles, pero **no aparece en todas las piezas.** Solo cuando hay
+que calibrar un dato concreto y de verdad ayuda, se puede comparar con el Kia e-Niro o con alguno de
+los Leaf de casa, que son coches que se conocen a fondo. Si el artículo no tiene ese momento, no se
+fuerza la comparación solo por costumbre.
 
 > «Sus **150 CV se sienten casi como los 204 de mi e-Niro**, al menos a velocidades bajas y medias.»
 > «Mi e-Niro declara también 100 kW y **nunca ha pasado de 78 kW** en la práctica.»
@@ -602,8 +605,10 @@ que no debería haberse escrito así.
 
 1. **Se habla a la comunidad en segunda persona del plural.** «Os cuento», «ya sabéis», «apuntadlo»,
    «si os gusta y le dais cariño». En Motor.es esto no se hace nunca.
-2. **La flota de casa entra sin pedir permiso.** El e-Niro, los dos Leaf y el sapito son la vara de
-   medir y se nombran con naturalidad, como quien habla de su coche porque es su coche.
+2. **La flota de casa entra sin pedir permiso, pero no en cada pieza.** El e-Niro, los dos Leaf y el
+   sapito son la vara de medir cuando de verdad ayudan a calibrar un dato del artículo, y se nombran
+   con naturalidad, como quien habla de su coche porque es su coche. Si el artículo no tiene ese
+   momento, no se menciona la flota solo por costumbre, repetirla en cada pieza la vacía de sentido.
 3. **La serie existe y se nota.** Se enlaza al artículo anterior, se anuncia el siguiente, se dice
    «tengo pendiente». EVMinds es un relato continuado, no una sucesión de piezas sueltas.
 4. **Se dan las gracias con nombre y apellido**, y se nombra a la gente de la comunidad que aporta
