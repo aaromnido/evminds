@@ -184,18 +184,40 @@ const relatedArticles = ownArticles
     <article class="article-detail__content">
       <!-- Meta + Badges -->
       <div class="article-detail__header">
-        <div class="article-detail__meta">
-          <time datetime={v.date.toISOString()}>{formattedDate}</time>
-          <span class="article-detail__meta-separator">·</span>
-          <span>{v.author}</span>
-          <span class="article-detail__meta-separator">·</span>
-          <span>{readingTime} min de lectura</span>
-        </div>
-
         <div class="article-detail__badges">
           <Badge label="EVMinds" variant="filled" />
           <Badge label={v.category} variant="outlined" />
           {v.tags.map((tag) => <Badge label={tag} variant="outlined" />)}
+        </div>
+
+        <!-- Author signature: only Fer writes for EVMinds today, so this is hardcoded. -->
+        <div class="article-detail__byline">
+          <div class="article-detail__author">
+            <img
+              src="/images/avatar-fer.png"
+              alt="Fernando Val"
+              class="article-detail__author-avatar"
+              width="48"
+              height="48"
+              loading="lazy"
+            />
+            <div class="article-detail__author-info">
+              <span class="article-detail__author-name">Fernando Val</span>
+              <a
+                href={`mailto:fer@evminds.es?subject=${encodeURIComponent(`Consulta: ${v.title}`)}`}
+                class="article-detail__author-email"
+              >
+                fer@evminds.es
+              </a>
+            </div>
+          </div>
+
+          <div class="article-detail__meta">
+            <time datetime={v.date.toISOString()} class="article-detail__meta-date"
+              >{formattedDate}</time
+            >
+            <span class="article-detail__meta-reading">{readingTime} min de lectura</span>
+          </div>
         </div>
       </div>
 
@@ -337,15 +359,75 @@ const relatedArticles = ownArticles
 
   .article-detail__meta {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+  }
+
+  .article-detail__meta-date {
     font-family: var(--font-body);
     font-size: 15px;
+    font-weight: 700;
     color: var(--navy-2);
   }
 
-  .article-detail__meta-separator {
+  .article-detail__meta-reading {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--navy-2);
+    opacity: 0.75;
+  }
+
+  /* Byline row: author signature + date/reading time, boxed with corporate-navy rules */
+  .article-detail__byline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: -12px;
+    padding: 12px 0;
+    border-top: 2px solid var(--navy-2);
+    border-bottom: 2px solid var(--navy-2);
+  }
+
+  .article-detail__author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .article-detail__author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .article-detail__author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .article-detail__author-name {
+    font-family: var(--font-body);
+    font-size: 15px;
     font-weight: 700;
+    color: var(--navy-2);
+  }
+
+  .article-detail__author-email {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ev-primary-blue);
+    text-decoration: none;
+  }
+
+  .article-detail__author-email:hover {
+    text-decoration: underline;
   }
 
   /* Prose styles for rendered Markdown */
