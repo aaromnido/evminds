@@ -59,19 +59,19 @@ const previousChannel = channels[channels.indexOf(channel) - 1];
 const previousChannelDate =
   draftRows?.find((row) => row.channel === previousChannel)?.publish_date ?? null;
 
-// "Now", in Madrid, as two plain wall-clock strings. Computed here and not in the
+// "Now", locally, as two plain wall-clock strings. Computed here and not in the
 // island for the reason the whole section follows: `Date` inside a hydrated
 // component gives a different answer on the server than on the client. As strings
 // they can be compared against what the native date input returns without parsing
 // anything (see `isPublishDatePast`).
 const now = new Date();
-const madrid = { timeZone: "Europe/Madrid" } as const;
-const todayInMadrid = new Intl.DateTimeFormat("en-CA", {
-  ...madrid,
+const localZone = { timeZone: "Europe/Madrid" } as const;
+const todayLocal = new Intl.DateTimeFormat("en-CA", {
+  ...localZone,
   dateStyle: "short",
 }).format(now);
-const nowHourInMadrid = new Intl.DateTimeFormat("en-GB", {
-  ...madrid,
+const nowHourLocal = new Intl.DateTimeFormat("en-GB", {
+  ...localZone,
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
@@ -96,8 +96,8 @@ const nowHourInMadrid = new Intl.DateTimeFormat("en-GB", {
     briefAngle={piece.brief_angle}
     briefSourceName={piece.source_name}
     briefSourceUrl={piece.source_url}
-    todayInMadrid={todayInMadrid}
-    nowHourInMadrid={nowHourInMadrid}
+    todayLocal={todayLocal}
+    nowHourLocal={nowHourLocal}
     previousChannelDate={previousChannelDate}
   />
 </AdminShell>

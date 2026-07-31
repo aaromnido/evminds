@@ -64,7 +64,7 @@ describe("parsePostForm", () => {
   });
 
   // Scheduling is always on the hour, same rule as the redacción wizard's
-  // madridPublishInstant — whatever minute the picker sends is discarded
+  // localPublishInstant — whatever minute the picker sends is discarded
   // before it ever reaches the DB, regardless of the real time of saving.
   it("floors published_at to hh:00, discarding whatever minute was submitted", () => {
     const parsed = parsePostForm(fd({ ...validFields, published_at: "2026-01-20T10:37" }));

@@ -178,12 +178,12 @@ export function validateChannelDraft(input: ChannelDraftInput): ChannelDraftErro
 export function isPublishDatePast(
   publishDate: string,
   publishHour: string | undefined,
-  todayInMadrid: string,
-  nowHourInMadrid: string,
+  todayLocal: string,
+  nowHourLocal: string,
 ): boolean {
   if (!publishDate || !publishHour) return false;
-  if (publishDate < todayInMadrid) return true;
-  return publishDate === todayInMadrid && nowHourInMadrid >= publishHour;
+  if (publishDate < todayLocal) return true;
+  return publishDate === todayLocal && nowHourLocal >= publishHour;
 }
 
 export function isChannelDraftValid(errors: ChannelDraftErrors): boolean {

@@ -102,12 +102,12 @@ interface Props {
   briefSourceName?: string | null;
   briefSourceUrl?: string | null;
   /**
-   * "Now" in Madrid, as wall-clock strings (`YYYY-MM-DD` and `HH:MM`), computed
+   * "Now" locally, as wall-clock strings (`YYYY-MM-DD` and `HH:MM`), computed
    * by the page. Never derive them here: `Date` inside a hydrated island answers
    * differently on the server than on the client.
    */
-  todayInMadrid: string;
-  nowHourInMadrid: string;
+  todayLocal: string;
+  nowHourLocal: string;
   /**
    * Publish date chosen on the previous channel's screen, `YYYY-MM-DD`.
    *
@@ -266,8 +266,8 @@ export default function PublishChannelStep({
   briefAngle,
   briefSourceName,
   briefSourceUrl,
-  todayInMadrid,
-  nowHourInMadrid,
+  todayLocal,
+  nowHourLocal,
   previousChannelDate,
 }: Props) {
   const spec: ChannelSpec = getChannel(channel);
@@ -459,12 +459,7 @@ export default function PublishChannelStep({
    * 8:00 has gone means publishing immediately, not scheduling. Warned about,
    * never blocked.
    */
-  const scheduleWarning = isPublishDatePast(
-    publishDate,
-    spec.publishHour,
-    todayInMadrid,
-    nowHourInMadrid,
-  )
+  const scheduleWarning = isPublishDatePast(publishDate, spec.publishHour, todayLocal, nowHourLocal)
     ? "Ese día ya ha pasado la hora de publicación, así que saldría en cuanto lo programes."
     : null;
 
@@ -1096,7 +1091,7 @@ export default function PublishChannelStep({
         quickPick={
           previousChannelDate ? undefined : (
             <QuickDatePicker
-              today={todayInMadrid}
+              today={todayLocal}
               value={publishDate}
               onPick={setPublishDate}
               disabled={busy}

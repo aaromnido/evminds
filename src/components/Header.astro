@@ -57,13 +57,13 @@ const navItems = [
         </a>
       ))
     }
-    <SearchButton showNew />
+    <SearchButton />
     <ThemeToggle />
   </nav>
 
   {/* Mobile actions: search + menu */}
   <div class="header__mobile-actions">
-    <SearchButton showNew />
+    <SearchButton />
     <MobileMenu navItems={navItems} client:idle />
   </div>
 </header>

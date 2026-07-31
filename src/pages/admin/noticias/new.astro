@@ -4,7 +4,7 @@ import NewsCreateForm, {
   type SourceOption,
   type NewsCreateValues,
 } from "@/components/admin/NewsCreateForm.tsx";
-import { madridLocalToUtcIso } from "@/lib/madrid-time";
+import { localToUtcIso } from "@/lib/local-time";
 
 const supabase = Astro.locals.supabase;
 
@@ -49,14 +49,14 @@ if (supabase && Astro.request.method === "POST") {
   if (!articleUrl) missing.push("URL");
   if (!publishedAtRaw) missing.push("fecha");
 
-  // The datetime-local input is timezone-naive Madrid wall-clock time, so it
-  // must go through madridLocalToUtcIso rather than a bare `new Date()` — the
+  // The datetime-local input is timezone-naive local wall-clock time, so it
+  // must go through localToUtcIso rather than a bare `new Date()` — the
   // latter parses it in the server process's own timezone (UTC on Netlify),
-  // silently shifting the published time by Madrid's offset (1-2h with DST).
+  // silently shifting the published time by the local offset (1-2h with DST).
   let publishedAt = "";
   if (publishedAtRaw) {
     try {
-      publishedAt = madridLocalToUtcIso(publishedAtRaw);
+      publishedAt = localToUtcIso(publishedAtRaw);
     } catch {
       missing.push("fecha (formato no válido)");
     }

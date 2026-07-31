@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { readPrefsFromCookie } from "@/lib/preferences";
 import { getOwnArticles } from "@/lib/own-articles";
 import { formatDate } from "@/lib/date-utils";
+import { isLocalToday } from "@/lib/local-time";
 import { getArticleUrl } from "@/lib/article-url";
 import {
   ARTICLE_SELECT,
@@ -111,6 +112,15 @@ const featuredSecondary2 = latestArticle
     }
   : mapArticleToProps(remaining[0]);
 
+// "New" badge only for content actually published today (local time) —
+// otherwise it goes stale the moment tomorrow's article takes this slot.
+const featuredSecondary2PublishedAt = latestArticle
+  ? latestArticle.date
+  : remaining[0]?.published_at;
+const featuredSecondary2IsNew = featuredSecondary2PublishedAt
+  ? isLocalToday(featuredSecondary2PublishedAt)
+  : false;
+
 // Grid: rest of news (skip first only if no own article took the featured slot)
 const gridArticles = latestArticle ? remaining : remaining.slice(1);
 
@@ -156,7 +166,12 @@ const hasActivePrefs = prefs.excludedSources.length > 0 || prefs.excludedCategor
               <FeaturedPrimary {...mapArticleToProps(featuredPrimary)} />
 
               <div class="featured__right">
-                {featuredSecondary2 && <FeaturedSecondary {...featuredSecondary2} badge="New" />}
+                {featuredSecondary2 && (
+                  <FeaturedSecondary
+                    {...featuredSecondary2}
+                    badge={featuredSecondary2IsNew ? "New" : undefined}
+                  />
+                )}
                 {featuredSecondary1 && (
                   <FeaturedSecondary
                     {...{ ...mapArticleToProps(featuredSecondary1), category: "Vídeo" }}

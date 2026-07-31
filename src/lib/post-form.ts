@@ -1,5 +1,5 @@
 import { isValidPostCategory } from "./post-categories";
-import { madridLocalToUtcIso } from "./madrid-time";
+import { localToUtcIso } from "./local-time";
 import type { PostFormValues } from "@/components/admin/PostEditor";
 
 /**
@@ -42,7 +42,7 @@ export function parsePostForm(form: FormData): ParsedPostForm {
   const imageAlt = get("image_alt");
   const status = get("status");
   // Scheduling is always on the hour (ADR-006 scheduling model matches the
-  // redacción wizard's madridPublishInstant, which never picks a minute
+  // redacción wizard's localPublishInstant, which never picks a minute
   // either) — whatever minute the user typed or the picker defaulted to is
   // discarded here, before it ever reaches the DB.
   const publishedAtRaw = get("published_at").replace(/^(\d{4}-\d{2}-\d{2}T\d{2}):\d{2}/, "$1:00");
@@ -56,18 +56,18 @@ export function parsePostForm(form: FormData): ParsedPostForm {
 
   // Scheduling model (ADR-006): published + future date = scheduled.
   // Published with no date = now. Draft keeps whatever date was given (or null).
-  // The datetime-local input is timezone-naive Madrid wall-clock time (that's
+  // The datetime-local input is timezone-naive local wall-clock time (that's
   // what the edit form shows and what the user picked), so it must go through
-  // madridLocalToUtcIso rather than a bare `new Date()` — the latter parses it
+  // localToUtcIso rather than a bare `new Date()` — the latter parses it
   // in the server process's own timezone (UTC on Netlify), silently shifting
-  // the published time by Madrid's offset (1-2h depending on DST).
+  // the published time by the local offset (1-2h depending on DST).
   // Guard the conversion: an invalid raw value (e.g. tampered input) would
   // throw — leave null so validatePostForm catches it with the friendly
   // "Fecha de publicación no válida." message instead of a 500.
   let publishedAt: string | null = null;
   if (publishedAtRaw) {
     try {
-      publishedAt = madridLocalToUtcIso(publishedAtRaw);
+      publishedAt = localToUtcIso(publishedAtRaw);
     } catch {
       publishedAt = null;
     }

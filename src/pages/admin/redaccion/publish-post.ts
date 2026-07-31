@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { parseEvmindsPayload } from "@/lib/editorial-drafts";
-import { madridPublishInstant } from "@/lib/madrid-time";
+import { localPublishInstant } from "@/lib/local-time";
 import { markdownToHtml } from "@/lib/markdown";
 import { purgeTags } from "@/lib/cache-purge";
 
@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   let publishedAt: string;
   try {
-    publishedAt = madridPublishInstant(publishDate);
+    publishedAt = localPublishInstant(publishDate);
   } catch {
     return json({ error: "La fecha de publicación no es válida." }, 400);
   }
