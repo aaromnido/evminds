@@ -203,11 +203,15 @@ const relatedArticles = ownArticles
             />
             <div class="article-detail__author-info">
               <span class="article-detail__author-name">Fernando Val</span>
+              <!-- Email rendered via JavaScript to prevent spam bots from scraping it -->
               <a
-                href={`mailto:fer@evminds.es?subject=${encodeURIComponent(`Consulta: ${v.title}`)}`}
+                href="#"
+                id="author-email-link"
                 class="article-detail__author-email"
+                data-user="fer"
+                data-domain="evminds.es"
+                data-subject={`Consulta: ${v.title}`}
               >
-                fer@evminds.es
               </a>
             </div>
           </div>
@@ -269,6 +273,21 @@ const relatedArticles = ownArticles
 
   <ImageLightbox selector=".article-prose" />
 </BaseLayout>
+
+<script>
+  // Anti-spam email obfuscation, same approach as contacto.astro
+  const emailLink = document.getElementById("author-email-link") as HTMLAnchorElement;
+  if (emailLink) {
+    const user = emailLink.getAttribute("data-user");
+    const domain = emailLink.getAttribute("data-domain");
+    const subject = emailLink.getAttribute("data-subject") || "";
+    if (user && domain) {
+      const email = `${user}@${domain}`;
+      emailLink.href = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+      emailLink.textContent = email;
+    }
+  }
+</script>
 
 <style>
   .article-detail {
@@ -422,7 +441,7 @@ const relatedArticles = ownArticles
   .article-detail__author-email {
     font-family: var(--font-body);
     font-size: 14px;
-    color: var(--ev-primary-blue);
+    color: var(--navy-2);
     text-decoration: none;
   }
 
