@@ -41,4 +41,16 @@ describe("slugify", () => {
   it("removes em-dashes without converting to hyphens", () => {
     expect(slugify("café—résumé")).toBe("caferesume");
   });
+
+  it("drops Spanish articles from the slug", () => {
+    expect(slugify("El Nuevo Tesla Model 3")).toBe("nuevo-tesla-model-3");
+  });
+
+  it("drops Spanish prepositions and conjunctions from the slug", () => {
+    expect(slugify("El Coche del Futuro y su Autonomía")).toBe("coche-futuro-su-autonomia");
+  });
+
+  it("keeps the words intact when the title is only stopwords", () => {
+    expect(slugify("El de la Que")).toBe("el-de-la-que");
+  });
 });

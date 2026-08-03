@@ -23,6 +23,13 @@ export interface MotorChannelPayload {
   /** Empty means "no distinct listing title": the UI falls back to a copy of the headline. */
   listTitle: string;
   discoverTitle: string;
+  /**
+   * The URL slug Fer types into Motor.es' own CMS. Added alongside the
+   * headline fields (task A3, wizard slug guide) because it is derived from
+   * the title the same way `listTitle` is, and it is required for SEO on both
+   * channels rather than left as an optional nicety.
+   */
+  slug: string;
   /** Both metas are the escape valve for a long headline, so empty IS the normal value. */
   metaTitle: string;
   metaDescription: string;
@@ -106,6 +113,7 @@ export function parseMotorPayload(raw: unknown): MotorChannelPayload {
   return {
     listTitle: str(source, "listTitle"),
     discoverTitle: str(source, "discoverTitle"),
+    slug: str(source, "slug"),
     metaTitle: str(source, "metaTitle"),
     metaDescription: str(source, "metaDescription"),
     lead: str(source, "lead"),

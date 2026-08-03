@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SlugField from "@/components/admin/SlugField";
 import { cn } from "@/lib/utils";
 import CountedTextField from "./CountedTextField";
+import FieldError from "./FieldError";
 import { CMS_TITLE_MAX } from "@/lib/editorial-validation";
 
 /** One field's copy state plus the handler that copies it. */
@@ -22,11 +24,17 @@ interface Props {
     title: CopyBinding;
     listTitle: CopyBinding;
     discoverTitle: CopyBinding;
+    slug: CopyBinding;
   };
   /** True while "Mejorar SEO" is working on the main headline. */
   improvingSeo: boolean;
   onImproveSeo: () => void;
   titleError?: string | null;
+  slug: string;
+  onSlugChange: (value: string) => void;
+  /** Stops the slug from following the headline any more. */
+  onSlugManualEdit: () => void;
+  slugError?: string | null;
   disabled?: boolean;
 }
 
@@ -59,6 +67,10 @@ export default function CmsHeadlineFields({
   improvingSeo,
   onImproveSeo,
   titleError,
+  slug,
+  onSlugChange,
+  onSlugManualEdit,
+  slugError,
   disabled,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -84,6 +96,22 @@ export default function CmsHeadlineFields({
         error={titleError}
         disabled={disabled}
       />
+
+      {/* Ours, not theirs: required for SEO even though it is not one of
+        Motor.es' own required fields (only Título and Entradilla are). Fer
+        types it into their URL field once he transcribes the piece. Placed
+        right under the headline it derives from, ahead of the collapse toggle
+        below, rather than after it (Fer, 2026-08-03). */}
+      <div className="grid gap-1.5">
+        <SlugField
+          slug={slug}
+          onChange={onSlugChange}
+          onManualEdit={onSlugManualEdit}
+          prefix="motor.es/"
+          copy={{ what: "el slug", ...copy.slug }}
+        />
+        <FieldError message={slugError} />
+      </div>
 
       <Button
         type="button"

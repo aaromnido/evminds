@@ -159,6 +159,8 @@ function buildSeed({
     const { title, body, imageUrl, publishDate } = initialDraft;
     const motor = channel === "motor" ? (initialDraft.payload as MotorChannelPayload) : null;
     const evminds = channel === "evminds" ? (initialDraft.payload as EvmindsChannelPayload) : null;
+    // Whichever channel this is, only one of the two ever has a stored slug.
+    const storedSlug = motor?.slug || evminds?.slug;
 
     return {
       title,
@@ -179,8 +181,8 @@ function buildSeed({
       published: motor?.published ?? false,
       publishedDate: motor?.publishedDate ?? "",
       publishedUrl: motor?.publishedUrl ?? "",
-      slug: evminds?.slug || slugify(title),
-      slugEdited: Boolean(evminds?.slug && evminds.slug !== slugify(title)),
+      slug: storedSlug || slugify(title),
+      slugEdited: Boolean(storedSlug && storedSlug !== slugify(title)),
       excerpt: evminds?.excerpt ?? "",
       category: evminds?.category ?? VALID_POST_CATEGORIES[0],
       tags: evminds?.tags ?? [],
@@ -411,6 +413,7 @@ export default function PublishChannelStep({
     ? {
         listTitle,
         discoverTitle,
+        slug,
         metaTitle,
         metaDescription,
         lead,
@@ -451,7 +454,7 @@ export default function PublishChannelStep({
     // Its presence is what turns on each channel's extra rules, rather than a
     // flag beside optional fields.
     postRecord: spec.needsPostRecord ? { slug, excerpt, imageAlt } : undefined,
-    cmsRecord: spec.needsCmsFields ? { lead } : undefined,
+    cmsRecord: spec.needsCmsFields ? { lead, slug } : undefined,
   });
 
   /**
@@ -477,7 +480,8 @@ export default function PublishChannelStep({
         : "escribe el texto alternativo de la imagen",
     );
   }
-  if (errors.excerpt || errors.slug) missing.push("completa la ficha del artículo");
+  if (errors.excerpt) missing.push("completa la ficha del artículo");
+  if (errors.slug) missing.push("rellena el slug");
   if (errors.schedule) missing.push("elige cuándo se publica");
 
   const busy =
@@ -552,6 +556,7 @@ export default function PublishChannelStep({
     ["title", title],
     ["listTitle", listTitle],
     ["discoverTitle", discoverTitle],
+    ["slug", slug],
   ];
   const searchFields: [string, string][] = [
     ["metaTitle", metaTitle],
@@ -1200,10 +1205,15 @@ export default function PublishChannelStep({
                     title: bindCopy("title", title),
                     listTitle: bindCopy("listTitle", listTitle),
                     discoverTitle: bindCopy("discoverTitle", discoverTitle),
+                    slug: bindCopy("slug", slug),
                   }}
                   improvingSeo={improvingSeo}
                   onImproveSeo={handleImproveSeo}
                   titleError={errors.title}
+                  slug={slug}
+                  onSlugChange={setSlug}
+                  onSlugManualEdit={() => setSlugEdited(true)}
+                  slugError={errors.slug}
                   disabled={busy}
                 />
               </StepSection>
