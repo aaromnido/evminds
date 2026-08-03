@@ -392,8 +392,6 @@ práctica no se cumple». No dan derecho a sustituir una estadística por una an
 
 ## Lo que aquí NO se hace, aunque en EVMinds sí
 
-- **No se habla en segunda persona del plural.** Nada de «os cuento», «ya sabéis» ni «apuntadlo».
-  Aquí no hay comunidad a la que dirigirse.
 - **No se nombra la flota de casa como vara de medir.** El e-Niro, los Leaf y el sapito se quedan en
   EVMinds. Aquí se puede decir «llevo años conduciendo eléctrico», no «mi e-Niro nunca ha pasado de
   78 kW».
@@ -604,7 +602,7 @@ que no debería haberse escrito así.
 ## Los cinco rasgos que solo aparecen aquí
 
 1. **Se habla a la comunidad en segunda persona del plural.** «Os cuento», «ya sabéis», «apuntadlo»,
-   «si os gusta y le dais cariño». En Motor.es esto no se hace nunca.
+   «si os gusta y le dais cariño».
 2. **La flota de casa entra sin pedir permiso, pero no en cada pieza.** El e-Niro, los dos Leaf y el
    sapito son la vara de medir cuando de verdad ayudan a calibrar un dato del artículo, y se nombran
    con naturalidad, como quien habla de su coche porque es su coche. Si el artículo no tiene ese

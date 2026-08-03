@@ -101,3 +101,23 @@ export interface AngleBrief {
   links: ReferenceLink[];
   channels: PublishChannel[];
 }
+
+/**
+ * The Revisor AI's verdict on one finding. Mirrors
+ * `supabase/functions/editorial-review/review.ts`'s `Severity`.
+ */
+export type ReviewSeverity = "recomendacion" | "aviso" | "danger";
+
+export interface ReviewFinding {
+  severidad: ReviewSeverity;
+  mensaje: string;
+  /** How to fix it, or "" when the message already says it plainly. */
+  recomendacion: string;
+}
+
+/** The Revisor AI's structured report on one draft, by category. */
+export interface ReviewResult {
+  contenido: ReviewFinding[];
+  forma: ReviewFinding[];
+  ortografia: ReviewFinding[];
+}

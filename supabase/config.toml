@@ -33,3 +33,6 @@ verify_jwt = false
 
 [functions.editorial-curator]
 verify_jwt = false
+
+[functions.editorial-review]
+verify_jwt = false
