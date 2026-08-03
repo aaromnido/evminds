@@ -157,13 +157,16 @@ export default function DraftBodyField({
         <p className="text-xs text-muted-foreground">{previewBlockedReason}</p>
       )}
 
-      {/* Two columns only while the Revisor panel is open: the editor shrinks
-          to make real room for it, never overlapping (Fer, 2026-08-03).
-          `items-stretch` (the default, made explicit) lets the panel match
-          the editor's real height; its own `max-h` (see `ArticleReviewPanel`)
-          is the safety ceiling that keeps a long report from dragging the
-          whole page down with it instead of just scrolling internally. */}
-      <div className="flex items-stretch gap-4">
+      {/* Two columns only from `md` up, and only while the Revisor panel is
+          open: the editor shrinks to make real room for it, never
+          overlapping (Fer, 2026-08-03). `items-stretch` (the default, made
+          explicit) lets the panel match the editor's real height in that
+          row layout; its own `max-h` (see `ArticleReviewPanel`) is the
+          safety ceiling that keeps a long report from dragging the whole
+          page down with it instead of just scrolling internally.
+          Below `md`, there is no side column to shrink for: the panel goes
+          full-width underneath the editor instead (Fer, 2026-08-04). */}
+      <div className="flex flex-col items-stretch gap-4 md:flex-row">
         <div className="grid min-w-0 flex-1 gap-2">
           {/* Two ways of editing the same text, never a read-only pane: the
               visual one writes on the finished piece, the Markdown one on the
@@ -203,7 +206,7 @@ export default function DraftBodyField({
         </div>
 
         {review.open && (
-          <div className="w-[22rem] shrink-0">
+          <div className="w-full shrink-0 md:w-[22rem]">
             <ArticleReviewPanel
               loading={review.loading}
               error={review.error}
