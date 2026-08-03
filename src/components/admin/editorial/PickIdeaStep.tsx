@@ -191,7 +191,7 @@ export default function PickIdeaStep({ nowIso }: Props) {
     <div className="flex flex-col gap-6">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="outline" size="lg" render={<a href={ideasUrl()} />}>
+        <Button variant="outline" size="lg" nativeButton={false} render={<a href={ideasUrl()} />}>
           <Lightbulb />
           Ver banco de ideas
         </Button>

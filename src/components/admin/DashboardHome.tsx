@@ -148,13 +148,18 @@ export default function DashboardHome({
             en total · {newsArchived} archivadas
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button className="w-full sm:w-auto" render={<a href="/admin/noticias" />}>
+            <Button
+              className="w-full sm:w-auto"
+              nativeButton={false}
+              render={<a href="/admin/noticias" />}
+            >
               Gestionar noticias
               <ArrowRight />
             </Button>
             <Button
               variant="outline"
               className="w-full sm:w-auto"
+              nativeButton={false}
               render={<a href="/admin/noticias/new" />}
             >
               <Plus />
@@ -173,13 +178,18 @@ export default function DashboardHome({
             {postsDrafts} {postsDrafts === 1 ? "borrador" : "borradores"}
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button className="w-full sm:w-auto" render={<a href="/admin/articulos" />}>
+            <Button
+              className="w-full sm:w-auto"
+              nativeButton={false}
+              render={<a href="/admin/articulos" />}
+            >
               Gestionar artículos
               <ArrowRight />
             </Button>
             <Button
               variant="outline"
               className="w-full sm:w-auto"
+              nativeButton={false}
               render={<a href="/admin/articulos/new" />}
             >
               <Plus />

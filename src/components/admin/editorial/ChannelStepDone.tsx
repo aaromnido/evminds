@@ -59,7 +59,7 @@ export default function ChannelStepDone({ title, hint, piece, onEdit }: Props) {
       <ChannelResultCard {...piece} onEdit={onEdit} />
 
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button size="lg" render={<a href={newPieceUrl()} />}>
+        <Button size="lg" nativeButton={false} render={<a href={newPieceUrl()} />}>
           <PenLine />
           Crear nuevo artículo
         </Button>

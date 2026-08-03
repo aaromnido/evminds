@@ -87,15 +87,17 @@ export interface ChannelDraftInput {
    * Set only on a channel transcribed into someone else's CMS (Motor.es). Same
    * presence-activates-the-rules shape as `postRecord`.
    *
-   * **Only the entradilla is in here, and that is deliberate.** Motor.es marks
-   * exactly two fields required in their form, `Título` and `Entradilla`, and the
-   * rest — meta title, meta description, marca, modelo, fuente, tags — are
-   * optional there. Requiring any of them here would invent a rule their own CMS
-   * does not have, and would block the button over a field Fer is allowed to
-   * leave empty. Same reasoning that keeps category and tags out of `postRecord`.
+   * The entradilla is required because Motor.es marks it required in their own
+   * form, alongside `Título` — meta title, meta description, marca, modelo,
+   * fuente, tags stay optional here for that reason, and requiring any of them
+   * would invent a rule their CMS does not have. `slug` is different: it is
+   * required by our own SEO rule (task A3, wizard slug guide), not by theirs —
+   * Fer types it into their URL field, but the requirement to fill it in is
+   * ours.
    */
   cmsRecord?: {
     lead: string;
+    slug: string;
   };
 }
 
@@ -120,13 +122,16 @@ export function validateChannelDraft(input: ChannelDraftInput): ChannelDraftErro
   const body = input.body.trim();
   const record = input.postRecord;
   const excerpt = record?.excerpt.trim() ?? "";
+  // Whichever channel is active, at most one of the two supplies a slug.
+  const slugValue = record?.slug ?? input.cmsRecord?.slug;
 
   return {
-    slug: !record
-      ? null
-      : record.slug.trim()
+    slug:
+      slugValue === undefined
         ? null
-        : "La URL del artículo no puede quedarse vacía.",
+        : slugValue.trim()
+          ? null
+          : "La URL del artículo no puede quedarse vacía.",
     excerpt: !record
       ? null
       : !excerpt

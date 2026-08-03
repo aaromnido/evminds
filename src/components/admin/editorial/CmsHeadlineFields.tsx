@@ -1,4 +1,10 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import SlugField from "@/components/admin/SlugField";
+import { cn } from "@/lib/utils";
 import CountedTextField from "./CountedTextField";
+import FieldError from "./FieldError";
 import { CMS_TITLE_MAX } from "@/lib/editorial-validation";
 
 /** One field's copy state plus the handler that copies it. */
@@ -18,11 +24,17 @@ interface Props {
     title: CopyBinding;
     listTitle: CopyBinding;
     discoverTitle: CopyBinding;
+    slug: CopyBinding;
   };
   /** True while "Mejorar SEO" is working on the main headline. */
   improvingSeo: boolean;
   onImproveSeo: () => void;
   titleError?: string | null;
+  slug: string;
+  onSlugChange: (value: string) => void;
+  /** Stops the slug from following the headline any more. */
+  onSlugManualEdit: () => void;
+  slugError?: string | null;
   disabled?: boolean;
 }
 
@@ -55,8 +67,14 @@ export default function CmsHeadlineFields({
   improvingSeo,
   onImproveSeo,
   titleError,
+  slug,
+  onSlugChange,
+  onSlugManualEdit,
+  slugError,
   disabled,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div className="grid gap-5">
       <CountedTextField
@@ -79,30 +97,62 @@ export default function CmsHeadlineFields({
         disabled={disabled}
       />
 
-      <CountedTextField
-        id="cms-list-title"
-        label="Título Listados"
-        hint="El que se lee en las tarjetas de su portada. Viene copiado del título y le sigue mientras no lo toques; escribe otro si ahí conviene uno más corto."
-        value={listTitle}
-        onChange={onListTitleChange}
-        max={CMS_TITLE_MAX}
-        counterOverTitle="Motor.es recomienda 65 caracteres."
-        copy={{ what: "el título de listados", ...copy.listTitle }}
-        disabled={disabled}
-      />
+      {/* Ours, not theirs: required for SEO even though it is not one of
+        Motor.es' own required fields (only Título and Entradilla are). Fer
+        types it into their URL field once he transcribes the piece. Placed
+        right under the headline it derives from, ahead of the collapse toggle
+        below, rather than after it (Fer, 2026-08-03). */}
+      <div className="grid gap-1.5">
+        <SlugField
+          slug={slug}
+          onChange={onSlugChange}
+          onManualEdit={onSlugManualEdit}
+          prefix="motor.es/"
+          copy={{ what: "el slug", ...copy.slug }}
+        />
+        <FieldError message={slugError} />
+      </div>
 
-      <CountedTextField
-        id="cms-discover-title"
-        label="Título Discover"
-        // Their own help text, word for word: it is the clearest explanation of
-        // what the field does, and copying it means the panel and their CMS say
-        // the same thing.
-        hint="Este título se usará durante las primeras 48 horas. Es el de Google Discover, así que va con gancho o en primera persona."
-        value={discoverTitle}
-        onChange={onDiscoverTitleChange}
-        copy={{ what: "el título de Discover", ...copy.discoverTitle }}
-        disabled={disabled}
-      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="justify-self-start"
+        aria-expanded={expanded}
+      >
+        {expanded ? "Ocultar título Listados y Discover" : "Mostrar título Listados y Discover"}
+        <ChevronDown className={cn("transition-transform", expanded && "rotate-180")} />
+      </Button>
+
+      {expanded && (
+        <>
+          <CountedTextField
+            id="cms-list-title"
+            label="Título Listados"
+            hint="El que se lee en las tarjetas de su portada. Viene copiado del título y le sigue mientras no lo toques; escribe otro si ahí conviene uno más corto."
+            value={listTitle}
+            onChange={onListTitleChange}
+            max={CMS_TITLE_MAX}
+            counterOverTitle="Motor.es recomienda 65 caracteres."
+            copy={{ what: "el título de listados", ...copy.listTitle }}
+            disabled={disabled}
+          />
+
+          <CountedTextField
+            id="cms-discover-title"
+            label="Título Discover"
+            // Their own help text, word for word: it is the clearest explanation of
+            // what the field does, and copying it means the panel and their CMS say
+            // the same thing.
+            hint="Este título se usará durante las primeras 48 horas. Es el de Google Discover, así que va con gancho o en primera persona."
+            value={discoverTitle}
+            onChange={onDiscoverTitleChange}
+            copy={{ what: "el título de Discover", ...copy.discoverTitle }}
+            disabled={disabled}
+          />
+        </>
+      )}
     </div>
   );
 }

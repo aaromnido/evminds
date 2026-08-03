@@ -14,6 +14,7 @@
 import {
   EDITORIAL_LINE,
   EVMINDS_VOICE_NOTE,
+  LINKING_GUIDE,
   MOTOR_STYLE_GUIDE,
   MOTOR_VOICE_NOTE,
   STYLE_GUIDE,
@@ -205,6 +206,13 @@ ${MOTOR_VOICE_NOTE}
 
 ${MOTOR_STYLE_GUIDE}
 
+Sobre el enlazado, esto es orientación de criterio, no una regla de cumplimiento estricto: no
+fuerces un enlace que no encaje de forma natural, y recuerda que solo puedes enlazar a una URL
+que esté literalmente en el contenido de referencia o en el dato de fuente ya conocido de la
+pieza, nunca una inventada.
+
+${LINKING_GUIDE}
+
 Brief de la pieza:
 
 ${buildBriefBlock(input)}
@@ -216,7 +224,7 @@ Genera un JSON con estos campos exactos:
 - "meta_titulo": SOLO si "titulo" se pasa bastante de 65 caracteres o queda mal como resultado de búsqueda. Si no, cadena vacía "".
 - "meta_descripcion": SOLO si añade algo que el titular no dice, una única frase, apunta a 155 caracteres. Si no aporta nada nuevo, cadena vacía "".
 - "entradilla": un párrafo de apertura de 40 a 45 palabras (50 como máximo, contado en PALABRAS, no caracteres). Formato en línea permitido (negrita, cursiva, enlace), SIN encabezados. El "cuerpo" no debe repetirla.
-- "cuerpo": el cuerpo de la noticia en Markdown, empezando DESPUÉS de la entradilla (nunca la repite ni la resume otra vez). Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 550 y 1.150 palabras (la pieza completa, entradilla incluida, tiene que rondar las 600-1.200 palabras que pide la guía de estilo de Motor.es). Esto es un artículo desarrollado con varias secciones, NO un resumen de tres párrafos: cubre el contexto, los datos comparativos y las implicaciones prácticas con profundidad.
+- "cuerpo": el cuerpo de la noticia en Markdown, empezando DESPUÉS de la entradilla (nunca la repite ni la resume otra vez). ESTRUCTURA OBLIGATORIA DE APERTURA: los dos primeros párrafos del cuerpo (antes del primer "##") son párrafos de arranque propios, con gancho, que no repiten ni resumen la entradilla — nunca empieces el cuerpo directamente con un encabezado. Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 550 y 1.150 palabras (la pieza completa, entradilla incluida, tiene que rondar las 600-1.200 palabras que pide la guía de estilo de Motor.es). Esto es un artículo desarrollado con varias secciones, NO un resumen de tres párrafos: cubre el contexto, los datos comparativos y las implicaciones prácticas con profundidad.
 - "marca": la marca del coche protagonista, si la pieza va de un coche concreto. Si no, cadena vacía "".
 - "modelo": el modelo, en las mismas condiciones que "marca".
 - "tags": entre 2 y 5, prefiriendo los que ya existen en el vocabulario de Motor.es (listados arriba).
@@ -248,13 +256,20 @@ ${EDITORIAL_LINE}
 
 ${EVMINDS_VOICE_NOTE}
 
+Sobre el enlazado, esto es orientación de criterio, no una regla de cumplimiento estricto: no
+fuerces un enlace que no encaje de forma natural, y recuerda que solo puedes enlazar a una URL
+que esté literalmente en el contenido de referencia, en el texto de Motor.es o en el dato de
+fuente ya conocido de la pieza, nunca una inventada.
+
+${LINKING_GUIDE}
+
 Brief de la pieza:
 
 ${buildBriefBlock(input)}
 ${motorBlock}${weeklyBlock}
 Genera un JSON con estos campos exactos:
 - "titulo": el titular, en la voz de EVminds (segunda persona del plural, la flota de casa como vara de medir). ${input.motorDraft ? 'No puede compartir las primeras palabras con el título de Motor.es de arriba.' : ''}
-- "cuerpo": el cuerpo completo del artículo en Markdown. Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 800 y 2.000 palabras, según lo que dé de sí el tema — la guía de estilo de EVminds pide esa horquilla. Es un artículo desarrollado con varias secciones, NO un resumen condensado.`;
+- "cuerpo": el cuerpo completo del artículo en Markdown. ESTRUCTURA OBLIGATORIA DE APERTURA: los dos primeros párrafos (antes del primer "##") son párrafos de arranque con gancho — nunca empieces el cuerpo directamente con un encabezado. Usa "##" para los encabezados de sección, NUNCA "#". EXTENSIÓN OBLIGATORIA: entre 800 y 2.000 palabras, según lo que dé de sí el tema — la guía de estilo de EVminds pide esa horquilla. Es un artículo desarrollado con varias secciones, NO un resumen condensado.`;
 }
 
 function buildMotorResponseSchema() {

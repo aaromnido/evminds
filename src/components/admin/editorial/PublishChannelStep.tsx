@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CalendarClock, Check, Eye, Wand2 } from "lucide-react";
 import ArticlePreviewSheet from "./ArticlePreviewSheet";
+import type { ReviewSession } from "./ArticleReviewPanel";
 import BackStepButton from "./BackStepButton";
 import ChannelStepDone from "./ChannelStepDone";
 import CmsHeadlineFields, { type CopyBinding } from "./CmsHeadlineFields";
 import CmsRecordFields from "./CmsRecordFields";
 import CmsSearchFields from "./CmsSearchFields";
 import CopyProgress from "./CopyProgress";
-import DraftBodyField from "./DraftBodyField";
+import DraftBodyField, { type ReviewFieldProps } from "./DraftBodyField";
 import DraftGeneratingLoader from "./DraftGeneratingLoader";
 import DraftTextBlock from "./DraftTextBlock";
 import EvmindsPreGenerateStep from "./EvmindsPreGenerateStep";
@@ -45,8 +46,9 @@ import {
 import { copyPlain, copyRich } from "@/lib/clipboard";
 import { markdownToHtml } from "@/lib/markdown";
 import { VALID_POST_CATEGORIES, type PostCategory } from "@/lib/post-categories";
+import { readReviewSession, writeReviewSession } from "@/lib/review-cache";
 import { slugify } from "@/lib/slugify";
-import type { PublishChannel } from "@/lib/editorial-types";
+import type { PublishChannel, ReviewResult } from "@/lib/editorial-types";
 
 /**
  * Fake latencies (prototype only).
@@ -159,6 +161,8 @@ function buildSeed({
     const { title, body, imageUrl, publishDate } = initialDraft;
     const motor = channel === "motor" ? (initialDraft.payload as MotorChannelPayload) : null;
     const evminds = channel === "evminds" ? (initialDraft.payload as EvmindsChannelPayload) : null;
+    // Whichever channel this is, only one of the two ever has a stored slug.
+    const storedSlug = motor?.slug || evminds?.slug;
 
     return {
       title,
@@ -179,8 +183,8 @@ function buildSeed({
       published: motor?.published ?? false,
       publishedDate: motor?.publishedDate ?? "",
       publishedUrl: motor?.publishedUrl ?? "",
-      slug: evminds?.slug || slugify(title),
-      slugEdited: Boolean(evminds?.slug && evminds.slug !== slugify(title)),
+      slug: storedSlug || slugify(title),
+      slugEdited: Boolean(storedSlug && storedSlug !== slugify(title)),
       excerpt: evminds?.excerpt ?? "",
       category: evminds?.category ?? VALID_POST_CATEGORIES[0],
       tags: evminds?.tags ?? [],
@@ -383,7 +387,7 @@ export default function PublishChannelStep({
   // Holds the in-flight redactor call's controller so the loader's manual
   // "Cancelar" button can abort it directly, without waiting on the timeout.
   const abortControllerRef = useRef<AbortController | null>(null);
-  // "Volver a generar" on the body field alone (Fer, 2026-07-27) — a separate
+  // "Regenerar" on the body field alone (Fer, 2026-07-27) — a separate
   // flag from `generatingDraft`, which is reserved for the first, full-screen
   // generation. This one is scoped and small: a toast on success or failure,
   // never a screen takeover, and it never touches title/entradilla/tags/etc.
@@ -394,6 +398,18 @@ export default function PublishChannelStep({
   const [shorteningTitle, setShorteningTitle] = useState(false);
   const [publishDate, setPublishDate] = useState(seed.publishDate);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // The Revisor's report, docked next to the body editor rather than shown in
+  // a sheet like the preview above — see `ArticleReviewPanel`. Never
+  // autosaved to the draft row, it is advice about the text at some past
+  // instant, not part of the piece itself — but it does survive a reload via
+  // `localStorage` (Fer, 2026-08-04), keyed to this piece+channel so it can't
+  // leak into another one.
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSession, setReviewSession] = useState<ReviewSession | null>(() =>
+    readReviewSession(pieceId, channel),
+  );
   const [savingDraft, setSavingDraft] = useState(false);
   const [handingOff, setHandingOff] = useState(false);
   const [navigating, setNavigating] = useState(false);
@@ -411,6 +427,7 @@ export default function PublishChannelStep({
     ? {
         listTitle,
         discoverTitle,
+        slug,
         metaTitle,
         metaDescription,
         lead,
@@ -451,7 +468,7 @@ export default function PublishChannelStep({
     // Its presence is what turns on each channel's extra rules, rather than a
     // flag beside optional fields.
     postRecord: spec.needsPostRecord ? { slug, excerpt, imageAlt } : undefined,
-    cmsRecord: spec.needsCmsFields ? { lead } : undefined,
+    cmsRecord: spec.needsCmsFields ? { lead, slug } : undefined,
   });
 
   /**
@@ -477,7 +494,8 @@ export default function PublishChannelStep({
         : "escribe el texto alternativo de la imagen",
     );
   }
-  if (errors.excerpt || errors.slug) missing.push("completa la ficha del artículo");
+  if (errors.excerpt) missing.push("completa la ficha del artículo");
+  if (errors.slug) missing.push("rellena el slug");
   if (errors.schedule) missing.push("elige cuándo se publica");
 
   const busy =
@@ -552,6 +570,7 @@ export default function PublishChannelStep({
     ["title", title],
     ["listTitle", listTitle],
     ["discoverTitle", discoverTitle],
+    ["slug", slug],
   ];
   const searchFields: [string, string][] = [
     ["metaTitle", metaTitle],
@@ -627,7 +646,7 @@ export default function PublishChannelStep({
 
   /**
    * The one call to the redactor proxy, shared by every action that needs a
-   * fresh draft: the initial generation and the per-field "Volver a generar".
+   * fresh draft: the initial generation and the per-field "Regenerar".
    * Throws on any failure, so each caller decides how to surface it (a
    * full-screen error for the first generation, a toast for a scoped retry).
    */
@@ -750,7 +769,7 @@ export default function PublishChannelStep({
   }
 
   /**
-   * "Volver a generar" on "Cuerpo noticia" alone (Fer, 2026-07-27). Runs the
+   * "Regenerar" on "Cuerpo noticia" alone (Fer, 2026-07-27). Runs the
    * same redactor call — there is no body-only prompt, so this is a fresh full
    * draft off the same brief — but only the body is applied. Título,
    * entradilla, tags, marca/modelo… stay exactly as they are, since the point
@@ -768,6 +787,80 @@ export default function PublishChannelStep({
       setRegeneratingBody(false);
     }
   }
+
+  // The Revisor's cache key: the exact title+body a report was produced for.
+  // `JSON.stringify` on the pair, not a joined string, so a title/body split
+  // never collides, e.g. "AB" + "C" vs "A" + "BC".
+  const currentReviewKey = JSON.stringify([title, body]);
+  const reviewStale = reviewSession !== null && reviewSession.reviewedKey !== currentReviewKey;
+
+  /**
+   * Reviews the current title+body against Tema, Enfoque and every editorial
+   * guide (`editorial-review`). Replaces whatever session existed before,
+   * findings and ticked checkboxes included — a fresh report is a fresh
+   * checklist, since a tick from the last pass says nothing about whether a
+   * changed article still has that problem.
+   */
+  async function runReview() {
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      const res = await fetch("/admin/redaccion/review-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel, briefTitle, briefAngle, title, body }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok !== true) throw new Error();
+
+      const result: ReviewResult = {
+        contenido: Array.isArray(data.contenido) ? data.contenido : [],
+        forma: Array.isArray(data.forma) ? data.forma : [],
+        ortografia: Array.isArray(data.ortografia) ? data.ortografia : [],
+      };
+      setReviewSession({ reviewedKey: JSON.stringify([title, body]), result, checked: {} });
+    } catch {
+      setReviewError("No se ha podido revisar el artículo.");
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
+  // Persists every change (a fresh report, or a box ticked/unticked) so it
+  // survives a reload. Runs after `reviewSession` itself already changed, so
+  // this never races the read on mount.
+  useEffect(() => {
+    if (reviewSession) writeReviewSession(pieceId, channel, reviewSession);
+  }, [reviewSession, pieceId, channel]);
+
+  /**
+   * Opens (or closes) the panel. The first ever click fires the review right
+   * away — Fer's own call, 2026-08-03 — but once a report exists, reopening
+   * the panel just shows it again, stale or not: nothing here ever relaunches
+   * Gemini on its own, that always goes through the explicit "Revisar de
+   * nuevo" in `ArticleReviewPanel`.
+   */
+  function handleToggleReview() {
+    if (!reviewOpen && !reviewSession) void runReview();
+    setReviewOpen((prev) => !prev);
+  }
+
+  function handleToggleFinding(key: string) {
+    setReviewSession((prev) =>
+      prev ? { ...prev, checked: { ...prev.checked, [key]: !prev.checked[key] } } : prev,
+    );
+  }
+
+  const reviewFieldProps: ReviewFieldProps = {
+    open: reviewOpen,
+    onToggle: handleToggleReview,
+    loading: reviewLoading,
+    error: reviewError,
+    session: reviewSession,
+    stale: reviewStale,
+    onToggleFinding: handleToggleFinding,
+    onRerun: runReview,
+  };
 
   /**
    * Motor.es fires the redactor call the instant this screen mounts with
@@ -1200,10 +1293,15 @@ export default function PublishChannelStep({
                     title: bindCopy("title", title),
                     listTitle: bindCopy("listTitle", listTitle),
                     discoverTitle: bindCopy("discoverTitle", discoverTitle),
+                    slug: bindCopy("slug", slug),
                   }}
                   improvingSeo={improvingSeo}
                   onImproveSeo={handleImproveSeo}
                   titleError={errors.title}
+                  slug={slug}
+                  onSlugChange={setSlug}
+                  onSlugManualEdit={() => setSlugEdited(true)}
+                  slugError={errors.slug}
                   disabled={busy}
                 />
               </StepSection>
@@ -1268,6 +1366,7 @@ export default function PublishChannelStep({
                     }
                     onRegenerate={handleRegenerateBody}
                     regenerating={regeneratingBody}
+                    review={reviewFieldProps}
                     disabled={busy}
                   />
                   <FieldError message={errors.body} />
@@ -1340,6 +1439,7 @@ export default function PublishChannelStep({
                   }
                   improvingSeo={improvingSeo}
                   onImproveSeo={handleImproveSeo}
+                  review={reviewFieldProps}
                   disabled={busy}
                 />
                 <FieldError message={errors.title ?? errors.body} />

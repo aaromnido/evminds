@@ -1,5 +1,5 @@
 import CountedTextField from "./CountedTextField";
-import DraftBodyField from "./DraftBodyField";
+import DraftBodyField, { type ReviewFieldProps } from "./DraftBodyField";
 import { SEO_TITLE_MAX } from "@/lib/editorial-validation";
 
 interface Props {
@@ -17,6 +17,8 @@ interface Props {
   /** True while "Mejorar SEO" is working on the headline. */
   improvingSeo: boolean;
   onImproveSeo: () => void;
+  /** Passed straight through to `DraftBodyField`. See its own docs. */
+  review: ReviewFieldProps;
   disabled?: boolean;
 }
 
@@ -43,6 +45,7 @@ export default function DraftTextBlock({
   previewBlockedReason,
   improvingSeo,
   onImproveSeo,
+  review,
   disabled,
 }: Props) {
   return (
@@ -72,6 +75,7 @@ export default function DraftTextBlock({
         onCopy={onCopy}
         onPreview={onPreview}
         previewBlockedReason={previewBlockedReason}
+        review={review}
         disabled={disabled}
       />
     </div>

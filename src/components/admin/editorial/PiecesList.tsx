@@ -71,7 +71,7 @@ export default function PiecesList({ pieces: initial, nowIso }: Props) {
           </p>
         </div>
         <div className="flex justify-center">
-          <Button size="lg" render={<a href={newPieceUrl()} />}>
+          <Button size="lg" nativeButton={false} render={<a href={newPieceUrl()} />}>
             <PenLine />
             Escribir algo nuevo
           </Button>

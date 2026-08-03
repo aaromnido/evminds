@@ -22,6 +22,7 @@ describe("parseMotorPayload", () => {
     const payload = parseMotorPayload({
       listTitle: "Titular de listados",
       discoverTitle: "Titular de Discover",
+      slug: "titular-de-listados",
       metaTitle: "Meta título",
       metaDescription: "Meta descripción",
       lead: "La **entradilla** en Markdown.",
@@ -33,6 +34,7 @@ describe("parseMotorPayload", () => {
     });
 
     expect(payload.listTitle).toBe("Titular de listados");
+    expect(payload.slug).toBe("titular-de-listados");
     expect(payload.lead).toBe("La **entradilla** en Markdown.");
     expect(payload.tags).toEqual(["Coches eléctricos", "Autonomía"]);
   });
@@ -42,6 +44,7 @@ describe("parseMotorPayload", () => {
 
     expect(payload.listTitle).toBe("Solo esto");
     expect(payload.discoverTitle).toBe("");
+    expect(payload.slug).toBe("");
     expect(payload.metaTitle).toBe("");
     expect(payload.tags).toEqual([]);
   });
@@ -143,6 +146,7 @@ describe("channelDraftFromRow / channelDraftToRow", () => {
       payload: {
         listTitle: "",
         discoverTitle: "",
+        slug: "",
         metaTitle: "",
         metaDescription: "",
         lead: "La entradilla.",

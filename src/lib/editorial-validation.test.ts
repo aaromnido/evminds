@@ -119,26 +119,45 @@ describe("validateChannelDraft", () => {
 
   describe("the Motor.es record", () => {
     it("stays silent when there is none", () => {
-      expect(validateChannelDraft(draft()).lead).toBeNull();
+      const errors = validateChannelDraft(draft());
+
+      expect(errors.lead).toBeNull();
+      expect(errors.slug).toBeNull();
     });
 
-    it("requires the entradilla, and only that", () => {
+    it("requires the entradilla and the slug, and only those", () => {
       // Their form marks exactly two fields required, `Título` and `Entradilla`.
-      // Requiring anything else here would invent a rule their own CMS does not
-      // have and block the button over a field they let you leave empty.
-      const errors = validateChannelDraft(draft({ cmsRecord: { lead: "  " } }));
+      // `slug` is required too, but that is our own SEO rule, not theirs — meta
+      // title, meta description, marca, modelo, fuente, tags stay optional, same
+      // as before.
+      const errors = validateChannelDraft(draft({ cmsRecord: { lead: "  ", slug: " " } }));
 
       expect(errors.lead).toBeTruthy();
+      expect(errors.slug).toBeTruthy();
       expect(
-        isChannelDraftValid(validateChannelDraft(draft({ cmsRecord: { lead: "Hola" } }))),
+        isChannelDraftValid(
+          validateChannelDraft(draft({ cmsRecord: { lead: "Hola", slug: "un-slug" } })),
+        ),
       ).toBe(true);
+    });
+
+    it("checks the entradilla and the slug independently", () => {
+      expect(
+        validateChannelDraft(draft({ cmsRecord: { lead: "Hola", slug: " " } })).lead,
+      ).toBeNull();
+      expect(
+        validateChannelDraft(draft({ cmsRecord: { lead: "Hola", slug: " " } })).slug,
+      ).toBeTruthy();
+      expect(
+        validateChannelDraft(draft({ cmsRecord: { lead: "  ", slug: "un-slug" } })).slug,
+      ).toBeNull();
     });
   });
 
   it("is invalid when ANY error is set", () => {
     // `isChannelDraftValid` walks the whole object precisely so that adding a new
     // error can never forget to join the check.
-    const errors = validateChannelDraft(draft({ cmsRecord: { lead: "" } }));
+    const errors = validateChannelDraft(draft({ cmsRecord: { lead: "", slug: "" } }));
 
     expect(isChannelDraftValid(errors)).toBe(false);
   });
