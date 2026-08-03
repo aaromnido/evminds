@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import CountedTextField from "./CountedTextField";
 import { CMS_TITLE_MAX } from "@/lib/editorial-validation";
 
@@ -57,6 +61,8 @@ export default function CmsHeadlineFields({
   titleError,
   disabled,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div className="grid gap-5">
       <CountedTextField
@@ -79,30 +85,46 @@ export default function CmsHeadlineFields({
         disabled={disabled}
       />
 
-      <CountedTextField
-        id="cms-list-title"
-        label="Título Listados"
-        hint="El que se lee en las tarjetas de su portada. Viene copiado del título y le sigue mientras no lo toques; escribe otro si ahí conviene uno más corto."
-        value={listTitle}
-        onChange={onListTitleChange}
-        max={CMS_TITLE_MAX}
-        counterOverTitle="Motor.es recomienda 65 caracteres."
-        copy={{ what: "el título de listados", ...copy.listTitle }}
-        disabled={disabled}
-      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="justify-self-start"
+        aria-expanded={expanded}
+      >
+        {expanded ? "Ocultar título Listados y Discover" : "Mostrar título Listados y Discover"}
+        <ChevronDown className={cn("transition-transform", expanded && "rotate-180")} />
+      </Button>
 
-      <CountedTextField
-        id="cms-discover-title"
-        label="Título Discover"
-        // Their own help text, word for word: it is the clearest explanation of
-        // what the field does, and copying it means the panel and their CMS say
-        // the same thing.
-        hint="Este título se usará durante las primeras 48 horas. Es el de Google Discover, así que va con gancho o en primera persona."
-        value={discoverTitle}
-        onChange={onDiscoverTitleChange}
-        copy={{ what: "el título de Discover", ...copy.discoverTitle }}
-        disabled={disabled}
-      />
+      {expanded && (
+        <>
+          <CountedTextField
+            id="cms-list-title"
+            label="Título Listados"
+            hint="El que se lee en las tarjetas de su portada. Viene copiado del título y le sigue mientras no lo toques; escribe otro si ahí conviene uno más corto."
+            value={listTitle}
+            onChange={onListTitleChange}
+            max={CMS_TITLE_MAX}
+            counterOverTitle="Motor.es recomienda 65 caracteres."
+            copy={{ what: "el título de listados", ...copy.listTitle }}
+            disabled={disabled}
+          />
+
+          <CountedTextField
+            id="cms-discover-title"
+            label="Título Discover"
+            // Their own help text, word for word: it is the clearest explanation of
+            // what the field does, and copying it means the panel and their CMS say
+            // the same thing.
+            hint="Este título se usará durante las primeras 48 horas. Es el de Google Discover, así que va con gancho o en primera persona."
+            value={discoverTitle}
+            onChange={onDiscoverTitleChange}
+            copy={{ what: "el título de Discover", ...copy.discoverTitle }}
+            disabled={disabled}
+          />
+        </>
+      )}
     </div>
   );
 }
