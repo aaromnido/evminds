@@ -62,7 +62,7 @@ export default function PieceCard({ piece, nowIso, onDelete, deleting = false }:
         {/* A link rendered as a button, the same way `PostEditor` does it: it is
             navigation, so it must behave like a link (middle click, open in a new
             tab) even though it reads as the primary action. */}
-        <Button size="lg" render={<a href={piece.href} />}>
+        <Button size="lg" nativeButton={false} render={<a href={piece.href} />}>
           {piece.status === "done" ? "Abrir la pieza" : "Seguir escribiendo"}
           <ArrowRight data-icon="inline-end" />
         </Button>
