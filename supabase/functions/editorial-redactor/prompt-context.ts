@@ -654,3 +654,116 @@ Misma noticia que en \`motor-es-voice-note.md\`, escrita para este canal:
 
 Si un párrafo de EVMinds pudiera aparecer tal cual en Motor.es, no está bien escrito.`;
 
+export const LINKING_GUIDE = `# Guía de enlazado
+
+Adaptada de la guía de enlazado de Motor.es (v1.3) para valer en los dos canales. Es una
+brújula, no un semáforo: orientación editorial sobre cómo pensar los enlaces cuando la pieza
+los tiene, no una lista de comprobación que el sistema fuerce. El redactor AI solo puede
+enlazar a una URL que de verdad esté en el contenido de referencia o en el dato de fuente ya
+conocido de la pieza (nunca se inventa una), así que esta guía es sobre todo criterio: cuándo
+un enlace aporta, dónde colocarlo, y con qué texto ancla, no un catálogo de páginas fijas a las
+que apuntar.
+
+## Por qué enlazamos
+
+Un enlace interno hace dos cosas a la vez:
+
+- Ayuda al lector a ampliar, le da el siguiente paso natural sin que se vaya a buscarlo fuera.
+- Concentra autoridad en las páginas propias que perduran. Enlazamos, sobre todo, hacia lo
+  que no envejece: la ficha o página de referencia de la marca o el modelo protagonista, un
+  hub temático, un artículo evergreen (una guía, un ranking), o la pieza hermana de una serie
+  (el informe anterior, la parte previa de un tema).
+
+## Los tres tipos de enlace (no compiten entre sí)
+
+No todos hacen lo mismo, así que no se cuentan juntos en un único "cuántos enlaces llevo":
+
+- **De entidad.** Al protagonista de la pieza (la marca, el modelo), hacia su página de
+  referencia si existe y se conoce su URL real. El ancla es el nombre de la entidad.
+- **Contextual.** A un hub o evergreen relacionado (una guía, un ranking, un tema recurrente).
+- **De serie.** A la pieza hermana: el informe anterior, la parte previa de un tema. Construye
+  el hilo y ayuda a entender que hay una continuidad.
+
+## La regla de oro
+
+Si la pieza gira en torno a una entidad (una marca, un modelo concreto) y se conoce su URL de
+referencia, esa entidad enlaza a su página. Es el enlace que más fácil se olvida y el que más
+falta hace.
+
+Y su corolario, el error más caro: nunca dejes que los rivales o competidores mencionados
+tengan enlace y el protagonista no. En una comparativa, si enlazas a dos coches rivales pero
+no al de la noticia, repartes fuerza a la competencia y no a la pieza propia.
+
+## Los anchors: naturales, contextuales y variados
+
+El ancla es el texto sobre el que va el enlace, y de él depende que se lea como natural o como
+forzado.
+
+- Dale contexto, no enlaces "marca modelo" a secas cuando sea posible. Mejor "los precios y
+  versiones del BMW X2" que "BMW X2" a secas: dice para qué vas al destino.
+- Con contexto, pero no media frase. De tres a seis palabras es una buena orientación: da
+  contexto sin volverse un enlace kilométrico.
+- Contextual y variado a la vez. Si enlazas dos veces al mismo destino, que no compartan el
+  mismo ancla exacto. El ancla clonado es lo único que de verdad huele a forzado, no el número
+  de enlaces.
+
+## Cuántos, y varios al mismo destino
+
+No hay un tope duro, y el criterio no es "cuántos caben" sino "cuáles aportan". Como
+orientación blanda, tres a cinco enlaces de calidad es sano para una pieza estándar; una pieza
+larga (una prueba a fondo, un evergreen extenso) admite y pide más, de forma natural, porque
+hay más contextos donde un enlace aporta.
+
+Dos enlaces al mismo destino están bien si están separados, cada uno con su razón de estar, y
+con anclas distintas. Mal si están pegados o uno es claramente redundante. Ante la duda de
+volumen, sustituye (quita el que menos aporta, añade el que más) en vez de sumar.
+
+## Dónde colocar el enlace importante
+
+Si hay un enlace clave y encaja de forma natural en la primera mitad del texto, mejor ahí que
+enterrado al final: lo ve y lo pincha más gente porque más lectores llegan hasta esa parte. Eso
+no significa amontonar enlaces al principio ni forzar la estructura del texto para subir uno
+que su sitio lógico es el cierre.
+
+**Ni en la entradilla ni en el arranque.** La entradilla (o, en el canal que no la tenga, los
+párrafos de arranque del cuerpo) tiene un solo trabajo: enganchar y que el lector siga leyendo.
+Un enlace ahí es una puerta de salida antes de que el lector haya empezado de verdad. El
+enlace importante va en el cuerpo, a partir de sus primeros párrafos de desarrollo, no en la
+apertura.
+
+## Enlazado externo
+
+Un enlace externo, bien usado, suma: respalda lo que se cuenta y transmite rigor. Se enlaza
+fuera cuando aporta valor al lector: fuentes oficiales y primarias, la web de una marca o
+fabricante, el origen de un dato o una declaración. Eso incluye, cuando corresponda, a la
+competencia: si otro medio tiene una exclusiva de la que se habla, se enlaza sin problema,
+porque aportar valor al lector está por encima de a quién se enlaza. Cuando la misma
+información esté disponible en varias fuentes equivalentes, se prefiere la que menos
+competencia directa suponga.
+
+**Nunca en la entradilla ni en el arranque**, y donde sea posible tampoco en los primeros
+párrafos del cuerpo: un enlace externo temprano es una salida de la pieza antes de que el
+lector se haya enganchado. Si el contexto no permite bajarlo, prioriza que el enlace tenga
+sentido donde va.
+
+## Atribución: en el texto o en el dato de fuente ya conocido
+
+Depende del peso que tenga la fuente ajena:
+
+- Si es solo una cita o referencia puntual ("según [medio]…"), se resuelve en el propio texto,
+  con el enlace sobre ese "según [medio]".
+- Si la pieza entera se basa en otro medio (es su información y se desarrolla aquí), la
+  atribución de fondo va en el dato de fuente que el propio wizard ya conoce y que ninguno de
+  los dos canales necesita repetir dentro del cuerpo.
+
+## Notas por canal
+
+- **Motor.es** conoce mejor que nadie sus propias páginas de referencia (fichas, hubs,
+  categorías); esta guía es orientación de criterio, la decisión final de a qué URL enlazar
+  sigue siendo de quien transcribe la pieza a su CMS.
+- **EVminds** no tiene fichas de modelo propias ni una jerarquía de hubs equivalente a la de
+  Motor.es. Aquí el enlazado interno relevante es sobre todo de serie: al artículo anterior de
+  EVminds cuando la pieza responde a él o continúa un hilo abierto (ver
+  \`evminds-voice-note.md\`, "Cuándo se menciona el original de Motor.es"). El enlazado externo
+  (fuentes, marcas, comparación con otro medio) sigue las mismas reglas que arriba.`;
+
